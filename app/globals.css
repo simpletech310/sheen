@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bone: #FAFAF7;
+  --ink: #0A0A0A;
+  --cobalt: #1E40FF;
+  --wax: #C9A961;
+  --mist: #E8E6E0;
+  --smoke: #6E6E6A;
+}
+
+html, body {
+  background: var(--bone);
+  color: var(--ink);
+}
+
+[data-theme="dark"] {
+  --bone: #0A0A0A;
+  --ink: #FAFAF7;
+  --mist: #1A1A18;
+  --smoke: #8A8A85;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] {
+  background: var(--bone);
+  color: var(--ink);
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  .eyebrow {
+    font-family: var(--font-sans), system-ui, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--smoke);
+  }
+
+  .display {
+    font-family: var(--font-display), Georgia, serif;
+    font-style: italic;
+    letter-spacing: -0.035em;
+    line-height: 0.95;
+  }
+
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  .hairline {
+    background: linear-gradient(currentColor, currentColor);
+    background-size: 100% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+  }
+
+  .cobalt-strike {
+    position: relative;
+    display: inline-block;
+  }
+  .cobalt-strike::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: -2%;
+    bottom: 14%;
+    height: 4px;
+    background: var(--cobalt);
+    transform: rotate(-1.5deg);
+  }
+}
