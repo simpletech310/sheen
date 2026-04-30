@@ -16,7 +16,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   const { data: booking } = await supabase
     .from("bookings")
-    .select("id, assigned_washer_id, assigned_partner_id, service_cents, stripe_payment_intent_id, status, customer_id")
+    .select("id, assigned_washer_id, assigned_partner_id, service_cents, stripe_payment_intent_id, status, customer_id, service_id, checklist_progress")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -28,6 +28,38 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   }
   if (booking.status === "completed") {
     return NextResponse.json({ ok: true, already_complete: true });
+  }
+
+  // Gate completion on the checklist. Every item must be marked done;
+  // items that require a photo must have one recorded. This is the QA
+  // step that proves the work was actually done before payment can
+  // release.
+  const { data: items } = await supabase
+    .from("service_checklist_items")
+    .select("id, label, requires_photo")
+    .eq("service_id", booking.service_id);
+
+  const progress: Record<string, { done_at?: string; photo_path?: string | null }> =
+    (booking.checklist_progress as any) ?? {};
+  const missing: string[] = [];
+  for (const it of items ?? []) {
+    const entry = progress[it.id];
+    if (!entry?.done_at) {
+      missing.push(it.label);
+      continue;
+    }
+    if (it.requires_photo && !entry.photo_path) {
+      missing.push(`${it.label} (photo missing)`);
+    }
+  }
+  if (missing.length > 0) {
+    return NextResponse.json(
+      {
+        error: `Checklist not complete`,
+        missing,
+      },
+      { status: 400 }
+    );
   }
 
   // Mark complete
