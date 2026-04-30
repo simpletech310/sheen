@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/Toast";
 
 export function VerifyButton({
   userId,
@@ -26,8 +27,9 @@ export function VerifyButton({
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        alert(d.error || "Failed");
+        toast(d.error || "Could not update verification", "error");
       } else {
+        toast(verified ? "Pro un-verified" : "Pro verified ✓", "success");
         router.refresh();
       }
     } finally {

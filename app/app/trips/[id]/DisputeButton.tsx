@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/components/ui/Toast";
 
 export function DisputeButton({ bookingId }: { bookingId: string }) {
   const [open, setOpen] = useState(false);
@@ -25,8 +26,10 @@ export function DisputeButton({ bookingId }: { bookingId: string }) {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Failed");
       setDone(true);
+      toast("Claim filed — we’ll be in touch within 24 hours", "success");
     } catch (e: any) {
       setErr(e.message);
+      toast(e.message || "Could not file claim", "error");
     } finally {
       setSubmitting(false);
     }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PlaceForm } from "./PlaceForm";
+import { toast } from "@/components/ui/Toast";
 
 type Place = {
   id: string;
@@ -28,10 +29,11 @@ export function PlaceRow({ place }: { place: Place }) {
     setDeleting(true);
     const r = await fetch(`/api/places/${place.id}`, { method: "DELETE" });
     if (r.ok) {
+      toast("Place removed", "success");
       router.refresh();
     } else {
       setDeleting(false);
-      alert("Could not remove place.");
+      toast("Could not remove place", "error");
     }
   }
 

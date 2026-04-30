@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AddressAutocomplete } from "./AddressAutocomplete";
 import type { GeocodeResult } from "@/lib/mapbox";
+import { toast } from "@/components/ui/Toast";
 
 type Place = {
   id?: string;
@@ -70,10 +71,12 @@ export function PlaceForm({ initial, mode }: { initial?: Place; mode: "new" | "e
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Failed");
+      toast(mode === "new" ? "Place saved" : "Place updated", "success");
       router.push("/app/places");
       router.refresh();
     } catch (e: any) {
       setErr(e.message);
+      toast(e.message || "Could not save place", "error");
     } finally {
       setSubmitting(false);
     }

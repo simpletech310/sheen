@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/Toast";
 
 export function StatusButtons({ jobId, mapsUrl }: { jobId: string; mapsUrl: string }) {
   const router = useRouter();
@@ -13,6 +14,7 @@ export function StatusButtons({ jobId, mapsUrl }: { jobId: string; mapsUrl: stri
     setErr(null);
     try {
       await fetch(`/api/bookings/${jobId}/en-route`, { method: "POST" });
+      toast("Customer notified you’re on the way", "success");
     } catch (e: any) {
       setErr(e.message);
     } finally {
@@ -27,9 +29,11 @@ export function StatusButtons({ jobId, mapsUrl }: { jobId: string; mapsUrl: stri
     try {
       const r = await fetch(`/api/bookings/${jobId}/arrived`, { method: "POST" });
       if (!r.ok) throw new Error((await r.json()).error || "Failed");
+      toast("Customer notified you’ve arrived", "success");
       router.push(`/pro/jobs/${jobId}/checkin`);
     } catch (e: any) {
       setErr(e.message);
+      toast(e.message || "Could not update status", "error");
       setBusy("none");
     }
   }

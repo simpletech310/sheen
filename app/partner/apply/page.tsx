@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MNav } from "@/components/marketing/MNav";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { DocUpload } from "@/components/partner/DocUpload";
+import { toast } from "@/components/ui/Toast";
 
 const types = ["Auto detail", "Mobile fleet", "Power wash", "Multi-service"];
 const yearsOptions = ["<1 year", "1–3 years", "3–5 years", "5–10 years", "10+ years"];
@@ -58,9 +59,11 @@ export default function ApplyPage() {
         const e = await res.json().catch(() => ({}));
         throw new Error(e.error || `Status ${res.status}`);
       }
+      toast("Application submitted — we’ll review within 48 hours", "success");
       router.push("/partner/dashboard");
     } catch (e: any) {
       setErr(e.message);
+      toast(e.message || "Could not submit", "error");
     } finally {
       setSubmitting(false);
     }

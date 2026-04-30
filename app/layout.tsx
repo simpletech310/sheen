@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, Inter } from "next/font/google";
 import "./globals.css";
-import { ToastProvider } from "@/components/ui/Toast";
+import { ToastProvider, ToastBridge } from "@/components/ui/Toast";
 
 // Display: Anton — condensed athletic sans, the family of choice for sports
 // wordmarks. Single weight, all-caps friendly. No italic, no curls.
@@ -73,7 +73,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body className="bg-bone text-ink font-sans antialiased [font-feature-settings:'tnum'] min-h-screen">
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <ToastBridge />
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

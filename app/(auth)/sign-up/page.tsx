@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/components/ui/Toast";
 
 function SignUpInner() {
   const router = useRouter();
@@ -32,17 +33,20 @@ function SignUpInner() {
     setLoading(false);
     if (error) {
       setErr(error.message);
+      toast(error.message, "error");
       return;
     }
     if (data.session) {
       // Update role on public.users immediately
       await supabase.from("users").update({ full_name: name, role }).eq("id", data.user!.id);
+      toast("Account created — welcome to Sheen", "success");
       if (role === "washer") router.push("/pro/onboard");
       else if (role === "partner_owner") router.push("/partner/apply");
       else router.push("/app");
       router.refresh();
     } else {
       setErr("Check your email to confirm.");
+      toast("Check your email to confirm your account", "info");
     }
   }
 

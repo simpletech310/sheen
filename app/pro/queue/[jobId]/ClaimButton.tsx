@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/Toast";
 
 export function ClaimButton({ jobId }: { jobId: string }) {
   const router = useRouter();
@@ -17,9 +18,11 @@ export function ClaimButton({ jobId }: { jobId: string }) {
         const e = await res.json().catch(() => ({}));
         throw new Error(e.error || `Status ${res.status}`);
       }
+      toast("Job claimed — let’s go", "success");
       router.push(`/pro/jobs/${jobId}/navigate`);
     } catch (e: any) {
       setErr(e.message);
+      toast(e.message || "Could not claim job", "error");
       setLoading(false);
     }
   }

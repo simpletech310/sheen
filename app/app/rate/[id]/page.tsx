@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
+import { toast } from "@/components/ui/Toast";
 
 const tips = [
   { pct: 18, label: "18%" },
@@ -22,12 +23,22 @@ export default function RatePage({ params }: { params: Promise<{ id: string }> }
   async function submit() {
     setSubmitting(true);
     try {
-      await fetch(`/api/bookings/${id}/rate`, {
+      const r = await fetch(`/api/bookings/${id}/rate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stars, tip_pct: tipPct, comment }),
       });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.error || "Could not submit rating");
+      }
+      toast(
+        tipPct > 0 ? "Rating + tip sent · thanks!" : "Rating sent · thanks!",
+        "success"
+      );
       router.push("/app/trips");
+    } catch (e: any) {
+      toast(e.message || "Could not submit rating", "error");
     } finally {
       setSubmitting(false);
     }

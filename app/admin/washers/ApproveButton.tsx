@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/Toast";
 
 export function ApproveButton({ userId, status }: { userId: string; status: string }) {
   const router = useRouter();
@@ -9,11 +10,25 @@ export function ApproveButton({ userId, status }: { userId: string; status: stri
 
   async function setStatus(newStatus: "active" | "pending" | "suspended") {
     setBusy(true);
-    await fetch("/api/admin/washer-status", {
+    const r = await fetch("/api/admin/washer-status", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: userId, status: newStatus }),
     });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      toast(d.error || "Could not update status", "error");
+      setBusy(false);
+      return;
+    }
+    toast(
+      newStatus === "active"
+        ? "Pro activated"
+        : newStatus === "suspended"
+        ? "Pro suspended"
+        : "Status updated",
+      "success"
+    );
     router.refresh();
     setBusy(false);
   }

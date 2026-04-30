@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/Toast";
 
 type Vehicle = {
   id?: string;
@@ -45,10 +46,12 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Failed");
+      toast(mode === "new" ? "Vehicle added" : "Vehicle updated", "success");
       router.push("/app/garage");
       router.refresh();
     } catch (e: any) {
       setErr(e.message);
+      toast(e.message || "Could not save vehicle", "error");
     } finally {
       setSubmitting(false);
     }

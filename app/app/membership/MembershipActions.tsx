@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/components/ui/Toast";
 
 export function MembershipActions({
   planId,
@@ -28,20 +29,27 @@ export function MembershipActions({
       });
       const d = await r.json();
       if (d.url) window.location.href = d.url;
-      else setErr(d.error || "Failed");
+      else {
+        setErr(d.error || "Failed");
+        toast(d.error || "Could not start checkout", "error");
+      }
     } finally {
       setBusy(false);
     }
   }
 
   async function cancel() {
+    if (!confirm("Cancel your membership at the end of this period?")) return;
     setBusy(true);
     try {
       const r = await fetch("/api/stripe/subscriptions", { method: "DELETE" });
-      if (r.ok) window.location.reload();
-      else {
+      if (r.ok) {
+        toast("Membership will cancel at period end", "success");
+        window.location.reload();
+      } else {
         const d = await r.json();
         setErr(d.error || "Failed");
+        toast(d.error || "Could not cancel", "error");
       }
     } finally {
       setBusy(false);

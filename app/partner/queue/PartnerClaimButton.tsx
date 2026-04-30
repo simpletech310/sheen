@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/Toast";
 
 export function PartnerClaimButton({ jobId }: { jobId: string }) {
   const router = useRouter();
@@ -15,10 +16,12 @@ export function PartnerClaimButton({ jobId }: { jobId: string }) {
       const r = await fetch(`/api/bookings/${jobId}/claim-as-partner`, { method: "POST" });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Failed");
+      toast("Job claimed — view it on your dashboard", "success");
       router.push("/partner/dashboard");
       router.refresh();
     } catch (e: any) {
       setErr(e.message);
+      toast(e.message || "Could not claim job", "error");
       setBusy(false);
     }
   }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { VehicleForm } from "./VehicleForm";
+import { toast } from "@/components/ui/Toast";
 
 type Vehicle = {
   id: string;
@@ -24,10 +25,11 @@ export function VehicleRow({ vehicle }: { vehicle: Vehicle }) {
     setDeleting(true);
     const r = await fetch(`/api/vehicles/${vehicle.id}`, { method: "DELETE" });
     if (r.ok) {
+      toast("Vehicle removed", "success");
       router.refresh();
     } else {
       setDeleting(false);
-      alert("Could not remove vehicle.");
+      toast("Could not remove vehicle", "error");
     }
   }
 

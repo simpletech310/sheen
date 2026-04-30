@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/components/ui/Toast";
 
 function SignInInner() {
   const router = useRouter();
@@ -24,8 +25,10 @@ function SignInInner() {
     setLoading(false);
     if (error) {
       setErr(error.message);
+      toast(error.message, "error");
       return;
     }
+    toast("Welcome back", "success");
     router.push(next);
     router.refresh();
   }

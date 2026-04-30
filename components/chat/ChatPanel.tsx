@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
+import { toast } from "@/components/ui/Toast";
 
 type Message = {
   id: string;
@@ -113,6 +114,9 @@ export function ChatPanel({
           setMessages((prev) => (prev.some((p) => p.id === d.message.id) ? prev : [...prev, d.message]));
         }
         setDraft("");
+      } else {
+        const d = await r.json().catch(() => ({}));
+        toast(d.error || "Could not send message", "error");
       }
     } finally {
       setSending(false);
