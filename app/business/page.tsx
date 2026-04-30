@@ -8,9 +8,15 @@ export default function BusinessPage() {
   return (
     <>
       <MNav />
-      <section className="bg-ink text-bone px-6 md:px-14 pt-16 md:pt-20 pb-14 relative">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
-        <Eyebrow className="!text-sol">Service · Commercial</Eyebrow>
+      <section className="relative overflow-hidden bg-ink text-bone">
+        <div className="absolute inset-0 z-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/img/business.jpg" alt="" className="w-full h-full object-cover opacity-50" />
+          <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/70 to-ink/30" />
+        </div>
+        <div className="relative z-10 px-6 md:px-14 pt-16 md:pt-20 pb-14">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
+          <Eyebrow className="!text-sol">Service · Commercial</Eyebrow>
         <h1 className="display text-[56px] md:text-[104px] leading-[0.92] max-w-[900px] mt-7">
           STOREFRONTS, LOTS, FLEET.
           <br />
@@ -20,6 +26,7 @@ export default function BusinessPage() {
           Commercial work is partner-routed. Site visit, custom quote in 24 hours, net-30 invoicing for verified
           businesses. Recurring contracts get a 15% discount.
         </p>
+        </div>
       </section>
 
       <section className="px-6 md:px-14 pb-16 pt-12">

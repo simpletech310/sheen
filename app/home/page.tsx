@@ -17,9 +17,15 @@ export default function HomePage() {
   return (
     <>
       <MNav />
-      <section className="bg-royal text-bone px-6 md:px-14 pt-16 md:pt-20 pb-14 relative">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
-        <Eyebrow className="!text-sol">Service · Home</Eyebrow>
+      <section className="relative overflow-hidden bg-royal text-bone">
+        <div className="absolute inset-0 z-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/img/home.jpg" alt="" className="w-full h-full object-cover opacity-50" />
+          <div className="absolute inset-0 bg-gradient-to-r from-royal/95 via-royal/70 to-royal/30" />
+        </div>
+        <div className="relative z-10 px-6 md:px-14 pt-16 md:pt-20 pb-14">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
+          <Eyebrow className="!text-sol">Service · Home</Eyebrow>
         <h1 className="display text-[64px] md:text-[112px] leading-[0.92] max-w-[900px] mt-7">
           DRIVEWAYS, DECKS,
           <br />
@@ -31,6 +37,7 @@ export default function HomePage() {
           Soft-wash certified pros for siding. Pressure-washed concrete. Deck-safe pH. Solar panel cleanings that
           actually move output. No deposit, transparent pricing.
         </p>
+        </div>
       </section>
 
       <section className="px-6 md:px-14 py-16">
@@ -58,10 +65,10 @@ export default function HomePage() {
 
       <section className="px-6 md:px-14 py-16 bg-ink text-bone">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Placeholder label="driveway · before" tone="ink" height={220} />
-          <Placeholder label="driveway · after" tone="royal" height={220} />
-          <Placeholder label="siding · before" tone="ink" height={220} />
-          <Placeholder label="siding · after" tone="sol" height={220} />
+          <Placeholder label="driveway · before" tone="ink" height={220} src="/img/driveway_before.jpg" />
+          <Placeholder label="driveway · after" tone="royal" height={220} src="/img/driveway_after.jpg" />
+          <Placeholder label="siding · before" tone="ink" height={220} src="/img/siding_before.jpg" />
+          <Placeholder label="siding · after" tone="sol" height={220} src="/img/siding_after.jpg" />
         </div>
       </section>
 
