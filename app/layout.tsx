@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, DM_Sans } from "next/font/google";
+import { Anton, Inter } from "next/font/google";
 import "./globals.css";
 
-const display = Instrument_Serif({
+// Display: Anton — condensed athletic sans, the family of choice for sports
+// wordmarks. Single weight, all-caps friendly. No italic, no curls.
+const display = Anton({
   subsets: ["latin"],
   weight: "400",
-  style: ["normal", "italic"],
   variable: "--font-display",
   display: "swap",
 });
 
-const body = DM_Sans({
+// Body: Inter — neutral, plenty of weights, great with tabular numerals.
+const body = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
@@ -30,7 +32,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#FAFAF7",
+  themeColor: "#003594",
 };
 
 export default function RootLayout({

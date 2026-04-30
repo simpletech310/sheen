@@ -11,16 +11,20 @@ const config: Config = {
       colors: {
         ink: "#0A0A0A",
         bone: "#FAFAF7",
-        cobalt: "#1E40FF",
-        wax: "#C9A961",
+        // LA Rams palette
+        royal: "#003594",     // Rams Royal Blue — primary action / accent
+        sol: "#FFA300",       // Rams Sol Gold — partner / premium
+        // Legacy aliases so we don't have to rename every usage in one go
+        cobalt: "#003594",
+        wax: "#FFA300",
         mist: "#E8E6E0",
-        smoke: "#6E6E6A",
+        smoke: "#5A5A56",
         good: "#157449",
         bad: "#A12B2B",
       },
       fontFamily: {
-        display: ["var(--font-display)", "Instrument Serif", "Georgia", "serif"],
-        sans: ["var(--font-sans)", "DM Sans", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Anton", "Impact", "sans-serif"],
+        sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       letterSpacing: {

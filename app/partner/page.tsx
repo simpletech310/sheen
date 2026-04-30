@@ -5,7 +5,6 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Partners — Sheen" };
-
 export const revalidate = 60;
 
 export default async function PartnerPage() {
@@ -28,32 +27,33 @@ export default async function PartnerPage() {
   return (
     <>
       <MNav />
-      <section className="px-6 md:px-14 pt-16 md:pt-20 pb-14">
+      <section className="bg-sol text-ink px-6 md:px-14 pt-16 md:pt-20 pb-14 relative">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-royal" />
         <Eyebrow>For established businesses</Eyebrow>
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-8 mt-7">
-          <h1 className="display text-[56px] md:text-[96px] leading-[0.92] max-w-[800px]">
-            Partner program.
+          <h1 className="display text-[64px] md:text-[112px] leading-[0.92] max-w-[800px]">
+            PARTNER PROGRAM.
             <br />
-            <span className="text-wax">12% flat.</span>
+            <span className="text-royal">12% FLAT.</span>
           </h1>
-          <p className="max-w-[400px] text-base md:text-lg leading-relaxed text-smoke">
+          <p className="max-w-[400px] text-base md:text-lg leading-relaxed text-ink/80">
             For shops with their own crew, insurance, and book of business. We send you overflow leads. You manage your
             own dispatch and disputes. Your brand on a public profile page.
           </p>
         </div>
       </section>
 
-      <section className="px-6 md:px-14 pb-16">
-        <div className="bg-mist/40 border border-mist p-1">
+      <section className="px-6 md:px-14 py-16">
+        <div className="border border-mist">
           <div className="grid grid-cols-3 text-xs md:text-sm">
-            <div className="p-4 font-mono uppercase text-[11px] text-smoke">Component</div>
-            <div className="p-4 font-mono uppercase text-[11px] text-smoke">Solo Washer</div>
-            <div className="p-4 font-mono uppercase text-[11px] text-smoke bg-wax/15">Partner</div>
+            <div className="p-4 font-mono uppercase text-[11px] text-smoke bg-mist/40">Component</div>
+            <div className="p-4 font-mono uppercase text-[11px] text-smoke bg-mist/40">Solo Washer</div>
+            <div className="p-4 font-mono uppercase text-[11px] text-bone bg-royal">Partner</div>
             {compare.map((r, i) => (
-              <div key={r.c} className={`contents`}>
-                <div className={`p-4 ${i % 2 === 0 ? "bg-bone" : ""}`}>{r.c}</div>
-                <div className={`p-4 ${i % 2 === 0 ? "bg-bone" : ""}`}>{r.solo}</div>
-                <div className={`p-4 ${i % 2 === 0 ? "bg-bone" : ""} font-semibold bg-wax/10`}>{r.partner}</div>
+              <div key={r.c} className="contents">
+                <div className={`p-4 ${i % 2 === 0 ? "bg-bone" : "bg-mist/20"}`}>{r.c}</div>
+                <div className={`p-4 ${i % 2 === 0 ? "bg-bone" : "bg-mist/20"}`}>{r.solo}</div>
+                <div className={`p-4 font-bold ${i % 2 === 0 ? "bg-sol/15" : "bg-sol/25"}`}>{r.partner}</div>
               </div>
             ))}
           </div>
@@ -61,18 +61,20 @@ export default async function PartnerPage() {
       </section>
 
       <section className="px-6 md:px-14 py-16">
-        <h2 className="display text-[32px] md:text-[48px] leading-tight mb-8">Active partners.</h2>
+        <h2 className="display text-[40px] md:text-[56px] leading-tight mb-8">ACTIVE PARTNERS.</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {(partners ?? []).map((p) => (
             <Link
               key={p.slug}
               href={`/p/${p.slug}`}
-              className="bg-bone border border-mist p-6 hover:border-ink transition"
+              className="bg-bone border border-mist p-6 hover:border-royal transition group"
             >
               <div className="flex items-start justify-between">
-                <div className="display text-2xl">{p.business_name}</div>
+                <div className="display text-[28px] leading-tight group-hover:text-royal transition-colors">
+                  {p.business_name.toUpperCase()}
+                </div>
                 {p.is_founding && (
-                  <span className="font-mono text-[10px] text-wax border border-wax px-2 py-0.5 rounded-full uppercase">
+                  <span className="font-mono text-[10px] text-ink bg-sol px-2 py-0.5 uppercase font-bold">
                     Founding
                   </span>
                 )}
@@ -89,8 +91,9 @@ export default async function PartnerPage() {
         </div>
       </section>
 
-      <section className="px-6 md:px-14 py-24 bg-ink text-bone">
-        <Eyebrow className="!text-bone/60" prefix={null}>How it works</Eyebrow>
+      <section className="px-6 md:px-14 py-24 bg-ink text-bone relative">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
+        <Eyebrow className="!text-sol" prefix={null}>How it works</Eyebrow>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-7">
           {[
             ["01", "Apply", "Upload $1M GL, license, sample jobs."],
@@ -99,15 +102,15 @@ export default async function PartnerPage() {
             ["04", "Get jobs", "Overflow leads in your radius. Accept what fits."],
           ].map(([n, h, d]) => (
             <div key={n} className="border-t border-bone/30 pt-5">
-              <div className="font-mono text-xs opacity-60">{n}</div>
-              <div className="display text-xl mt-2">{h}</div>
-              <p className="text-sm opacity-70 mt-2">{d}</p>
+              <div className="font-mono text-xs text-sol">{n}</div>
+              <div className="display text-2xl mt-2">{h.toUpperCase()}</div>
+              <p className="text-sm text-bone/70 mt-2">{d}</p>
             </div>
           ))}
         </div>
         <Link
           href="/partner/apply"
-          className="mt-10 inline-block bg-bone text-ink rounded-full px-7 py-4 text-sm font-semibold"
+          className="mt-10 inline-block bg-sol text-ink px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone transition-colors"
         >
           Apply now →
         </Link>

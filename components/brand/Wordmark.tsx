@@ -1,5 +1,9 @@
 import { cn } from "@/lib/cn";
 
+/**
+ * SHEEN wordmark — uppercase Anton, condensed athletic display.
+ * Optional gold underbar in Rams gold #FFA300 when `highlight` is set.
+ */
 export function Wordmark({
   size = 24,
   highlight = false,
@@ -11,36 +15,23 @@ export function Wordmark({
   className?: string;
   invert?: boolean;
 }) {
-  // Hairline diagonal through the second 'E' (PDF Concept A — "The Highlight")
   return (
     <span
       className={cn(
-        "display inline-block relative leading-none select-none",
+        "display inline-block relative leading-none select-none tracking-wide",
         invert ? "text-bone" : "text-ink",
         className
       )}
-      style={{ fontSize: size, fontStyle: "italic", fontWeight: 400 }}
+      style={{ fontSize: size }}
     >
-      SHE
-      <span className="relative inline-block">
-        E
-        {highlight && (
-          <span
-            aria-hidden
-            className="absolute"
-            style={{
-              left: "10%",
-              right: "-10%",
-              top: "30%",
-              height: 1,
-              background: "currentColor",
-              transform: "rotate(-30deg)",
-              transformOrigin: "center",
-            }}
-          />
-        )}
-      </span>
-      N
+      SHEEN
+      {highlight && (
+        <span
+          aria-hidden
+          className="absolute left-0 right-0 bg-sol"
+          style={{ bottom: -size * 0.12, height: Math.max(2, size * 0.08) }}
+        />
+      )}
     </span>
   );
 }

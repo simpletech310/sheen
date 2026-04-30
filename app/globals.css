@@ -5,10 +5,12 @@
 :root {
   --bone: #FAFAF7;
   --ink: #0A0A0A;
-  --cobalt: #1E40FF;
-  --wax: #C9A961;
+  --royal: #003594;   /* LA Rams Royal Blue */
+  --sol: #FFA300;     /* LA Rams Sol Gold */
+  --cobalt: #003594;  /* alias */
+  --wax: #FFA300;     /* alias */
   --mist: #E8E6E0;
-  --smoke: #6E6E6A;
+  --smoke: #5A5A56;
 }
 
 html, body {
@@ -42,10 +44,11 @@ html, body {
   }
 
   .display {
-    font-family: var(--font-display), Georgia, serif;
-    font-style: italic;
-    letter-spacing: -0.035em;
-    line-height: 0.95;
+    font-family: var(--font-display), Impact, sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    line-height: 0.92;
   }
 
   .tabular { font-variant-numeric: tabular-nums; }
@@ -57,18 +60,24 @@ html, body {
     background-repeat: no-repeat;
   }
 
-  .cobalt-strike {
+  .cobalt-strike,
+  .royal-strike {
     position: relative;
     display: inline-block;
   }
-  .cobalt-strike::after {
+  .cobalt-strike::after,
+  .royal-strike::after {
     content: "";
     position: absolute;
     left: 0;
     right: -2%;
-    bottom: 14%;
-    height: 4px;
-    background: var(--cobalt);
+    bottom: 12%;
+    height: 6px;
+    background: var(--royal);
     transform: rotate(-1.5deg);
+  }
+
+  .horn-stripe {
+    background: linear-gradient(180deg, var(--royal) 0%, var(--royal) 65%, var(--sol) 65%, var(--sol) 100%);
   }
 }
