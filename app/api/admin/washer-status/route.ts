@@ -15,6 +15,21 @@ export async function POST(req: Request) {
   if ("error" in ok) return ok.error;
   const body = Body.parse(await req.json());
 
+  // Block activation of an unverified pro to keep the marketplace honest.
+  if (body.status === "active") {
+    const { data: wp } = await ok.service
+      .from("washer_profiles")
+      .select("background_check_verified")
+      .eq("user_id", body.user_id)
+      .maybeSingle();
+    if (!wp?.background_check_verified) {
+      return NextResponse.json(
+        { error: "Run background check first (Verify button)." },
+        { status: 400 }
+      );
+    }
+  }
+
   await ok.service
     .from("washer_profiles")
     .update({ status: body.status })

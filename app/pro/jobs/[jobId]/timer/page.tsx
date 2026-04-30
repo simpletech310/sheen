@@ -25,6 +25,11 @@ export default function TimerPage({ params }: { params: Promise<{ jobId: string 
     return () => clearInterval(t);
   }, []);
 
+  // Mark booking as in_progress on first mount of the timer (best effort).
+  useEffect(() => {
+    fetch(`/api/bookings/${jobId}/start`, { method: "POST" }).catch(() => {});
+  }, [jobId]);
+
   const min = Math.floor(elapsed / 60);
   const sec = elapsed % 60;
 

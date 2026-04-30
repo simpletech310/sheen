@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MNav } from "@/components/marketing/MNav";
 import { Eyebrow } from "@/components/brand/Eyebrow";
+import { DocUpload } from "@/components/partner/DocUpload";
 
 const types = ["Auto detail", "Mobile fleet", "Power wash", "Multi-service"];
 const yearsOptions = ["<1 year", "1–3 years", "3–5 years", "5–10 years", "10+ years"];
@@ -15,6 +16,9 @@ export default function ApplyPage() {
   const [type, setType] = useState(types[0]);
   const [years, setYears] = useState(yearsOptions[2]);
   const [capabilities, setCapabilities] = useState<string[]>([]);
+  const [glPath, setGlPath] = useState<string | null>(null);
+  const [licensePath, setLicensePath] = useState<string | null>(null);
+  const [portfolio, setPortfolio] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -40,7 +44,15 @@ export default function ApplyPage() {
       const res = await fetch("/api/partner/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ business_name: name, type, years, capabilities }),
+        body: JSON.stringify({
+          business_name: name,
+          type,
+          years,
+          capabilities,
+          gl_doc_path: glPath,
+          license_doc_path: licensePath,
+          portfolio_photos: portfolio,
+        }),
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
@@ -131,19 +143,34 @@ export default function ApplyPage() {
 
         {step === 3 && (
           <div className="space-y-3">
-            <div className="bg-mist/50 p-5">
-              <div className="text-sm font-semibold">$1M GL Insurance</div>
-              <div className="text-xs text-smoke mt-1">Upload PDF or photo</div>
-              <input type="file" accept="application/pdf,image/*" className="mt-3 text-xs" />
-            </div>
-            <div className="bg-mist/50 p-5">
-              <div className="text-sm font-semibold">Business license</div>
-              <input type="file" accept="application/pdf,image/*" className="mt-3 text-xs" />
-            </div>
-            <div className="bg-mist/50 p-5">
-              <div className="text-sm font-semibold">3 sample jobs</div>
-              <input type="file" accept="image/*" multiple className="mt-3 text-xs" />
-            </div>
+            <DocUpload
+              bucket="insurance-docs"
+              scope="partner-gl"
+              accept="application/pdf,image/*"
+              label="$1M GL Insurance"
+              hint="Upload PDF or photo · current effective date"
+              onChange={(p) => setGlPath(p[0] ?? null)}
+              initialPaths={glPath ? [glPath] : []}
+            />
+            <DocUpload
+              bucket="insurance-docs"
+              scope="partner-license"
+              accept="application/pdf,image/*"
+              label="Business license"
+              hint="State or city operating license"
+              onChange={(p) => setLicensePath(p[0] ?? null)}
+              initialPaths={licensePath ? [licensePath] : []}
+            />
+            <DocUpload
+              bucket="partner-portfolio"
+              scope="partner-portfolio"
+              accept="image/*"
+              multiple
+              label="3+ sample jobs"
+              hint="Photos of your best work"
+              onChange={setPortfolio}
+              initialPaths={portfolio}
+            />
           </div>
         )}
 
@@ -160,6 +187,16 @@ export default function ApplyPage() {
             </div>
             <div>
               <strong>Capabilities:</strong> {capabilities.join(", ") || "—"}
+            </div>
+            <div>
+              <strong>Documents:</strong>{" "}
+              {[
+                glPath && "GL insurance",
+                licensePath && "License",
+                portfolio.length > 0 && `${portfolio.length} portfolio photos`,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "—"}
             </div>
             <p className="text-xs text-smoke pt-3 border-t border-mist">
               We&rsquo;ll review within 48 hours and email you with next steps.

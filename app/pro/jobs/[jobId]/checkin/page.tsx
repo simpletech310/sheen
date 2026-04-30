@@ -3,12 +3,16 @@ import { notFound } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
+import { ChatPanel } from "@/components/chat/ChatPanel";
+
+export const dynamic = "force-dynamic";
 
 export default async function CheckInPage({ params }: { params: { jobId: string } }) {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const { data: job } = await supabase
     .from("bookings")
-    .select("id, qr_check_in_code")
+    .select("id, qr_check_in_code, customer_id, users:customer_id(full_name)")
     .eq("id", params.jobId)
     .maybeSingle();
   if (!job) notFound();
@@ -39,6 +43,15 @@ export default async function CheckInPage({ params }: { params: { jobId: string 
       >
         Customer scanned · Start timer →
       </Link>
+
+      {user && (
+        <ChatPanel
+          bookingId={job.id}
+          currentUserId={user.id}
+          otherName={(job as any).users?.full_name ?? "the customer"}
+          variant="pro"
+        />
+      )}
     </div>
   );
 }

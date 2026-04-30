@@ -7,6 +7,9 @@ const Body = z.object({
   type: z.string(),
   years: z.string(),
   capabilities: z.array(z.string()).default([]),
+  gl_doc_path: z.string().optional().nullable(),
+  license_doc_path: z.string().optional().nullable(),
+  portfolio_photos: z.array(z.string()).optional().default([]),
 });
 
 function slugify(s: string) {
@@ -27,8 +30,14 @@ export async function POST(req: Request) {
 
   let slug = slugify(body.business_name);
   // Append random suffix if collision
-  const { data: existing } = await supabase.from("partner_profiles").select("slug").eq("slug", slug).maybeSingle();
-  if (existing) slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+  const { data: existing } = await supabase
+    .from("partner_profiles")
+    .select("slug, user_id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (existing && existing.user_id !== user.id) {
+    slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+  }
 
   const { error } = await supabase.from("partner_profiles").upsert({
     user_id: user.id,
@@ -38,6 +47,9 @@ export async function POST(req: Request) {
     years_in_business: parseInt(body.years.replace(/[^0-9]/g, "")) || 0,
     is_founding: body.years.startsWith("10"),
     status: "pending",
+    gl_doc_path: body.gl_doc_path ?? null,
+    license_doc_path: body.license_doc_path ?? null,
+    portfolio_photos: body.portfolio_photos ?? [],
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

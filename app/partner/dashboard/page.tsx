@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { ConnectStandardButton } from "./ConnectStandardButton";
+import { PartnerStripeBalance } from "./PartnerStripeBalance";
 
 export const dynamic = "force-dynamic";
 
@@ -39,11 +40,9 @@ export default async function PartnerDashboard() {
         <nav className="mt-10 space-y-1 text-sm">
           {[
             { l: "Overview", h: "/partner/dashboard", active: true },
-            { l: "Job board", h: "#" },
-            { l: "Schedule", h: "#" },
-            { l: "Earnings", h: "#" },
+            { l: "Available jobs", h: "/partner/queue" },
             { l: "Profile page", h: partner?.slug ? `/p/${partner.slug}` : "#" },
-            { l: "Settings", h: "#" },
+            { l: "Apply / docs", h: "/partner/apply" },
           ].map((n) => (
             <Link
               key={n.l}
@@ -83,6 +82,12 @@ export default async function PartnerDashboard() {
           </div>
         )}
 
+        {connected && (
+          <div className="mb-6">
+            <PartnerStripeBalance />
+          </div>
+        )}
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
           <div className="bg-mist/40 p-5">
             <div className="font-mono text-[10px] uppercase text-smoke">This week gross</div>
@@ -102,7 +107,16 @@ export default async function PartnerDashboard() {
           </div>
         </div>
 
-        <Eyebrow>Job board</Eyebrow>
+        {partner?.status === "active" && (
+          <Link
+            href="/partner/queue"
+            className="block w-full bg-ink text-bone py-4 text-center text-sm font-bold uppercase tracking-wide hover:bg-royal mb-8 transition"
+          >
+            View available jobs →
+          </Link>
+        )}
+
+        <Eyebrow>Your assigned jobs</Eyebrow>
         <div className="mt-3 space-y-2">
           {(jobs ?? []).length === 0 && (
             <div className="bg-mist/40 p-6 text-sm text-smoke">

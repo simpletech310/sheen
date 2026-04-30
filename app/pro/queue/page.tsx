@@ -64,16 +64,21 @@ export default async function QueuePage() {
   });
 
   return (
-    <div className="px-5 pt-10 pb-8">
-      <div className="flex justify-between items-center mb-6">
-        <Eyebrow className="!text-bone/60" prefix={null}>
-          Available · {radius} mi radius
-        </Eyebrow>
-        <Link href="/pro/availability" className="text-[10px] text-bone/60 underline uppercase tracking-wide">
-          Hours
-        </Link>
+    <div className="pb-8">
+      {/* Sticky header so the queue is always anchored when scrolling jobs. */}
+      <div className="sticky top-0 z-20 bg-ink/95 backdrop-blur supports-[backdrop-filter]:bg-ink/80 px-5 pt-6 pb-4 -mt-px border-b border-bone/10">
+        <div className="flex justify-between items-center mb-2">
+          <Eyebrow className="!text-bone/60" prefix={null}>
+            Available · {radius} mi radius · {jobs.length} job{jobs.length === 1 ? "" : "s"}
+          </Eyebrow>
+          <Link href="/pro/availability" className="text-[10px] text-bone/60 underline uppercase tracking-wide">
+            Hours
+          </Link>
+        </div>
+        <h1 className="display text-3xl">QUEUE</h1>
       </div>
-      <h1 className="display text-3xl mb-6">QUEUE</h1>
+
+      <div className="px-5 pt-5">
 
       {profile?.status !== "active" && (
         <Link
@@ -127,10 +132,23 @@ export default async function QueuePage() {
           })}
         </div>
       ) : (
-        <div className="bg-white/5 p-6 text-center text-sm text-bone/60">
-          No jobs in your radius right now. Check back soon.
+        <div className="relative overflow-hidden">
+          <div
+            className="aspect-[16/9] bg-cover bg-center"
+            style={{ backgroundImage: "url(/img/og-default.jpg)" }}
+          />
+          <div className="absolute inset-0 bg-ink/65 flex flex-col items-center justify-center text-center px-6">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-2">
+              Quiet right now
+            </div>
+            <h2 className="display text-xl text-bone mb-1">No jobs in your radius</h2>
+            <p className="text-xs text-bone/70 max-w-xs">
+              Bookings come in throughout the day. We&rsquo;ll push you when something matches.
+            </p>
+          </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -18,6 +18,13 @@ export default async function TripDetailPage({ params }: { params: { id: string 
     .maybeSingle();
   if (!booking) notFound();
 
+  // The customer's own review of this trip (if they left one).
+  const { data: review } = await supabase
+    .from("reviews")
+    .select("rating_int, comment, created_at")
+    .eq("booking_id", params.id)
+    .maybeSingle();
+
   const completedHours =
     booking.completed_at != null
       ? (Date.now() - new Date(booking.completed_at).getTime()) / 3_600_000
@@ -74,6 +81,28 @@ export default async function TripDetailPage({ params }: { params: { id: string 
           {(booking as any).addresses?.zip}
         </div>
       </div>
+
+      {review && (
+        <div className="bg-mist/40 p-4 mt-3">
+          <Eyebrow>Your review</Eyebrow>
+          <div className="text-sol text-base tracking-widest mt-2">
+            {"★".repeat(review.rating_int)}
+            <span className="text-mist">{"★".repeat(5 - review.rating_int)}</span>
+          </div>
+          {review.comment && (
+            <p className="text-sm mt-2 leading-relaxed text-ink/85">{review.comment}</p>
+          )}
+        </div>
+      )}
+
+      {booking.status === "completed" && !review && (
+        <Link
+          href={`/app/rate/${booking.id}`}
+          className="mt-3 block text-center bg-royal text-bone py-3.5 text-sm font-bold uppercase tracking-wide hover:bg-ink"
+        >
+          Rate &amp; tip your pro →
+        </Link>
+      )}
 
       {canDispute && <DisputeButton bookingId={booking.id} />}
     </div>

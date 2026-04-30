@@ -25,6 +25,32 @@ export async function POST(req: Request) {
   const supabase = createServiceClient();
 
   try {
+    // Some Stripe event types (e.g. "transfer.failed") aren't part of the
+    // strongly-typed union in this SDK version, so handle them by string before
+    // entering the typed switch.
+    if ((event.type as string) === "transfer.failed") {
+      const tr = event.data.object as Stripe.Transfer;
+      const bookingId = tr.metadata?.booking_id;
+      if (bookingId) {
+        await supabase
+          .from("payouts")
+          .update({ status: "failed" })
+          .eq("booking_id", bookingId);
+        await supabase.from("booking_events").insert({
+          booking_id: bookingId,
+          type: "transfer_failed",
+          payload: { transfer_id: tr.id, amount: tr.amount },
+        });
+        await supabase.from("audit_log").insert({
+          action: "transfer_failed",
+          target_type: "booking",
+          target_id: bookingId,
+          payload: { transfer_id: tr.id, amount: tr.amount },
+        });
+      }
+      return NextResponse.json({ received: true });
+    }
+
     switch (event.type) {
       // ─── Customer payments ─────────────────────────────────────────
       case "payment_intent.succeeded": {
@@ -95,6 +121,61 @@ export async function POST(req: Request) {
             .from("payouts")
             .update({ status: "reversed" })
             .eq("booking_id", bookingId);
+        }
+        break;
+      }
+      // ─── Disputes ─────────────────────────────────────────────────
+      case "charge.dispute.created":
+      case "charge.dispute.funds_withdrawn":
+      case "charge.dispute.funds_reinstated":
+      case "charge.dispute.closed": {
+        const dis = event.data.object as Stripe.Dispute;
+        const charge = dis.charge;
+        let bookingId: string | null = null;
+
+        // Try to find the booking via charge → payment_intent → booking metadata.
+        try {
+          const chargeId = typeof charge === "string" ? charge : charge.id;
+          const ch = await getStripe().charges.retrieve(chargeId);
+          bookingId =
+            (ch.metadata?.booking_id as string | undefined) ??
+            ((ch.payment_intent &&
+              (typeof ch.payment_intent === "string"
+                ? null
+                : ch.payment_intent.metadata?.booking_id)) as string | undefined) ??
+            null;
+        } catch {
+          // ignore — we still log the audit row below
+        }
+
+        await supabase.from("audit_log").insert({
+          action: event.type,
+          target_type: "dispute",
+          target_id: null,
+          payload: {
+            dispute_id: dis.id,
+            amount: dis.amount,
+            reason: dis.reason,
+            status: dis.status,
+            booking_id: bookingId,
+          },
+        });
+
+        if (bookingId) {
+          await supabase.from("booking_events").insert({
+            booking_id: bookingId,
+            type: event.type.replace("charge.", ""),
+            payload: { dispute_id: dis.id, reason: dis.reason, status: dis.status },
+          });
+
+          if (event.type === "charge.dispute.created") {
+            // Mark booking disputed so it surfaces in admin filters.
+            await supabase
+              .from("bookings")
+              .update({ status: "disputed" })
+              .eq("id", bookingId)
+              .neq("status", "cancelled");
+          }
         }
         break;
       }

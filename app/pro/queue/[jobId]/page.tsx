@@ -5,6 +5,9 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { computeFees } from "@/lib/stripe/fees";
 import { ClaimButton } from "./ClaimButton";
+import { ChatPanel } from "@/components/chat/ChatPanel";
+
+export const dynamic = "force-dynamic";
 
 export default async function JobDetailPage({ params }: { params: { jobId: string } }) {
   const supabase = createClient();
@@ -12,7 +15,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
   const { data: job } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, customer_id, scheduled_window_start, scheduled_window_end, service_cents, customer_note, services(tier_name, duration_minutes, included), addresses(street, city, state, zip, notes)"
+      "id, status, assigned_washer_id, customer_id, scheduled_window_start, scheduled_window_end, service_cents, customer_note, services(tier_name, duration_minutes, included), addresses(street, city, state, zip, notes), users:customer_id(full_name)"
     )
     .eq("id", params.jobId)
     .maybeSingle();
@@ -86,6 +89,15 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
           <div className="text-center text-bone/60 text-sm py-4">Claimed by another washer</div>
         )}
       </div>
+
+      {mine && user && (
+        <ChatPanel
+          bookingId={job.id}
+          currentUserId={user.id}
+          otherName={(job as any).users?.full_name ?? "the customer"}
+          variant="pro"
+        />
+      )}
     </div>
   );
 }

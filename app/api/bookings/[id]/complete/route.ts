@@ -78,8 +78,9 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
         booking_id: booking.id,
         amount_cents: fees.washerOrPartnerNet,
         status: "pending",
+        kind: "wash",
       },
-      { onConflict: "booking_id" }
+      { onConflict: "booking_id,kind" }
     )
     .select("id")
     .maybeSingle();

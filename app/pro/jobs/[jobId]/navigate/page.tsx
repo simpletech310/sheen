@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { NavigateClient } from "./NavigateClient";
+import { StatusButtons } from "./StatusButtons";
 
 export default async function NavigatePage({ params }: { params: { jobId: string } }) {
   const supabase = createClient();
@@ -38,20 +38,10 @@ export default async function NavigatePage({ params }: { params: { jobId: string
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <a
-          href={`https://maps.apple.com/?daddr=${fullAddress}`}
-          className="bg-bone text-ink py-3 text-sm font-bold uppercase text-center"
-        >
-          Open in Maps
-        </a>
-        <Link
-          href={`/pro/jobs/${params.jobId}/checkin`}
-          className="bg-sol text-ink py-3 text-sm font-bold uppercase text-center hover:bg-bone"
-        >
-          I&rsquo;ve arrived →
-        </Link>
-      </div>
+      <StatusButtons
+        jobId={job.id}
+        mapsUrl={`https://maps.apple.com/?daddr=${fullAddress}`}
+      />
     </div>
   );
 }
