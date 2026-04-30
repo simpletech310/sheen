@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { Eyebrow } from "@/components/brand/Eyebrow";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function PartnerDashboard() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in?next=/partner/dashboard");
   const { data: partner } = await supabase
     .from("partner_profiles")
     .select("business_name, slug, status, jobs_completed, rating_avg")
