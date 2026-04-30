@@ -175,7 +175,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <Placeholder label="customer + car after wash" src="/img/auto.jpg" height={400} />
+          <Placeholder label="customer + car after wash" src="/img/gt3.jpg" height={400} />
         </div>
       </section>
 
