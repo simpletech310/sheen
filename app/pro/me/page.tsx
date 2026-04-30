@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { WashHandleCard } from "./WashHandleCard";
+import { BigRigCapabilityCard } from "./BigRigCapabilityCard";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export default async function ProMePage() {
   const { data: { user } } = await supabase.auth.getUser();
   const { data: wp } = await supabase
     .from("washer_profiles")
-    .select("status, stripe_account_id, jobs_completed, rating_avg, wash_handle, background_check_verified")
+    .select("status, stripe_account_id, jobs_completed, rating_avg, wash_handle, background_check_verified, can_wash_big_rig")
     .eq("user_id", user?.id ?? "")
     .maybeSingle();
 
@@ -34,6 +35,10 @@ export default async function ProMePage() {
       </div>
 
       {wp?.wash_handle && <WashHandleCard handle={wp.wash_handle} />}
+
+      <div className="mt-5">
+        <BigRigCapabilityCard initialCapable={!!wp?.can_wash_big_rig} />
+      </div>
 
       <div className="space-y-2 mt-5">
         <Link href="/pro/onboard" className="block bg-white/5 p-3 text-sm hover:bg-white/10">

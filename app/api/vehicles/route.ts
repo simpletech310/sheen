@@ -24,10 +24,11 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const { year, make, model, color, plate, notes, photo_paths, is_default } = body ?? {};
+  const { year, make, model, color, plate, notes, photo_paths, is_default, vehicle_type } = body ?? {};
   if (!make || !model) {
     return NextResponse.json({ error: "Make and model are required" }, { status: 400 });
   }
+  const vType = vehicle_type === "big_rig" ? "big_rig" : "auto";
 
   // If is_default, clear any other default first.
   if (is_default) {
@@ -50,6 +51,7 @@ export async function POST(req: Request) {
       notes: notes ?? null,
       photo_paths: Array.isArray(photo_paths) ? photo_paths : [],
       is_default: !!is_default,
+      vehicle_type: vType,
     })
     .select("*")
     .maybeSingle();

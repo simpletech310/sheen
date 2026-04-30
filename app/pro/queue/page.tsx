@@ -14,9 +14,10 @@ export default async function QueuePage() {
   // Washer profile + availability
   const { data: profile } = await supabase
     .from("washer_profiles")
-    .select("status, service_radius_miles, base_lat, base_lng")
+    .select("status, service_radius_miles, base_lat, base_lng, can_wash_big_rig")
     .eq("user_id", user?.id ?? "")
     .maybeSingle();
+  const canWashBigRig = !!profile?.can_wash_big_rig;
 
   const { data: avail } = await supabase
     .from("availability")
@@ -53,6 +54,8 @@ export default async function QueuePage() {
   // so exclude them from the general list to avoid duplicates.
   const jobs = (jobsRaw ?? []).filter((j: any) => {
     if (directRequestIds.has(j.id)) return false;
+    // Big-rig jobs only show to pros who've opted in (and have the gear).
+    if (j.services?.category === "big_rig" && !canWashBigRig) return false;
     const start = new Date(j.scheduled_window_start);
     if (avail && avail.length) {
       const day = start.getDay();
@@ -168,27 +171,33 @@ export default async function QueuePage() {
                 : null;
             const category = j.services?.category ?? "auto";
             const isHome = category === "home";
+            const isBigRig = category === "big_rig";
+            const containerClass = isBigRig
+              ? "bg-royal/15 hover:bg-royal/25 border-sol"
+              : isHome
+              ? "bg-sol/10 hover:bg-sol/15 border-sol"
+              : "bg-white/5 hover:bg-white/10 border-royal";
+            const pillClass = isBigRig
+              ? "bg-sol text-ink"
+              : isHome
+              ? "bg-sol text-ink"
+              : "bg-royal text-bone";
+            const pillLabel = isBigRig ? "Big rig" : isHome ? "Home" : "Auto";
             return (
               <Link
                 key={j.id}
                 href={`/pro/queue/${j.id}`}
-                className={`block p-4 transition border-l-2 ${
-                  isHome
-                    ? "bg-sol/10 hover:bg-sol/15 border-sol"
-                    : "bg-white/5 hover:bg-white/10 border-royal"
-                }`}
+                className={`block p-4 transition border-l-2 ${containerClass}`}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span
-                    className={`font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 ${
-                      isHome ? "bg-sol text-ink" : "bg-royal text-bone"
-                    }`}
+                    className={`font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 ${pillClass}`}
                   >
-                    {isHome ? "Home" : "Auto"}
+                    {pillLabel}
                   </span>
                   {j.vehicle_count > 1 && !isHome && (
                     <span className="font-mono text-[9px] uppercase tracking-wider bg-bone/20 text-bone px-1.5 py-0.5">
-                      × {j.vehicle_count} vehicles
+                      × {j.vehicle_count} {isBigRig ? "rigs" : "vehicles"}
                     </span>
                   )}
                 </div>

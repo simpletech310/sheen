@@ -11,10 +11,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const body = await req.json().catch(() => ({}));
   const updates: Record<string, any> = {};
-  for (const k of ["year", "make", "model", "color", "plate", "notes", "photo_paths", "is_default"]) {
+  for (const k of ["year", "make", "model", "color", "plate", "notes", "photo_paths", "is_default", "vehicle_type"]) {
     if (k in body) updates[k] = body[k];
   }
   if (updates.year != null) updates.year = Number(updates.year);
+  if ("vehicle_type" in updates && updates.vehicle_type !== "big_rig") {
+    updates.vehicle_type = "auto";
+  }
 
   if (updates.is_default) {
     await supabase

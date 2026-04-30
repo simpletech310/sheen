@@ -1,6 +1,8 @@
+export type ServiceCategory = "auto" | "home" | "commercial" | "big_rig";
+
 export type Service = {
   id?: string;
-  category: "auto" | "home" | "commercial";
+  category: ServiceCategory;
   tier_name: string;
   base_price_cents: number;
   duration_minutes: number;
@@ -75,6 +77,41 @@ export const HOME_TIERS: Service[] = [
     duration_minutes: 5,
     description: "Per panel. De-ionised water + soft cloth, no chemicals.",
     included: ["De-ionised water", "Soft cloth", "Panel inspection"],
+  },
+];
+
+export const BIG_RIG_TIERS: Service[] = [
+  {
+    category: "big_rig",
+    tier_name: "Rig Rinse",
+    base_price_cents: 14500,
+    duration_minutes: 90,
+    description: "Hand wash for the cab + trailer/box. Foam, rinse, wheels, mud flaps.",
+    included: ["Foam wash", "Cab + trailer rinse", "Wheels & flaps", "Windows"],
+  },
+  {
+    category: "big_rig",
+    tier_name: "Trailer Wash",
+    base_price_cents: 28500,
+    duration_minutes: 180,
+    description: "Full exterior with chrome polish, tire dressing, fender details.",
+    included: ["Everything in Rinse", "Chrome polish", "Tire dressing", "Fender detail"],
+  },
+  {
+    category: "big_rig",
+    tier_name: "Full Rig Detail",
+    base_price_cents: 58500,
+    duration_minutes: 300,
+    description: "Exterior + cab interior. Vacuum, wipe-down, leather conditioning, glass.",
+    included: ["Everything in Trailer Wash", "Cab interior detail", "Leather conditioning", "Sleeper vacuum"],
+  },
+  {
+    category: "big_rig",
+    tier_name: "Showroom Rig",
+    base_price_cents: 95000,
+    duration_minutes: 480,
+    description: "Premium with paint correction on cab + trailer, ceramic top-up.",
+    included: ["Everything in Full Rig", "Paint correction", "Ceramic top-up", "8 hours"],
   },
 ];
 

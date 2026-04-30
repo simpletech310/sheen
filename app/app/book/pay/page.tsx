@@ -15,10 +15,13 @@ function PayInner() {
   const tier = params.get("tier") ?? "Premium Detail";
   const basePrice = Number(params.get("price") ?? "18500");
   const count = Math.max(1, Number(params.get("count") ?? "1"));
-  const category = params.get("category") === "home" ? "home" : "auto";
-  // Auto multiplies by vehicle count. Home has its multiplier baked
+  const rawCategory = params.get("category");
+  const category =
+    rawCategory === "home" ? "home" : rawCategory === "big_rig" ? "big_rig" : "auto";
+  // Auto + Big Rig multiply by vehicle count. Home has its multiplier baked
   // into `price` already (e.g. solar panels × N).
   const totalServiceCents = category === "home" ? basePrice : basePrice * count;
+  const usesVehicles = category === "auto" || category === "big_rig";
   const fees = computeFees({ serviceCents: totalServiceCents, routedTo: "solo_washer" });
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -45,9 +48,9 @@ function PayInner() {
       setLoading(false);
       return;
     }
-    // Auto bookings carry vehicles in the draft; home bookings don't.
+    // Auto + Big Rig bookings carry vehicles in the draft; home bookings don't.
     const draft = readDraft();
-    if (category === "auto" && (!draft || draft.vehicleIds.length === 0)) {
+    if (usesVehicles && (!draft || draft.vehicleIds.length === 0)) {
       setErr("No vehicles selected — go back and pick at least one.");
       setLoading(false);
       return;
@@ -67,8 +70,8 @@ function PayInner() {
             tier_name: tier,
             category,
             service_cents: totalServiceCents,
-            vehicle_ids: category === "auto" ? draft?.vehicleIds : undefined,
-            condition_photos: category === "auto" ? draft?.conditionPhotos : undefined,
+            vehicle_ids: usesVehicles ? draft?.vehicleIds : undefined,
+            condition_photos: usesVehicles ? draft?.conditionPhotos : undefined,
             requested_wash_handle: requestedHandle || undefined,
             redeem_points: redeemPoints || undefined,
             address: {
@@ -130,9 +133,9 @@ function PayInner() {
           {unit ? ` ${unit}` : ""}, {city}, {state} {zip}
         </div>
         <div className="text-xs text-smoke mt-1">{win.replace(/_/g, " ")}</div>
-        {category === "auto" && (
+        {usesVehicles && (
           <div className="text-xs text-smoke mt-1">
-            {count} vehicle{count === 1 ? "" : "s"}
+            {count} {category === "big_rig" ? "rig" : "vehicle"}{count === 1 ? "" : "s"}
           </div>
         )}
         {requestedHandle && (

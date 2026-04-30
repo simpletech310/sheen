@@ -39,7 +39,7 @@ export type AllowanceState = {
 export async function getAllowance(
   userId: string,
   serviceTierName: string,
-  category: "auto" | "home" = "auto"
+  category: "auto" | "home" | "big_rig" = "auto"
 ): Promise<AllowanceState> {
   const supabase = createClient();
   const { data: m } = await supabase

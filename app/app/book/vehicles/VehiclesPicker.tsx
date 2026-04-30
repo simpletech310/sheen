@@ -22,11 +22,13 @@ export function VehiclesPicker({
   tier,
   price,
   handle,
+  category = "auto",
   initialVehicles,
 }: {
   tier: string;
   price: number;
   handle?: string;
+  category?: "auto" | "big_rig";
   initialVehicles: Vehicle[];
 }) {
   const router = useRouter();
@@ -75,6 +77,7 @@ export function VehiclesPicker({
     url.searchParams.set("tier", tier);
     url.searchParams.set("price", String(price));
     url.searchParams.set("count", String(selected.length));
+    url.searchParams.set("category", category);
     if (handle) url.searchParams.set("handle", handle);
     router.push(url.pathname + url.search);
   }
@@ -82,17 +85,22 @@ export function VehiclesPicker({
   const total = price * selected.length;
 
   if (vehicles.length === 0) {
+    const isBigRig = category === "big_rig";
     return (
       <div className="bg-mist/40 p-6 text-sm text-smoke text-center">
         <div className="font-bold uppercase tracking-wide mb-2 text-ink">
-          No vehicles in your garage yet
+          {isBigRig ? "No big rigs in your garage yet" : "No vehicles in your garage yet"}
         </div>
-        <p className="mb-4">Add at least one to book a wash.</p>
+        <p className="mb-4">
+          {isBigRig
+            ? "Add a big rig (semi · box truck · sprinter · RV) to book this service."
+            : "Add at least one to book a wash."}
+        </p>
         <Link
-          href="/app/garage/new"
+          href={isBigRig ? "/app/garage/new?type=big_rig" : "/app/garage/new"}
           className="inline-block bg-ink text-bone px-5 py-3 text-xs font-bold uppercase tracking-wide hover:bg-royal"
         >
-          Add a vehicle →
+          {isBigRig ? "Add a big rig →" : "Add a vehicle →"}
         </Link>
       </div>
     );
@@ -175,10 +183,10 @@ export function VehiclesPicker({
       </div>
 
       <Link
-        href="/app/garage/new"
+        href={category === "big_rig" ? "/app/garage/new?type=big_rig" : "/app/garage/new"}
         className="block mt-3 text-center text-xs text-smoke underline"
       >
-        + Add another vehicle to your garage
+        {category === "big_rig" ? "+ Add another rig to your garage" : "+ Add another vehicle to your garage"}
       </Link>
 
       {/* Sticky total bar */}

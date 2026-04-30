@@ -15,6 +15,7 @@ type Vehicle = {
   notes: string | null;
   photo_paths: string[] | null;
   is_default: boolean | null;
+  vehicle_type?: string | null;
 };
 
 const PUBLIC_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/booking-photos`;
@@ -81,6 +82,11 @@ export function VehicleRow({ vehicle }: { vehicle: Vehicle }) {
           {vehicle.plate ? ` · plate ${vehicle.plate}` : ""}
         </div>
         <div className="flex flex-wrap gap-1.5 mt-2">
+          {vehicle.vehicle_type === "big_rig" && (
+            <span className="font-mono text-[10px] uppercase tracking-wider bg-sol text-ink px-2 py-0.5">
+              Big rig
+            </span>
+          )}
           {vehicle.is_default && (
             <span className="font-mono text-[10px] uppercase tracking-wider bg-royal text-bone px-2 py-0.5">
               Default

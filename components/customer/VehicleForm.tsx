@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
 import { VehiclePhotoPicker } from "./VehiclePhotoPicker";
 
@@ -15,10 +15,21 @@ type Vehicle = {
   notes?: string | null;
   photo_paths?: string[] | null;
   is_default?: boolean | null;
+  vehicle_type?: string | null;
 };
 
 export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" | "edit" }) {
   const router = useRouter();
+  const params = useSearchParams();
+  // Default new vehicles to the type the URL nudges us toward (e.g.
+  // /app/garage/new?type=big_rig from the booking flow's empty state).
+  const initialType =
+    initial?.vehicle_type === "big_rig"
+      ? "big_rig"
+      : params.get("type") === "big_rig" && mode === "new"
+      ? "big_rig"
+      : "auto";
+  const [vehicleType, setVehicleType] = useState<"auto" | "big_rig">(initialType as any);
   const [year, setYear] = useState(initial?.year?.toString() ?? "");
   const [make, setMake] = useState(initial?.make ?? "");
   const [model, setModel] = useState(initial?.model ?? "");
@@ -49,6 +60,7 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
           notes: notes.trim() || null,
           photo_paths: photoPaths,
           is_default: isDefault,
+          vehicle_type: vehicleType,
         }),
       });
       const d = await r.json();
@@ -66,6 +78,42 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
 
   return (
     <form onSubmit={submit} className="space-y-3">
+      <div>
+        <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-2">
+          Vehicle type
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setVehicleType("auto")}
+            className={`p-3 text-left transition border ${
+              vehicleType === "auto"
+                ? "border-ink bg-ink text-bone"
+                : "border-mist bg-mist/40 text-ink hover:bg-mist"
+            }`}
+          >
+            <div className="font-bold text-sm">Auto</div>
+            <div className={`text-[11px] mt-0.5 ${vehicleType === "auto" ? "text-bone/70" : "text-smoke"}`}>
+              Sedan · SUV · truck · coupe
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setVehicleType("big_rig")}
+            className={`p-3 text-left transition border ${
+              vehicleType === "big_rig"
+                ? "border-sol bg-royal text-bone"
+                : "border-mist bg-mist/40 text-ink hover:bg-mist"
+            }`}
+          >
+            <div className="font-bold text-sm">Big rig</div>
+            <div className={`text-[11px] mt-0.5 ${vehicleType === "big_rig" ? "text-bone/70" : "text-smoke"}`}>
+              Semi · box truck · sprinter · RV
+            </div>
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-3 gap-3">
         <input
           value={year}

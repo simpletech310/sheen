@@ -15,7 +15,7 @@ const Body = z.object({
   tier_name: z.string().optional(),
   // service_cents is the *total* (base × vehicle count) the client computed.
   service_cents: z.number().int().positive().optional(),
-  category: z.enum(["auto", "home"]).default("auto"),
+  category: z.enum(["auto", "home", "big_rig"]).default("auto"),
   vehicle_ids: z.array(z.string().uuid()).min(1).max(10).optional(),
   condition_photos: z.record(z.string(), z.array(z.string())).optional(),
   requested_wash_handle: z.string().min(3).max(12).optional(),
@@ -60,20 +60,35 @@ export async function POST(req: Request) {
     if (!body.tier_name || !body.service_cents || !body.address || !body.window) {
       return NextResponse.json({ error: "Missing booking fields" }, { status: 400 });
     }
-    if (body.category === "auto") {
+    const usesVehicles = body.category === "auto" || body.category === "big_rig";
+    if (usesVehicles) {
       if (!body.vehicle_ids || body.vehicle_ids.length === 0) {
         return NextResponse.json({ error: "Pick at least one vehicle" }, { status: 400 });
       }
-      // Verify every vehicle belongs to this user (RLS would also block, but
-      // we want a clean 400 instead of a confusing FK error).
+      // Verify every vehicle belongs to this user AND its type matches the
+      // booking category so a passenger car can't slip into a big-rig job
+      // (or vice-versa).
+      const requiredType = body.category === "big_rig" ? "big_rig" : "auto";
       const { data: ownedVehicles } = await supabase
         .from("vehicles")
-        .select("id")
+        .select("id, vehicle_type")
         .eq("user_id", user.id)
         .in("id", body.vehicle_ids);
-      const owned = new Set((ownedVehicles ?? []).map((v) => v.id));
-      if (owned.size !== body.vehicle_ids.length) {
+      const owned = ownedVehicles ?? [];
+      if (owned.length !== body.vehicle_ids.length) {
         return NextResponse.json({ error: "One or more vehicles aren't yours" }, { status: 400 });
+      }
+      const wrongType = owned.find((v: any) => (v.vehicle_type ?? "auto") !== requiredType);
+      if (wrongType) {
+        return NextResponse.json(
+          {
+            error:
+              requiredType === "big_rig"
+                ? "Big-rig bookings need vehicles marked as 'Big rig' in your garage."
+                : "Auto bookings need standard auto vehicles, not big rigs.",
+          },
+          { status: 400 }
+        );
       }
     }
     // Look up service id
@@ -105,8 +120,8 @@ export async function POST(req: Request) {
     const fees = computeFees({ serviceCents: body.service_cents, routedTo: "solo_washer" });
     const { start, end } = parseWindow(body.window);
     const vehicleIds = body.vehicle_ids ?? [];
-    const vehicleCount = body.category === "auto" ? vehicleIds.length : 1;
-    const primaryVehicleId = body.category === "auto" ? vehicleIds[0] : null;
+    const vehicleCount = usesVehicles ? vehicleIds.length : 1;
+    const primaryVehicleId = usesVehicles ? vehicleIds[0] : null;
 
     // Resolve direct request handle, if provided.
     let requestedWasherId: string | null = null;
@@ -213,7 +228,7 @@ export async function POST(req: Request) {
 
     // Insert booking_vehicles join rows with per-vehicle pre-wash photos.
     // Home services skip this — there's no vehicle to attach.
-    if (body.category === "auto" && vehicleIds.length > 0) {
+    if (usesVehicles && vehicleIds.length > 0) {
       const photoMap = body.condition_photos ?? {};
       const bvRows = vehicleIds.map((vid) => ({
         booking_id: bookingId!,

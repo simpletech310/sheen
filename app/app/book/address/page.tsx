@@ -36,7 +36,9 @@ function AddressFormInner() {
   const tier = params.get("tier") ?? "Premium Detail";
   const price = params.get("price") ?? "18500";
   const count = params.get("count") ?? "1";
-  const category = params.get("category") === "home" ? "home" : "auto";
+  const rawCategory = params.get("category");
+  const category =
+    rawCategory === "home" ? "home" : rawCategory === "big_rig" ? "big_rig" : "auto";
 
   const [places, setPlaces] = useState<SavedPlace[]>([]);
   const [loadingPlaces, setLoadingPlaces] = useState(true);
@@ -119,6 +121,8 @@ function AddressFormInner() {
     url.searchParams.set("price", price);
     url.searchParams.set("count", count);
     url.searchParams.set("category", category);
+    // (category includes 'big_rig' which the pay page treats like auto for
+    // multi-vehicle pricing.)
     url.searchParams.set("street", street);
     url.searchParams.set("city", city);
     url.searchParams.set("state", state);
@@ -141,6 +145,8 @@ function AddressFormInner() {
           href={
             category === "home"
               ? `/app/book/home?tier=${encodeURIComponent(tier)}`
+              : category === "big_rig"
+              ? `/app/book/vehicles?tier=${encodeURIComponent(tier)}&price=${price}&category=big_rig`
               : `/app/book/vehicles?tier=${encodeURIComponent(tier)}&price=${price}`
           }
           className="text-smoke text-sm"
@@ -149,7 +155,8 @@ function AddressFormInner() {
         </Link>
       </div>
       <Eyebrow>
-        Step {category === "home" ? "2 / 3" : "3 / 4"} · Where &amp; when
+        Step {category === "home" ? "2 / 3" : "3 / 4"} ·{" "}
+        {category === "big_rig" ? "Where & when (rig)" : "Where & when"}
       </Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">Where &amp; when</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />

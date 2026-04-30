@@ -169,6 +169,26 @@ export default async function CustomerHome() {
           </Link>
 
           <Link
+            href="/app/book/big-rig"
+            className="block bg-bone border border-mist hover:border-ink p-5 transition group relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-sol text-ink font-mono text-[9px] uppercase tracking-wider px-2 py-0.5">
+              New
+            </div>
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="display text-2xl group-hover:text-royal transition">Big rig</div>
+                <div className="text-xs text-smoke mt-1">Semi · box · sprinter · RV</div>
+              </div>
+              <div className="text-right">
+                <div className="font-mono text-[10px] text-smoke uppercase">From</div>
+                <div className="display tabular text-xl">$145</div>
+              </div>
+            </div>
+            <div className="mt-4 h-[2px] w-12 bg-gradient-to-r from-royal to-sol opacity-0 group-hover:opacity-100 transition" />
+          </Link>
+
+          <Link
             href="/app/book/commercial"
             className="block bg-bone border border-mist hover:border-ink p-5 transition group"
           >
