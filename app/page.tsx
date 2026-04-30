@@ -8,7 +8,7 @@ const categories = [
   { tag: "01", label: "Auto", tiers: "4 tiers", from: "$35", desc: "Express wash → showroom-grade paint correction.", href: "/auto", img: "/img/auto.jpg" },
   { tag: "02", label: "Big Rig", tiers: "4 tiers", from: "$145", desc: "Tractors, trailers, sleepers — at the rest stop or yard.", href: "/big-rig", tone: "ink" as const, img: "/img/big-rig-card.jpg" },
   { tag: "03", label: "Home", tiers: "4 tiers", from: "$185", desc: "Driveways, siding, decks, solar panels.", href: "/home", tone: "royal" as const, img: "/img/home.jpg" },
-  { tag: "04", label: "Commercial", tiers: "Quoted", from: "Custom", desc: "Storefronts, fleets, post-construction.", href: "/business", tone: "sol" as const, img: "/img/business.jpg" },
+  { tag: "04", label: "Commercial", tiers: "Quoted", from: "Custom", desc: "Storefronts, fleets, post-construction.", href: "/business", tone: "sol" as const, img: "/img/commercial.jpg" },
 ];
 
 const memberships = [
