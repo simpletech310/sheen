@@ -43,6 +43,41 @@ export const AUTO_TIERS: Service[] = [
   },
 ];
 
+export const HOME_TIERS: Service[] = [
+  {
+    category: "home",
+    tier_name: "Driveway & Walkway",
+    base_price_cents: 18500,
+    duration_minutes: 90,
+    description: "Up to 800 sq ft. Pressure-wash + concrete-safe rinse.",
+    included: ["Driveway", "Walkway", "Concrete-safe rinse", "Surface streak removal"],
+  },
+  {
+    category: "home",
+    tier_name: "Deck or Patio",
+    base_price_cents: 9500,
+    duration_minutes: 60,
+    description: "Wood-safe pH soft-wash + low-pressure rinse.",
+    included: ["Wood-safe soft-wash", "Low-pressure rinse", "Furniture pull/replace"],
+  },
+  {
+    category: "home",
+    tier_name: "Full Exterior",
+    base_price_cents: 38500,
+    duration_minutes: 240,
+    description: "House siding + drive + walks. Soft-wash certified.",
+    included: ["Siding soft-wash", "Driveway", "Walkways", "Window pre-rinse"],
+  },
+  {
+    category: "home",
+    tier_name: "Solar Panel Wash",
+    base_price_cents: 1200,
+    duration_minutes: 5,
+    description: "Per panel. De-ionised water + soft cloth, no chemicals.",
+    included: ["De-ionised water", "Soft cloth", "Panel inspection"],
+  },
+];
+
 export function fmtUSD(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
 }

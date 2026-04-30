@@ -15,7 +15,10 @@ function PayInner() {
   const tier = params.get("tier") ?? "Premium Detail";
   const basePrice = Number(params.get("price") ?? "18500");
   const count = Math.max(1, Number(params.get("count") ?? "1"));
-  const totalServiceCents = basePrice * count;
+  const category = params.get("category") === "home" ? "home" : "auto";
+  // Auto multiplies by vehicle count. Home has its multiplier baked
+  // into `price` already (e.g. solar panels × N).
+  const totalServiceCents = category === "home" ? basePrice : basePrice * count;
   const fees = computeFees({ serviceCents: totalServiceCents, routedTo: "solo_washer" });
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -42,8 +45,9 @@ function PayInner() {
       setLoading(false);
       return;
     }
+    // Auto bookings carry vehicles in the draft; home bookings don't.
     const draft = readDraft();
-    if (!draft || draft.vehicleIds.length === 0) {
+    if (category === "auto" && (!draft || draft.vehicleIds.length === 0)) {
       setErr("No vehicles selected — go back and pick at least one.");
       setLoading(false);
       return;
@@ -61,9 +65,10 @@ function PayInner() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             tier_name: tier,
+            category,
             service_cents: totalServiceCents,
-            vehicle_ids: draft.vehicleIds,
-            condition_photos: draft.conditionPhotos,
+            vehicle_ids: category === "auto" ? draft?.vehicleIds : undefined,
+            condition_photos: category === "auto" ? draft?.conditionPhotos : undefined,
             requested_wash_handle: requestedHandle || undefined,
             redeem_points: redeemPoints || undefined,
             address: {
@@ -112,7 +117,9 @@ function PayInner() {
           ← Back
         </Link>
       </div>
-      <Eyebrow>Step 4 / 4 · Pay &amp; confirm</Eyebrow>
+      <Eyebrow>
+        Step {category === "home" ? "3 / 3" : "4 / 4"} · Pay &amp; confirm
+      </Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">Confirm &amp; pay</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
 
@@ -123,9 +130,11 @@ function PayInner() {
           {unit ? ` ${unit}` : ""}, {city}, {state} {zip}
         </div>
         <div className="text-xs text-smoke mt-1">{win.replace(/_/g, " ")}</div>
-        <div className="text-xs text-smoke mt-1">
-          {count} vehicle{count === 1 ? "" : "s"}
-        </div>
+        {category === "auto" && (
+          <div className="text-xs text-smoke mt-1">
+            {count} vehicle{count === 1 ? "" : "s"}
+          </div>
+        )}
         {requestedHandle && (
           <div className="text-xs mt-2 font-mono uppercase tracking-wider text-royal">
             Requesting pro · {requestedHandle}

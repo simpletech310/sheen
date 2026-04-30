@@ -34,6 +34,7 @@ export default async function MePage() {
         { l: "Garage", href: "/app/garage" },
         { l: "Places", href: "/app/places" },
         { l: "Washes", href: "/app/washes" },
+        { l: "Recurring schedule", href: "/app/me/recurring" },
         { l: "Wallet", href: "/app/wallet" },
       ],
     },

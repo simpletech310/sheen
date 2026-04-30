@@ -35,6 +35,7 @@ function AddressFormInner() {
   const tier = params.get("tier") ?? "Premium Detail";
   const price = params.get("price") ?? "18500";
   const count = params.get("count") ?? "1";
+  const category = params.get("category") === "home" ? "home" : "auto";
 
   const [places, setPlaces] = useState<SavedPlace[]>([]);
   const [loadingPlaces, setLoadingPlaces] = useState(true);
@@ -114,6 +115,7 @@ function AddressFormInner() {
     url.searchParams.set("tier", tier);
     url.searchParams.set("price", price);
     url.searchParams.set("count", count);
+    url.searchParams.set("category", category);
     url.searchParams.set("street", street);
     url.searchParams.set("city", city);
     url.searchParams.set("state", state);
@@ -133,13 +135,19 @@ function AddressFormInner() {
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link
-          href={`/app/book/vehicles?tier=${encodeURIComponent(tier)}&price=${price}`}
+          href={
+            category === "home"
+              ? `/app/book/home?tier=${encodeURIComponent(tier)}`
+              : `/app/book/vehicles?tier=${encodeURIComponent(tier)}&price=${price}`
+          }
           className="text-smoke text-sm"
         >
           ← Back
         </Link>
       </div>
-      <Eyebrow>Step 3 / 4 · Where &amp; when</Eyebrow>
+      <Eyebrow>
+        Step {category === "home" ? "2 / 3" : "3 / 4"} · Where &amp; when
+      </Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">Where &amp; when</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
 

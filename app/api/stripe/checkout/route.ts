@@ -15,6 +15,7 @@ const Body = z.object({
   tier_name: z.string().optional(),
   // service_cents is the *total* (base × vehicle count) the client computed.
   service_cents: z.number().int().positive().optional(),
+  category: z.enum(["auto", "home"]).default("auto"),
   vehicle_ids: z.array(z.string().uuid()).min(1).max(10).optional(),
   condition_photos: z.record(z.string(), z.array(z.string())).optional(),
   requested_wash_handle: z.string().min(3).max(12).optional(),
@@ -59,25 +60,27 @@ export async function POST(req: Request) {
     if (!body.tier_name || !body.service_cents || !body.address || !body.window) {
       return NextResponse.json({ error: "Missing booking fields" }, { status: 400 });
     }
-    if (!body.vehicle_ids || body.vehicle_ids.length === 0) {
-      return NextResponse.json({ error: "Pick at least one vehicle" }, { status: 400 });
-    }
-    // Verify every vehicle belongs to this user (RLS would also block, but
-    // we want a clean 400 instead of a confusing FK error).
-    const { data: ownedVehicles } = await supabase
-      .from("vehicles")
-      .select("id")
-      .eq("user_id", user.id)
-      .in("id", body.vehicle_ids);
-    const owned = new Set((ownedVehicles ?? []).map((v) => v.id));
-    if (owned.size !== body.vehicle_ids.length) {
-      return NextResponse.json({ error: "One or more vehicles aren't yours" }, { status: 400 });
+    if (body.category === "auto") {
+      if (!body.vehicle_ids || body.vehicle_ids.length === 0) {
+        return NextResponse.json({ error: "Pick at least one vehicle" }, { status: 400 });
+      }
+      // Verify every vehicle belongs to this user (RLS would also block, but
+      // we want a clean 400 instead of a confusing FK error).
+      const { data: ownedVehicles } = await supabase
+        .from("vehicles")
+        .select("id")
+        .eq("user_id", user.id)
+        .in("id", body.vehicle_ids);
+      const owned = new Set((ownedVehicles ?? []).map((v) => v.id));
+      if (owned.size !== body.vehicle_ids.length) {
+        return NextResponse.json({ error: "One or more vehicles aren't yours" }, { status: 400 });
+      }
     }
     // Look up service id
     const { data: svc } = await supabase
       .from("services")
       .select("id")
-      .eq("category", "auto")
+      .eq("category", body.category)
       .eq("tier_name", body.tier_name)
       .maybeSingle();
     if (!svc) return NextResponse.json({ error: "Unknown service" }, { status: 400 });
@@ -101,8 +104,9 @@ export async function POST(req: Request) {
 
     const fees = computeFees({ serviceCents: body.service_cents, routedTo: "solo_washer" });
     const { start, end } = parseWindow(body.window);
-    const vehicleCount = body.vehicle_ids.length;
-    const primaryVehicleId = body.vehicle_ids[0];
+    const vehicleIds = body.vehicle_ids ?? [];
+    const vehicleCount = body.category === "auto" ? vehicleIds.length : 1;
+    const primaryVehicleId = body.category === "auto" ? vehicleIds[0] : null;
 
     // Resolve direct request handle, if provided.
     let requestedWasherId: string | null = null;
@@ -208,17 +212,20 @@ export async function POST(req: Request) {
     }
 
     // Insert booking_vehicles join rows with per-vehicle pre-wash photos.
-    const photoMap = body.condition_photos ?? {};
-    const bvRows = body.vehicle_ids.map((vid) => ({
-      booking_id: bookingId!,
-      vehicle_id: vid,
-      condition_photo_paths: photoMap[vid] ?? [],
-    }));
-    const { error: bvErr } = await supabase.from("booking_vehicles").insert(bvRows);
-    if (bvErr) {
-      // Roll the booking back so the customer doesn't end up with a broken row.
-      await supabase.from("bookings").delete().eq("id", bookingId!);
-      return NextResponse.json({ error: `Could not save vehicles: ${bvErr.message}` }, { status: 400 });
+    // Home services skip this — there's no vehicle to attach.
+    if (body.category === "auto" && vehicleIds.length > 0) {
+      const photoMap = body.condition_photos ?? {};
+      const bvRows = vehicleIds.map((vid) => ({
+        booking_id: bookingId!,
+        vehicle_id: vid,
+        condition_photo_paths: photoMap[vid] ?? [],
+      }));
+      const { error: bvErr } = await supabase.from("booking_vehicles").insert(bvRows);
+      if (bvErr) {
+        // Roll the booking back so the customer doesn't end up with a broken row.
+        await supabase.from("bookings").delete().eq("id", bookingId!);
+        return NextResponse.json({ error: `Could not save vehicles: ${bvErr.message}` }, { status: 400 });
+      }
     }
 
     await supabase.from("booking_events").insert({

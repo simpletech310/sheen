@@ -6,6 +6,7 @@ import { fmtUSD } from "@/lib/pricing";
 import { DisputeButton } from "./DisputeButton";
 import { CancelButton } from "./CancelButton";
 import { RescheduleButton } from "./RescheduleButton";
+import { RepeatButton } from "./RepeatButton";
 import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
 import { signedUrls } from "@/lib/storage";
 
@@ -27,7 +28,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, completed_at, scheduled_window_start, total_cents, service_cents, fees_cents, tip_cents, points_earned, vehicle_count, customer_id, services(tier_name), addresses(street, city, state, zip)"
+      "id, status, completed_at, scheduled_window_start, total_cents, service_cents, fees_cents, tip_cents, points_earned, vehicle_count, customer_id, service_id, address_id, recurring_template_id, services(tier_name, category), addresses(street, city, state, zip)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -189,6 +190,25 @@ export default async function WashDetailPage({ params }: { params: { id: string 
           <RescheduleButton bookingId={booking.id} />
           <CancelButton bookingId={booking.id} />
         </>
+      )}
+
+      {/* Offer recurring after a successful wash, if not already on a schedule */}
+      {booking.status === "completed" && !booking.recurring_template_id && (
+        <RepeatButton
+          serviceId={(booking as any).service_id}
+          addressId={(booking as any).address_id ?? null}
+          vehicleIds={(bvRows ?? []).map((r: any) => r.vehicle_id)}
+          preferredWindow="tomorrow_10_12"
+        />
+      )}
+
+      {booking.recurring_template_id && (
+        <Link
+          href="/app/me/recurring"
+          className="mt-3 block text-center bg-mist/50 text-smoke py-3 text-xs font-mono uppercase tracking-wider hover:bg-mist transition"
+        >
+          ↻ From your recurring schedule · manage
+        </Link>
       )}
 
       {canDispute && <DisputeButton bookingId={booking.id} />}

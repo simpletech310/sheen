@@ -74,21 +74,25 @@ export default async function CustomerHome() {
             <div className="mt-4 h-[2px] w-12 bg-gradient-to-r from-royal to-sol opacity-0 group-hover:opacity-100 transition" />
           </Link>
 
-          <div className="block bg-mist/30 p-5 cursor-not-allowed">
+          <Link
+            href="/app/book/home"
+            className="block bg-bone border border-mist hover:border-ink p-5 transition group"
+          >
             <div className="flex justify-between items-start">
               <div>
-                <div className="display text-2xl text-smoke">Home</div>
-                <div className="text-xs text-smoke mt-1">Phase 2 — coming soon</div>
+                <div className="display text-2xl group-hover:text-royal transition">Home</div>
+                <div className="text-xs text-smoke mt-1">Driveway · siding · deck · solar</div>
               </div>
-              <div className="text-right text-smoke">
-                <div className="font-mono text-[10px] uppercase">From</div>
-                <div className="display tabular text-xl">$185</div>
+              <div className="text-right">
+                <div className="font-mono text-[10px] text-smoke uppercase">From</div>
+                <div className="display tabular text-xl">$95</div>
               </div>
             </div>
-          </div>
+            <div className="mt-4 h-[2px] w-12 bg-gradient-to-r from-royal to-sol opacity-0 group-hover:opacity-100 transition" />
+          </Link>
 
           <Link
-            href="/business"
+            href="/app/book/commercial"
             className="block bg-bone border border-mist hover:border-ink p-5 transition group"
           >
             <div className="flex justify-between items-start">
