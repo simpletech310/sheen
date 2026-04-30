@@ -26,7 +26,7 @@ export default async function TripsPage() {
           {bookings.map((b: any) => (
             <Link
               key={b.id}
-              href={`/app/tracking/${b.id}`}
+              href={b.status === "completed" ? `/app/trips/${b.id}` : `/app/tracking/${b.id}`}
               className="block bg-mist/40 hover:bg-mist transition p-4"
             >
               <div className="flex justify-between items-start">
