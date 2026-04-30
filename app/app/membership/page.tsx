@@ -22,7 +22,7 @@ export default async function MembershipPage() {
     .from("memberships")
     .select("id, plan_id, status, washes_used, current_period_end, cancel_at_period_end, membership_plans(tier, display_name, included_washes)")
     .eq("user_id", user.id)
-    .in("status", ["active", "past_due"])
+    .in("status", ["active", "past_due", "paused"])
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -35,17 +35,23 @@ export default async function MembershipPage() {
       {current ? (
         <div className="bg-royal text-bone p-5 mb-6 relative">
           <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
-          <div className="font-mono text-[10px] uppercase opacity-80">Active · {(current as any).membership_plans?.tier?.toUpperCase()}</div>
+          <div className="font-mono text-[10px] uppercase opacity-80">
+            {current.status === "paused" ? "Paused" : "Active"} ·{" "}
+            {(current as any).membership_plans?.tier?.toUpperCase()}
+          </div>
           <div className="display text-3xl mt-2 mb-2">{(current as any).membership_plans?.display_name}</div>
           <div className="text-sm opacity-90">
             {current.washes_used ?? 0} of {(current as any).membership_plans?.included_washes} washes used this period.
           </div>
           <div className="text-xs opacity-70 mt-1">
-            Renews {new Date(current.current_period_end).toLocaleDateString()}
-            {current.cancel_at_period_end ? " · cancelling at period end" : ""}
+            {current.status === "paused"
+              ? "Billing paused — resume any time."
+              : `Renews ${new Date(current.current_period_end).toLocaleDateString()}${
+                  current.cancel_at_period_end ? " · cancelling at period end" : ""
+                }`}
           </div>
           {!current.cancel_at_period_end && (
-            <MembershipActions hasActive={true} />
+            <MembershipActions hasActive={true} isPaused={current.status === "paused"} />
           )}
         </div>
       ) : (

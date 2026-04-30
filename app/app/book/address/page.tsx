@@ -44,6 +44,7 @@ function AddressFormInner() {
   const [notes, setNotes] = useState("");
   const [w, setW] = useState(windows[2].value);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [washHandle, setWashHandle] = useState("");
 
   // Load saved places.
   useEffect(() => {
@@ -122,6 +123,7 @@ function AddressFormInner() {
     url.searchParams.set("unit", unit);
     url.searchParams.set("notes", placeNotes);
     url.searchParams.set("window", w);
+    if (washHandle.trim()) url.searchParams.set("handle", washHandle.trim().toUpperCase());
     router.push(url.pathname + url.search);
   }
 
@@ -234,6 +236,20 @@ function AddressFormInner() {
         rows={2}
         className="w-full px-4 py-3 bg-bone border border-mist text-sm"
       />
+
+      <div className="mt-6">
+        <Eyebrow>Request a specific pro · optional</Eyebrow>
+        <input
+          value={washHandle}
+          onChange={(e) => setWashHandle(e.target.value.toUpperCase().slice(0, 12))}
+          placeholder="Wash ID (e.g. ABC123)"
+          className="w-full mt-3 px-4 py-3.5 bg-bone border border-mist text-sm font-mono tracking-wider focus:outline-none focus:border-royal"
+        />
+        <div className="text-[11px] text-smoke mt-1 leading-relaxed">
+          Have a pro&rsquo;s wash ID? They get 5 minutes to accept before the
+          booking opens to the general queue.
+        </div>
+      </div>
 
       <div className="mt-6">
         <Eyebrow>Pick a window</Eyebrow>

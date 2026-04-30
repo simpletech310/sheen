@@ -96,3 +96,48 @@ export async function DELETE() {
 
   return NextResponse.json({ ok: true });
 }
+
+/** PATCH /api/stripe/subscriptions
+ *  Pause or resume the active subscription via Stripe pause_collection.
+ *  Body: { action: "pause" | "resume" }
+ */
+export async function PATCH(req: Request) {
+  const supabase = createClient();
+  const stripe = getStripe();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  const body = await req.json().catch(() => ({}));
+  const action = body?.action;
+  if (action !== "pause" && action !== "resume") {
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+  }
+
+  const { data: m } = await supabase
+    .from("memberships")
+    .select("id, stripe_subscription_id, status")
+    .eq("user_id", user.id)
+    .in("status", ["active", "paused", "past_due"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!m?.stripe_subscription_id) {
+    return NextResponse.json({ error: "No subscription found" }, { status: 404 });
+  }
+
+  if (action === "pause") {
+    // pause_collection with behavior 'mark_uncollectible' — Stripe stops
+    // billing but the subscription stays alive. Customer can resume any time.
+    await stripe.subscriptions.update(m.stripe_subscription_id, {
+      pause_collection: { behavior: "mark_uncollectible" } as any,
+    });
+    await supabase.from("memberships").update({ status: "paused" }).eq("id", m.id);
+  } else {
+    await stripe.subscriptions.update(m.stripe_subscription_id, {
+      pause_collection: "" as any,
+    });
+    await supabase.from("memberships").update({ status: "active" }).eq("id", m.id);
+  }
+
+  return NextResponse.json({ ok: true, status: action === "pause" ? "paused" : "active" });
+}

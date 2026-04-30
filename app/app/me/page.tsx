@@ -15,6 +15,13 @@ export default async function MePage() {
 
   const sections = [
     {
+      h: "Profile",
+      items: [
+        { l: "Edit profile", href: "/app/me/profile" },
+        { l: "Payment methods", href: "/app/me/payment-methods" },
+      ],
+    },
+    {
       h: "Membership",
       items: [
         { l: "Sheen+ plans", href: "/app/membership" },

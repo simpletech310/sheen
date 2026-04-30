@@ -8,11 +8,13 @@ export function MembershipActions({
   isCurrent,
   hasActive,
   disabled,
+  isPaused,
 }: {
   planId?: string;
   isCurrent?: boolean;
   hasActive?: boolean;
   disabled?: boolean;
+  isPaused?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -56,16 +58,45 @@ export function MembershipActions({
     }
   }
 
+  async function pauseOrResume(action: "pause" | "resume") {
+    setBusy(true);
+    try {
+      const r = await fetch("/api/stripe/subscriptions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (r.ok) {
+        toast(action === "pause" ? "Membership paused" : "Membership resumed", "success");
+        window.location.reload();
+      } else {
+        const d = await r.json();
+        toast(d.error || "Could not update", "error");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!planId) {
-    // Cancel button on the active membership banner
+    // Action row on the active membership banner
     return (
-      <button
-        onClick={cancel}
-        disabled={busy}
-        className="text-xs underline opacity-80 mt-3"
-      >
-        {busy ? "…" : "Cancel at period end"}
-      </button>
+      <div className="flex flex-wrap gap-3 mt-3">
+        <button
+          onClick={() => pauseOrResume(isPaused ? "resume" : "pause")}
+          disabled={busy}
+          className="text-xs underline opacity-80 disabled:opacity-50"
+        >
+          {busy ? "…" : isPaused ? "Resume" : "Pause billing"}
+        </button>
+        <button
+          onClick={cancel}
+          disabled={busy}
+          className="text-xs underline opacity-80 disabled:opacity-50"
+        >
+          {busy ? "…" : "Cancel at period end"}
+        </button>
+      </div>
     );
   }
 

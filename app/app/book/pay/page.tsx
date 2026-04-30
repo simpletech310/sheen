@@ -22,6 +22,8 @@ function PayInner() {
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pointsBalance, setPointsBalance] = useState(0);
+  const [redeemPoints, setRedeemPoints] = useState(Number(params.get("redeem") ?? "0"));
 
   const street = params.get("street") ?? "";
   const unit = params.get("unit") ?? "";
@@ -32,6 +34,7 @@ function PayInner() {
   const lng = params.get("lng");
   const notes = params.get("notes") ?? "";
   const win = params.get("window") ?? "tomorrow_10_12";
+  const requestedHandle = params.get("handle") ?? "";
 
   useEffect(() => {
     if (!street || !zip) {
@@ -45,6 +48,12 @@ function PayInner() {
       setLoading(false);
       return;
     }
+    // Best-effort load of loyalty balance for the redemption slider.
+    fetch("/api/loyalty/balance")
+      .then((r) => r.json())
+      .then((d) => setPointsBalance(d.points ?? 0))
+      .catch(() => {});
+
     (async () => {
       try {
         const res = await fetch("/api/stripe/checkout", {
@@ -55,6 +64,8 @@ function PayInner() {
             service_cents: totalServiceCents,
             vehicle_ids: draft.vehicleIds,
             condition_photos: draft.conditionPhotos,
+            requested_wash_handle: requestedHandle || undefined,
+            redeem_points: redeemPoints || undefined,
             address: {
               street,
               unit,
@@ -73,7 +84,7 @@ function PayInner() {
           throw new Error(e.error || `Status ${res.status}`);
         }
         const data = await res.json();
-        if (data.covered_by_membership) {
+        if (data.covered_by_membership || data.covered_by_loyalty) {
           clearDraft();
           router.replace(`/app/tracking/${data.booking_id}`);
           return;
@@ -115,7 +126,67 @@ function PayInner() {
         <div className="text-xs text-smoke mt-1">
           {count} vehicle{count === 1 ? "" : "s"}
         </div>
+        {requestedHandle && (
+          <div className="text-xs mt-2 font-mono uppercase tracking-wider text-royal">
+            Requesting pro · {requestedHandle}
+          </div>
+        )}
       </div>
+
+      {pointsBalance > 0 && !clientSecret && !loading && (
+        <div className="bg-royal text-bone p-4 mb-5">
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-wider opacity-80">
+                Redeem loyalty
+              </div>
+              <div className="text-sm mt-1">
+                {pointsBalance.toLocaleString()} pts available · 100 pts = $1
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const max = Math.min(pointsBalance, fees.serviceCents);
+                setRedeemPoints(redeemPoints > 0 ? 0 : Math.floor(max / 100) * 100);
+              }}
+              className="bg-sol text-ink px-3 py-2 text-xs font-bold uppercase tracking-wide hover:bg-bone"
+            >
+              {redeemPoints > 0 ? "Clear" : "Apply max"}
+            </button>
+          </div>
+          {redeemPoints > 0 && (
+            <>
+              <div className="mt-3">
+                <input
+                  type="range"
+                  min={0}
+                  max={Math.min(pointsBalance, fees.serviceCents)}
+                  step={100}
+                  value={redeemPoints}
+                  onChange={(e) => setRedeemPoints(Number(e.target.value))}
+                  className="w-full accent-sol"
+                />
+                <div className="flex justify-between text-xs mt-1 opacity-90 tabular">
+                  <span>{redeemPoints.toLocaleString()} pts</span>
+                  <span>− {fmtUSD(redeemPoints)}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("redeem", String(redeemPoints));
+                  window.location.href = url.pathname + url.search;
+                }}
+                className="mt-3 w-full bg-ink text-bone py-2.5 text-xs font-bold uppercase tracking-wide hover:bg-bone hover:text-ink"
+              >
+                Apply &amp; refresh checkout
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="space-y-2.5 text-sm mb-5">
         <div className="flex justify-between">

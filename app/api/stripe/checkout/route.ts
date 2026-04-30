@@ -17,6 +17,8 @@ const Body = z.object({
   service_cents: z.number().int().positive().optional(),
   vehicle_ids: z.array(z.string().uuid()).min(1).max(10).optional(),
   condition_photos: z.record(z.string(), z.array(z.string())).optional(),
+  requested_wash_handle: z.string().min(3).max(12).optional(),
+  redeem_points: z.number().int().min(0).optional(),
   address: z
     .object({
       street: z.string(),
@@ -102,13 +104,60 @@ export async function POST(req: Request) {
     const vehicleCount = body.vehicle_ids.length;
     const primaryVehicleId = body.vehicle_ids[0];
 
+    // Resolve direct request handle, if provided.
+    let requestedWasherId: string | null = null;
+    let requestExpiresAt: string | null = null;
+    if (body.requested_wash_handle) {
+      const { data: requestedWasher } = await supabase
+        .from("washer_profiles")
+        .select("user_id, status")
+        .eq("wash_handle", body.requested_wash_handle.toUpperCase())
+        .maybeSingle();
+      if (!requestedWasher) {
+        return NextResponse.json({ error: "No pro with that wash ID" }, { status: 400 });
+      }
+      if (requestedWasher.status !== "active") {
+        return NextResponse.json({ error: "That pro isn't accepting jobs" }, { status: 400 });
+      }
+      requestedWasherId = requestedWasher.user_id;
+      // 5-minute window for the requested pro to respond before the
+      // booking falls into the general queue.
+      requestExpiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    }
+
+    // Loyalty redemption: 100 points = $1. Bounded to wallet balance and
+    // the booking's pre-fee total so customers can't go negative or get
+    // a refund out of the trust fee.
+    let discountCents = 0;
+    let pointsRedeemed = 0;
+    if (body.redeem_points && body.redeem_points > 0) {
+      const { data: ledger } = await supabase
+        .from("loyalty_ledger")
+        .select("points")
+        .eq("user_id", user.id);
+      const balance = (ledger ?? []).reduce((acc, r: any) => acc + (r.points ?? 0), 0);
+      const requested = Math.min(body.redeem_points, balance);
+      const requestedDollars = Math.floor(requested / 100);
+      // Max we can discount is the service amount (not the trust fee).
+      const maxDiscountCents = Math.floor(fees.serviceCents);
+      discountCents = Math.min(requestedDollars * 100, maxDiscountCents);
+      pointsRedeemed = discountCents; // 100 pts → $1, so cents == pts redeemed
+    }
+
     // Check membership allowance — if covered, the booking is created with
     // total_cents=0 and we skip Stripe checkout entirely. Membership covers
     // a single wash; multi-vehicle bookings still pay for the extras.
     const allowance = await getAllowance(user.id, body.tier_name);
     const isCoveredByMembership =
-      allowance.canCoverTier && allowance.membershipId !== null && vehicleCount === 1;
+      allowance.canCoverTier &&
+      allowance.membershipId !== null &&
+      vehicleCount === 1 &&
+      pointsRedeemed === 0;
 
+    const finalCustomerCharge = Math.max(
+      0,
+      isCoveredByMembership ? 0 : fees.customerCharge - discountCents
+    );
     const { data: booking, error: bookingErr } = await supabase
       .from("bookings")
       .insert({
@@ -121,10 +170,14 @@ export async function POST(req: Request) {
         scheduled_window_end: end.toISOString(),
         service_cents: fees.serviceCents,
         fees_cents: isCoveredByMembership ? 0 : fees.trustFee,
-        total_cents: isCoveredByMembership ? 0 : fees.customerCharge,
+        total_cents: finalCustomerCharge,
+        discount_cents: discountCents,
+        points_redeemed: pointsRedeemed,
         status: "pending",
         customer_note: body.address.notes ?? null,
         membership_id: isCoveredByMembership ? allowance.membershipId : null,
+        requested_washer_id: requestedWasherId,
+        request_expires_at: requestExpiresAt,
       })
       .select("id, total_cents, service_cents")
       .single();
@@ -132,6 +185,27 @@ export async function POST(req: Request) {
 
     bookingId = booking.id;
     serviceCents = booking.service_cents;
+
+    // Loyalty redemption ledger entry (negative points).
+    if (pointsRedeemed > 0) {
+      await supabase.from("loyalty_ledger").insert({
+        user_id: user.id,
+        points: -pointsRedeemed,
+        reason: "redeem",
+        booking_id: bookingId,
+      });
+    }
+
+    // Notify the requested pro that they have 5 minutes to accept.
+    if (requestedWasherId) {
+      const { sendPushToUser } = await import("@/lib/push");
+      sendPushToUser(requestedWasherId, {
+        title: "You were requested",
+        body: "A customer asked for you. 5 minutes to accept.",
+        url: `/pro/queue/${bookingId}`,
+        tag: `request-${bookingId}`,
+      }).catch(() => {});
+    }
 
     // Insert booking_vehicles join rows with per-vehicle pre-wash photos.
     const photoMap = body.condition_photos ?? {};
@@ -207,8 +281,28 @@ export async function POST(req: Request) {
     stripeCustomerId = cust.id;
   }
 
+  // Re-read the booking to get the final total_cents (after discount).
+  const { data: finalBooking } = await supabase
+    .from("bookings")
+    .select("total_cents")
+    .eq("id", bookingId!)
+    .maybeSingle();
+  const chargeAmount = finalBooking?.total_cents ?? fees.customerCharge;
+
+  // Stripe requires amount >= 50¢. If the customer redeemed enough points
+  // to fully cover the wash, short-circuit without a PaymentIntent.
+  if (chargeAmount < 50) {
+    return NextResponse.json({
+      booking_id: bookingId,
+      client_secret: null,
+      amount_cents: chargeAmount,
+      covered_by_membership: false,
+      covered_by_loyalty: true,
+    });
+  }
+
   const intent = await stripe.paymentIntents.create({
-    amount: fees.customerCharge,
+    amount: chargeAmount,
     currency: "usd",
     customer: stripeCustomerId,
     automatic_payment_methods: { enabled: true },
@@ -224,6 +318,6 @@ export async function POST(req: Request) {
   return NextResponse.json({
     booking_id: bookingId,
     client_secret: intent.client_secret,
-    amount_cents: fees.customerCharge,
+    amount_cents: chargeAmount,
   });
 }

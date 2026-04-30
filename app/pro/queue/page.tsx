@@ -26,19 +26,33 @@ export default async function QueuePage() {
   const { data: jobsRaw } = await supabase
     .from("bookings")
     .select(
-      "id, scheduled_window_start, service_cents, total_cents, vehicle_count, services(tier_name, category), addresses(street, city, lat, lng)"
+      "id, scheduled_window_start, service_cents, total_cents, vehicle_count, requested_washer_id, request_expires_at, services(tier_name, category), addresses(street, city, lat, lng)"
     )
     .eq("status", "pending")
     .is("assigned_washer_id", null)
     .order("scheduled_window_start", { ascending: true })
     .limit(40);
 
+  // Active direct requests for this washer (RLS already lets them see
+  // these via the requested_washer_id branch in the queue policy).
+  const now = Date.now();
+  const directRequests = (jobsRaw ?? []).filter(
+    (j: any) =>
+      j.requested_washer_id === user?.id &&
+      j.request_expires_at &&
+      new Date(j.request_expires_at).getTime() > now
+  );
+  const directRequestIds = new Set(directRequests.map((j: any) => j.id));
+
   const myLat = profile?.base_lat ? Number(profile.base_lat) : null;
   const myLng = profile?.base_lng ? Number(profile.base_lng) : null;
   const radius = profile?.service_radius_miles ?? 5;
 
-  // Filter jobs: must fall inside an availability window AND within radius (if we know either)
+  // Filter jobs: must fall inside an availability window AND within radius (if we know either).
+  // Direct requests for THIS washer are surfaced separately above the queue,
+  // so exclude them from the general list to avoid duplicates.
   const jobs = (jobsRaw ?? []).filter((j: any) => {
+    if (directRequestIds.has(j.id)) return false;
     const start = new Date(j.scheduled_window_start);
     if (avail && avail.length) {
       const day = start.getDay();
@@ -90,6 +104,55 @@ export default async function QueuePage() {
             Status: {profile?.status ?? "pending"} — set up Stripe + insurance to start receiving jobs.
           </div>
         </Link>
+      )}
+
+      {directRequests.length > 0 && (
+        <div className="mb-6 -mx-1">
+          <div className="px-1 mb-2 flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-sol animate-pulse" />
+            <span className="font-mono text-[10px] uppercase tracking-wider text-sol">
+              Requested for you · respond before they expire
+            </span>
+          </div>
+          <div className="space-y-2">
+            {directRequests.map((j: any) => {
+              const net = computeFees({ serviceCents: j.service_cents, routedTo: "solo_washer" })
+                .washerOrPartnerNet;
+              const expiresMs = new Date(j.request_expires_at).getTime();
+              const minsLeft = Math.max(0, Math.ceil((expiresMs - now) / 60000));
+              return (
+                <Link
+                  key={j.id}
+                  href={`/pro/queue/${j.id}`}
+                  className="block border border-sol bg-sol/10 p-4 hover:bg-sol/20 transition"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-1">
+                        Direct request · {minsLeft} min left
+                      </div>
+                      <div className="text-sm font-bold uppercase">
+                        {j.services?.tier_name ?? "Service"}
+                        {j.vehicle_count > 1 && (
+                          <span className="ml-2 font-mono text-[10px] tracking-wider text-sol">
+                            × {j.vehicle_count}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-bone/70 mt-1">
+                        {j.addresses?.street}, {j.addresses?.city}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="display tabular text-2xl text-sol">{fmtUSD(net)}</div>
+                      <div className="font-mono text-[10px] text-bone/60">YOU GET</div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {jobs && jobs.length > 0 ? (

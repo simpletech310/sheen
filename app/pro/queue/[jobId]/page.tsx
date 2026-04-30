@@ -5,6 +5,7 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { computeFees } from "@/lib/stripe/fees";
 import { ClaimButton } from "./ClaimButton";
+import { RequestActions } from "./RequestActions";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
 import { signedUrls } from "@/lib/storage";
@@ -17,7 +18,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
   const { data: job } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, customer_id, scheduled_window_start, scheduled_window_end, service_cents, customer_note, services(tier_name, duration_minutes, included), addresses(street, city, state, zip, notes), users:customer_id(full_name)"
+      "id, status, assigned_washer_id, customer_id, requested_washer_id, request_expires_at, request_declined_at, scheduled_window_start, scheduled_window_end, service_cents, customer_note, services(tier_name, duration_minutes, included), addresses(street, city, state, zip, notes), users:customer_id(full_name)"
     )
     .eq("id", params.jobId)
     .maybeSingle();
@@ -26,6 +27,16 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
   const fees = computeFees({ serviceCents: (job as any).service_cents, routedTo: "solo_washer" });
   const claimed = !!job.assigned_washer_id;
   const mine = job.assigned_washer_id === user?.id;
+
+  // Direct-request state for this washer.
+  const isDirectRequest =
+    !!user &&
+    (job as any).requested_washer_id === user.id &&
+    (job as any).request_expires_at &&
+    new Date((job as any).request_expires_at).getTime() > Date.now() &&
+    !(job as any).request_declined_at &&
+    !claimed;
+  const requestExpiresAtIso = isDirectRequest ? (job as any).request_expires_at : null;
 
   // Vehicles + condition photos. Pros see this before AND after claiming so
   // they can decide whether to take a job that includes 3 SUVs vs 1 sedan.
@@ -100,7 +111,10 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
       )}
 
       <div className="mt-7">
-        {!claimed && <ClaimButton jobId={job.id} />}
+        {isDirectRequest && requestExpiresAtIso && (
+          <RequestActions jobId={job.id} expiresAtIso={requestExpiresAtIso} />
+        )}
+        {!isDirectRequest && !claimed && <ClaimButton jobId={job.id} />}
         {mine && (
           <Link
             href={`/pro/jobs/${job.id}/navigate`}

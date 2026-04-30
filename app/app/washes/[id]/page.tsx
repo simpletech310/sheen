@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { DisputeButton } from "./DisputeButton";
+import { CancelButton } from "./CancelButton";
+import { RescheduleButton } from "./RescheduleButton";
 import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
 import { signedUrls } from "@/lib/storage";
 
@@ -179,6 +181,14 @@ export default async function WashDetailPage({ params }: { params: { id: string 
         >
           Rate &amp; tip your pro →
         </Link>
+      )}
+
+      {/* Self-service before the wash starts */}
+      {(["pending", "matched"] as string[]).includes(booking.status) && (
+        <>
+          <RescheduleButton bookingId={booking.id} />
+          <CancelButton bookingId={booking.id} />
+        </>
       )}
 
       {canDispute && <DisputeButton bookingId={booking.id} />}
