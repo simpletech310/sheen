@@ -13,7 +13,10 @@ const Body = z.object({
   // params we need to create a booking + PaymentIntent in one round-trip.
   booking_id: z.string().uuid().optional(),
   tier_name: z.string().optional(),
+  // service_cents is the *total* (base × vehicle count) the client computed.
   service_cents: z.number().int().positive().optional(),
+  vehicle_ids: z.array(z.string().uuid()).min(1).max(10).optional(),
+  condition_photos: z.record(z.string(), z.array(z.string())).optional(),
   address: z
     .object({
       street: z.string(),
@@ -54,6 +57,20 @@ export async function POST(req: Request) {
     if (!body.tier_name || !body.service_cents || !body.address || !body.window) {
       return NextResponse.json({ error: "Missing booking fields" }, { status: 400 });
     }
+    if (!body.vehicle_ids || body.vehicle_ids.length === 0) {
+      return NextResponse.json({ error: "Pick at least one vehicle" }, { status: 400 });
+    }
+    // Verify every vehicle belongs to this user (RLS would also block, but
+    // we want a clean 400 instead of a confusing FK error).
+    const { data: ownedVehicles } = await supabase
+      .from("vehicles")
+      .select("id")
+      .eq("user_id", user.id)
+      .in("id", body.vehicle_ids);
+    const owned = new Set((ownedVehicles ?? []).map((v) => v.id));
+    if (owned.size !== body.vehicle_ids.length) {
+      return NextResponse.json({ error: "One or more vehicles aren't yours" }, { status: 400 });
+    }
     // Look up service id
     const { data: svc } = await supabase
       .from("services")
@@ -82,11 +99,15 @@ export async function POST(req: Request) {
 
     const fees = computeFees({ serviceCents: body.service_cents, routedTo: "solo_washer" });
     const { start, end } = parseWindow(body.window);
+    const vehicleCount = body.vehicle_ids.length;
+    const primaryVehicleId = body.vehicle_ids[0];
 
     // Check membership allowance — if covered, the booking is created with
-    // total_cents=0 and we skip Stripe checkout entirely.
+    // total_cents=0 and we skip Stripe checkout entirely. Membership covers
+    // a single wash; multi-vehicle bookings still pay for the extras.
     const allowance = await getAllowance(user.id, body.tier_name);
-    const isCoveredByMembership = allowance.canCoverTier && allowance.membershipId !== null;
+    const isCoveredByMembership =
+      allowance.canCoverTier && allowance.membershipId !== null && vehicleCount === 1;
 
     const { data: booking, error: bookingErr } = await supabase
       .from("bookings")
@@ -94,6 +115,8 @@ export async function POST(req: Request) {
         customer_id: user.id,
         service_id: svc.id,
         address_id: addr.id,
+        vehicle_id: primaryVehicleId,
+        vehicle_count: vehicleCount,
         scheduled_window_start: start.toISOString(),
         scheduled_window_end: end.toISOString(),
         service_cents: fees.serviceCents,
@@ -109,6 +132,20 @@ export async function POST(req: Request) {
 
     bookingId = booking.id;
     serviceCents = booking.service_cents;
+
+    // Insert booking_vehicles join rows with per-vehicle pre-wash photos.
+    const photoMap = body.condition_photos ?? {};
+    const bvRows = body.vehicle_ids.map((vid) => ({
+      booking_id: bookingId!,
+      vehicle_id: vid,
+      condition_photo_paths: photoMap[vid] ?? [],
+    }));
+    const { error: bvErr } = await supabase.from("booking_vehicles").insert(bvRows);
+    if (bvErr) {
+      // Roll the booking back so the customer doesn't end up with a broken row.
+      await supabase.from("bookings").delete().eq("id", bookingId!);
+      return NextResponse.json({ error: `Could not save vehicles: ${bvErr.message}` }, { status: 400 });
+    }
 
     await supabase.from("booking_events").insert({
       booking_id: bookingId,

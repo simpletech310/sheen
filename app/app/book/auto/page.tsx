@@ -19,7 +19,7 @@ function TierPickerInner() {
   function next() {
     const tier = AUTO_TIERS.find((t) => t.tier_name === selected);
     if (!tier) return;
-    const url = new URL("/app/book/address", window.location.origin);
+    const url = new URL("/app/book/vehicles", window.location.origin);
     url.searchParams.set("tier", tier.tier_name);
     url.searchParams.set("price", String(tier.base_price_cents));
     router.push(url.pathname + url.search);
@@ -32,7 +32,7 @@ function TierPickerInner() {
           ← Back
         </Link>
       </div>
-      <Eyebrow>Step 1 / 3 · Pick your wash</Eyebrow>
+      <Eyebrow>Step 1 / 4 · Pick your wash</Eyebrow>
       <h1 className="display text-3xl mt-3 mb-6">Choose a tier</h1>
       <div className="space-y-3">
         {AUTO_TIERS.map((t) => (
@@ -59,7 +59,7 @@ function TierPickerInner() {
         onClick={next}
         className="mt-7 w-full bg-cobalt text-bone rounded-full py-4 text-sm font-semibold"
       >
-        Continue · Address →
+        Continue · Vehicles →
       </button>
     </div>
   );

@@ -6,6 +6,8 @@ import { fmtUSD } from "@/lib/pricing";
 import { TrackingClient } from "@/components/customer/TrackingClient";
 import { WasherProfileCard } from "@/components/customer/WasherProfileCard";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
+import { signedUrls } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +21,16 @@ export default async function TrackingPage({ params }: { params: { id: string } 
     .maybeSingle();
 
   if (!booking) notFound();
+
+  // Vehicles + condition photos for this booking.
+  const { data: bvRows } = await supabase
+    .from("booking_vehicles")
+    .select(
+      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes)"
+    )
+    .eq("booking_id", params.id);
+  const photoPaths = (bvRows ?? []).flatMap((r: any) => r.condition_photo_paths ?? []);
+  const photoUrls = await signedUrls("booking-photos", photoPaths);
 
   const addr = (booking as any).addresses;
   const customerLat = addr?.lat ? Number(addr.lat) : 34.0522;
@@ -76,6 +88,12 @@ export default async function TrackingPage({ params }: { params: { id: string } 
           <div className="mt-2">
             <WasherProfileCard profile={washerProfile} publicLink />
           </div>
+        </div>
+      )}
+
+      {(bvRows ?? []).length > 0 && (
+        <div className="mt-6">
+          <BookingVehicleList rows={(bvRows ?? []) as any} signedPhotoUrls={photoUrls} />
         </div>
       )}
 

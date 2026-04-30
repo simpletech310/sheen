@@ -11,6 +11,7 @@ type Vehicle = {
   model?: string | null;
   color?: string | null;
   plate?: string | null;
+  notes?: string | null;
   is_default?: boolean | null;
 };
 
@@ -21,6 +22,7 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
   const [model, setModel] = useState(initial?.model ?? "");
   const [color, setColor] = useState(initial?.color ?? "");
   const [plate, setPlate] = useState(initial?.plate ?? "");
+  const [notes, setNotes] = useState(initial?.notes ?? "");
   const [isDefault, setIsDefault] = useState(!!initial?.is_default);
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -41,6 +43,7 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
           model,
           color: color || null,
           plate: plate || null,
+          notes: notes.trim() || null,
           is_default: isDefault,
         }),
       });
@@ -98,6 +101,23 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
           className="px-4 py-3.5 bg-bone border border-mist text-sm font-mono focus:outline-none focus:border-royal"
         />
       </div>
+      <div>
+        <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-2">
+          Special instructions for your pro
+        </label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Ceramic coated — pH-neutral soap only. Watch the rear bumper, small ding. Hand-dry, no air blower."
+          rows={4}
+          maxLength={1000}
+          className="w-full px-4 py-3 bg-bone border border-mist text-sm focus:outline-none focus:border-royal"
+        />
+        <div className="text-[11px] text-smoke mt-1">
+          Pros see this on every booking of this vehicle.
+        </div>
+      </div>
+
       <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
         <input
           type="checkbox"

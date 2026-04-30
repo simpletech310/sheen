@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { DisputeButton } from "./DisputeButton";
+import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
+import { signedUrls } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +25,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, completed_at, scheduled_window_start, total_cents, service_cents, fees_cents, tip_cents, points_earned, customer_id, services(tier_name), addresses(street, city, state, zip), vehicles(year, make, model, color)"
+      "id, status, completed_at, scheduled_window_start, total_cents, service_cents, fees_cents, tip_cents, points_earned, vehicle_count, customer_id, services(tier_name), addresses(street, city, state, zip)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -36,6 +38,16 @@ export default async function WashDetailPage({ params }: { params: { id: string 
     .eq("booking_id", params.id)
     .maybeSingle();
 
+  // All vehicles attached to this booking + signed URLs for their photos.
+  const { data: bvRows } = await supabase
+    .from("booking_vehicles")
+    .select(
+      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes)"
+    )
+    .eq("booking_id", params.id);
+  const allPhotoPaths = (bvRows ?? []).flatMap((r: any) => r.condition_photo_paths ?? []);
+  const photoUrls = await signedUrls("booking-photos", allPhotoPaths);
+
   const completedHours =
     booking.completed_at != null
       ? (Date.now() - new Date(booking.completed_at).getTime()) / 3_600_000
@@ -44,7 +56,6 @@ export default async function WashDetailPage({ params }: { params: { id: string 
   const isLive = !["completed", "cancelled", "disputed"].includes(booking.status);
   const statusLabel = STATUS_LABEL[booking.status] ?? booking.status.replace(/_/g, " ");
 
-  const v: any = (booking as any).vehicles;
   const a: any = (booking as any).addresses;
 
   return (
@@ -90,14 +101,9 @@ export default async function WashDetailPage({ params }: { params: { id: string 
         </div>
       </div>
 
-      {v && (
-        <div className="bg-mist/40 p-4 mt-3 text-sm">
-          <Eyebrow>Vehicle</Eyebrow>
-          <div className="mt-2">
-            {v.year ? `${v.year} ` : ""}
-            {v.make} {v.model}
-          </div>
-          {v.color && <div className="text-xs text-smoke">{v.color}</div>}
+      {(bvRows ?? []).length > 0 && (
+        <div className="mt-3">
+          <BookingVehicleList rows={(bvRows ?? []) as any} signedPhotoUrls={photoUrls} />
         </div>
       )}
 
@@ -112,7 +118,9 @@ export default async function WashDetailPage({ params }: { params: { id: string 
       <div className="bg-mist/40 p-5 mt-3 space-y-2.5 text-sm">
         <Eyebrow>Receipt</Eyebrow>
         <div className="flex justify-between mt-2">
-          <span className="text-smoke">Service</span>
+          <span className="text-smoke">
+            Service{booking.vehicle_count && booking.vehicle_count > 1 ? ` × ${booking.vehicle_count}` : ""}
+          </span>
           <span className="tabular">{fmtUSD(booking.service_cents)}</span>
         </div>
         <div className="flex justify-between">

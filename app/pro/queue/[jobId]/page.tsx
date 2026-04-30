@@ -6,6 +6,8 @@ import { fmtUSD } from "@/lib/pricing";
 import { computeFees } from "@/lib/stripe/fees";
 import { ClaimButton } from "./ClaimButton";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
+import { signedUrls } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,17 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
   const fees = computeFees({ serviceCents: (job as any).service_cents, routedTo: "solo_washer" });
   const claimed = !!job.assigned_washer_id;
   const mine = job.assigned_washer_id === user?.id;
+
+  // Vehicles + condition photos. Pros see this before AND after claiming so
+  // they can decide whether to take a job that includes 3 SUVs vs 1 sedan.
+  const { data: bvRows } = await supabase
+    .from("booking_vehicles")
+    .select(
+      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes)"
+    )
+    .eq("booking_id", params.jobId);
+  const photoPaths = (bvRows ?? []).flatMap((r: any) => r.condition_photo_paths ?? []);
+  const photoUrls = await signedUrls("booking-photos", photoPaths);
 
   return (
     <div className="px-5 pt-10 pb-8">
@@ -72,6 +85,17 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
             Customer note
           </Eyebrow>
           <div className="mt-2 text-sm bg-white/5 p-3">{(job as any).customer_note}</div>
+        </div>
+      )}
+
+      {(bvRows ?? []).length > 0 && (
+        <div className="mt-5">
+          <Eyebrow className="!text-bone/60" prefix={null}>
+            {bvRows!.length === 1 ? "Vehicle" : `Vehicles · ${bvRows!.length}`}
+          </Eyebrow>
+          <div className="mt-2">
+            <BookingVehicleList rows={(bvRows ?? []) as any} signedPhotoUrls={photoUrls} dark />
+          </div>
         </div>
       )}
 

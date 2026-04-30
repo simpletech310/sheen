@@ -26,7 +26,7 @@ export default async function QueuePage() {
   const { data: jobsRaw } = await supabase
     .from("bookings")
     .select(
-      "id, scheduled_window_start, service_cents, total_cents, services(tier_name, category), addresses(street, city, lat, lng)"
+      "id, scheduled_window_start, service_cents, total_cents, vehicle_count, services(tier_name, category), addresses(street, city, lat, lng)"
     )
     .eq("status", "pending")
     .is("assigned_washer_id", null)
@@ -111,7 +111,14 @@ export default async function QueuePage() {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="text-sm font-bold uppercase">{j.services?.tier_name ?? "Service"}</div>
+                    <div className="text-sm font-bold uppercase">
+                      {j.services?.tier_name ?? "Service"}
+                      {j.vehicle_count > 1 && (
+                        <span className="ml-2 font-mono text-[10px] tracking-wider text-sol">
+                          × {j.vehicle_count}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-bone/60 mt-1">
                       {j.addresses?.street}, {j.addresses?.city}
                       {dist ? ` · ${dist} mi` : ""}

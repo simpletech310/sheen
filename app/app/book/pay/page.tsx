@@ -7,13 +7,16 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { computeFees } from "@/lib/stripe/fees";
 import { fmtUSD } from "@/lib/pricing";
 import { StripePaymentElement } from "@/components/customer/StripePaymentElement";
+import { readDraft, clearDraft } from "@/lib/booking-draft";
 
 function PayInner() {
   const router = useRouter();
   const params = useSearchParams();
   const tier = params.get("tier") ?? "Premium Detail";
-  const price = Number(params.get("price") ?? "18500");
-  const fees = computeFees({ serviceCents: price, routedTo: "solo_washer" });
+  const basePrice = Number(params.get("price") ?? "18500");
+  const count = Math.max(1, Number(params.get("count") ?? "1"));
+  const totalServiceCents = basePrice * count;
+  const fees = computeFees({ serviceCents: totalServiceCents, routedTo: "solo_washer" });
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -36,6 +39,12 @@ function PayInner() {
       setLoading(false);
       return;
     }
+    const draft = readDraft();
+    if (!draft || draft.vehicleIds.length === 0) {
+      setErr("No vehicles selected — go back and pick at least one.");
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
         const res = await fetch("/api/stripe/checkout", {
@@ -43,7 +52,9 @@ function PayInner() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             tier_name: tier,
-            service_cents: price,
+            service_cents: totalServiceCents,
+            vehicle_ids: draft.vehicleIds,
+            condition_photos: draft.conditionPhotos,
             address: {
               street,
               unit,
@@ -63,7 +74,7 @@ function PayInner() {
         }
         const data = await res.json();
         if (data.covered_by_membership) {
-          // Membership ate the cost — bounce straight to tracking
+          clearDraft();
           router.replace(`/app/tracking/${data.booking_id}`);
           return;
         }
@@ -78,6 +89,11 @@ function PayInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function onPaymentSuccess() {
+    clearDraft();
+    router.push(`/app/tracking/${bookingId}`);
+  }
+
   return (
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
@@ -85,8 +101,9 @@ function PayInner() {
           ← Back
         </Link>
       </div>
-      <Eyebrow>Step 3 / 3 · Pay &amp; confirm</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-6">CONFIRM &amp; PAY</h1>
+      <Eyebrow>Step 4 / 4 · Pay &amp; confirm</Eyebrow>
+      <h1 className="display text-3xl mt-3 mb-2">Confirm &amp; pay</h1>
+      <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
 
       <div className="bg-mist/40 p-5 mb-5">
         <div className="text-sm font-bold">{tier}</div>
@@ -95,13 +112,24 @@ function PayInner() {
           {unit ? ` ${unit}` : ""}, {city}, {state} {zip}
         </div>
         <div className="text-xs text-smoke mt-1">{win.replace(/_/g, " ")}</div>
+        <div className="text-xs text-smoke mt-1">
+          {count} vehicle{count === 1 ? "" : "s"}
+        </div>
       </div>
 
       <div className="space-y-2.5 text-sm mb-5">
         <div className="flex justify-between">
-          <span className="text-smoke">{tier}</span>
+          <span className="text-smoke">
+            {tier} {count > 1 ? `× ${count}` : ""}
+          </span>
           <span className="tabular">{fmtUSD(fees.serviceCents)}</span>
         </div>
+        {count > 1 && (
+          <div className="flex justify-between text-xs text-smoke pl-2">
+            <span>{fmtUSD(basePrice)} per vehicle</span>
+            <span />
+          </div>
+        )}
         <div className="flex justify-between">
           <span className="text-smoke">Trust fee (10%)</span>
           <span className="tabular">{fmtUSD(fees.trustFee)}</span>
@@ -125,7 +153,7 @@ function PayInner() {
         <StripePaymentElement
           clientSecret={clientSecret}
           amountLabel={fmtUSD(fees.customerCharge)}
-          onSuccess={() => router.push(`/app/tracking/${bookingId}`)}
+          onSuccess={onPaymentSuccess}
         />
       )}
 
