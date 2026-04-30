@@ -1,110 +1,235 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { createClient } from "@/lib/supabase/server";
+import { fmtUSD } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
 export default async function MePage() {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase
-    .from("users")
-    .select("full_name, email")
-    .eq("id", user?.id ?? "")
-    .maybeSingle();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userId = user?.id ?? "";
 
-  const sections = [
+  // Pull a few summary stats so the header card carries real info.
+  const [
+    { data: profile },
+    { data: ledger },
+    { count: washCount },
+    { data: membership },
+    { count: badgeCount },
+  ] = await Promise.all([
+    supabase
+      .from("users")
+      .select("full_name, email")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("loyalty_ledger")
+      .select("points")
+      .eq("user_id", userId),
+    supabase
+      .from("bookings")
+      .select("*", { count: "exact", head: true })
+      .eq("customer_id", userId)
+      .eq("status", "completed"),
+    supabase
+      .from("memberships")
+      .select("status, membership_plans(display_name)")
+      .eq("user_id", userId)
+      .in("status", ["active", "past_due"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("user_achievements")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId),
+  ]);
+
+  const balance = (ledger ?? []).reduce(
+    (acc, r: any) => acc + (r.points ?? 0),
+    0
+  );
+  const creditDollars = (balance / 100).toFixed(2);
+  const planName = (membership as any)?.membership_plans?.display_name as string | undefined;
+
+  // Section model — kept flat with descriptive subtitles so users see at
+  // a glance what each tile leads to.
+  type Tile = {
+    label: string;
+    href: string;
+    sub?: string;
+    cta?: boolean;
+  };
+  const sections: { title: string; eyebrow: string; tiles: Tile[] }[] = [
     {
-      h: "Profile",
-      items: [
-        { l: "Edit profile", href: "/app/me/profile" },
-        { l: "Payment methods", href: "/app/me/payment-methods" },
+      title: "BOOKING",
+      eyebrow: "Trip prep",
+      tiles: [
+        { label: "Garage", href: "/app/garage", sub: "Vehicles & big rigs" },
+        { label: "Places", href: "/app/places", sub: "Saved addresses" },
+        { label: "Recurring", href: "/app/me/recurring", sub: "Auto-rebook routines" },
+        { label: "Washes", href: "/app/washes", sub: "Trip history" },
       ],
     },
     {
-      h: "Membership",
-      items: [
-        { l: "Sheen+ plans", href: "/app/membership" },
-        { l: "Achievements", href: "/app/me/achievements" },
+      title: "PAYMENTS",
+      eyebrow: "Money",
+      tiles: [
+        { label: "Wallet", href: "/app/wallet", sub: "Points · membership · fees" },
+        { label: "Payment methods", href: "/app/me/payment-methods", sub: "Cards on file" },
+        { label: "Sheen+ plans", href: "/app/membership", sub: "Save 20%+ monthly", cta: true },
       ],
     },
     {
-      h: "Booking",
-      items: [
-        { l: "Garage", href: "/app/garage" },
-        { l: "Places", href: "/app/places" },
-        { l: "Washes", href: "/app/washes" },
-        { l: "Recurring schedule", href: "/app/me/recurring" },
-        { l: "Wallet", href: "/app/wallet" },
+      title: "REWARDS",
+      eyebrow: "You earn this",
+      tiles: [
+        { label: "Achievements", href: "/app/me/achievements", sub: "Badges unlocked" },
+        { label: "Refer a friend", href: "/app/me/refer", sub: "$25 each side" },
       ],
     },
     {
-      h: "Trust",
-      items: [
-        // Damage claims start from a specific wash — point at the wash list.
-        { l: "Damage claims", href: "/app/washes" },
-        { l: "Refer a friend · $25", href: "/app/me/refer" },
-      ],
-    },
-    {
-      h: "Support",
-      items: [
-        { l: "Help", href: "/help" },
-        { l: "Safety standards", href: "/safety" },
-        { l: "Contact", href: "mailto:hello@sheen.co" },
+      title: "TRUST",
+      eyebrow: "We've got you",
+      tiles: [
+        { label: "File a claim", href: "/app/washes", sub: "From a recent wash" },
+        { label: "Safety standards", href: "/safety" },
+        { label: "Help & support", href: "mailto:hello@sheen.co" },
       ],
     },
   ];
 
   return (
     <div className="px-5 pt-10 pb-8">
-      <div className="flex items-center gap-4 mb-3">
-        <div className="w-14 h-14 rounded-full bg-royal text-bone flex items-center justify-center display text-xl">
-          {(profile?.full_name ?? "U")[0]}
+      {/* Identity card — branded surface, real numbers, edit affordance. */}
+      <div className="relative bg-royal text-bone p-6 mb-6 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
+        <div className="flex items-center gap-4 mb-5">
+          <div className="w-14 h-14 rounded-full bg-bone text-royal flex items-center justify-center display text-xl flex-shrink-0">
+            {(profile?.full_name ?? user?.email ?? "U")[0]?.toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="display text-2xl truncate">
+              {profile?.full_name ?? "You"}
+            </div>
+            <div className="text-xs opacity-75 truncate">{profile?.email}</div>
+          </div>
+          <Link
+            href="/app/me/profile"
+            className="font-mono text-[10px] uppercase tracking-wider text-sol hover:text-bone shrink-0"
+          >
+            Edit →
+          </Link>
         </div>
-        <div className="flex-1">
-          <div className="display text-2xl">{profile?.full_name ?? "You"}</div>
-          <div className="text-xs text-smoke">{profile?.email}</div>
-        </div>
-      </div>
-      <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-7" />
 
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
+              Points
+            </div>
+            <div className="display tabular text-2xl mt-1 leading-none">
+              {balance.toLocaleString()}
+            </div>
+            <div className="text-[10px] tabular opacity-60 mt-0.5">
+              ≈ ${creditDollars}
+            </div>
+          </div>
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
+              Washes
+            </div>
+            <div className="display tabular text-2xl mt-1 leading-none">
+              {washCount ?? 0}
+            </div>
+            <div className="text-[10px] tabular opacity-60 mt-0.5">
+              completed
+            </div>
+          </div>
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
+              Badges
+            </div>
+            <div className="display tabular text-2xl mt-1 leading-none">
+              {badgeCount ?? 0}
+            </div>
+            <div className="text-[10px] tabular opacity-60 mt-0.5">
+              unlocked
+            </div>
+          </div>
+        </div>
+
+        {/* Membership pill — shown only when active. */}
+        {planName && (
+          <div className="mt-5 inline-flex items-center gap-2 bg-sol/15 border border-sol/40 px-3 py-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-sol" />
+            <span className="font-mono text-[10px] uppercase tracking-wider text-sol">
+              SHEEN+ {planName} active
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Sections — clean grouped tiles, no dense list. */}
       <div className="space-y-7">
         {sections.map((s) => (
-          <div key={s.h}>
-            <Eyebrow>{s.h}</Eyebrow>
-            <div className="mt-2 -mx-2 space-y-1">
-              {s.items.map((i) => (
+          <section key={s.title}>
+            <Eyebrow>{s.eyebrow}</Eyebrow>
+            <h2 className="display text-xl mt-2 mb-3">{s.title}</h2>
+            <div className="grid grid-cols-1 gap-2">
+              {s.tiles.map((t) => (
                 <Link
-                  key={i.l}
-                  href={i.href}
-                  className="flex justify-between items-center px-3 py-3 hover:bg-mist text-sm transition group"
+                  key={t.label}
+                  href={t.href}
+                  className={`group flex items-center justify-between p-4 transition border ${
+                    t.cta
+                      ? "bg-sol border-sol text-ink hover:bg-bone"
+                      : "bg-bone border-mist hover:border-ink hover:bg-mist/30"
+                  }`}
                 >
-                  <span>{i.l}</span>
-                  <span className="text-smoke group-hover:text-royal transition">→</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold uppercase tracking-wide">
+                      {t.label}
+                    </div>
+                    {t.sub && (
+                      <div
+                        className={`text-xs mt-0.5 ${
+                          t.cta ? "text-ink/75" : "text-smoke"
+                        }`}
+                      >
+                        {t.sub}
+                      </div>
+                    )}
+                  </div>
+                  <span
+                    className={`shrink-0 ml-3 transition ${
+                      t.cta
+                        ? "text-ink"
+                        : "text-smoke group-hover:text-royal"
+                    }`}
+                  >
+                    →
+                  </span>
                 </Link>
               ))}
             </div>
-          </div>
+          </section>
         ))}
-
-        <div>
-          <Eyebrow>Account</Eyebrow>
-          <div className="mt-2 -mx-2 space-y-1">
-            <form action="/api/auth/sign-out" method="post">
-              <button
-                type="submit"
-                className="w-full text-left flex justify-between items-center px-3 py-3 hover:bg-mist text-sm transition group"
-              >
-                <span className="text-bad">Sign out</span>
-                <span className="text-smoke group-hover:text-bad transition">→</span>
-              </button>
-            </form>
-          </div>
-        </div>
       </div>
 
-      <div className="mt-12 text-[10px] font-mono uppercase tracking-wider text-smoke text-center">
+      {/* Sign-out — quiet, but on-brand */}
+      <form action="/api/auth/sign-out" method="post" className="mt-10">
+        <button
+          type="submit"
+          className="w-full py-3.5 text-sm font-bold uppercase tracking-wide bg-mist/30 text-bad hover:bg-bad hover:text-bone transition border border-mist"
+        >
+          Sign out
+        </button>
+      </form>
+
+      <div className="mt-10 font-mono text-[10px] uppercase tracking-wider text-smoke text-center">
         SHEEN · Los Angeles
       </div>
     </div>
