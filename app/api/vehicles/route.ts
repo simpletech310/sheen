@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const { year, make, model, color, plate, notes, is_default } = body ?? {};
+  const { year, make, model, color, plate, notes, photo_paths, is_default } = body ?? {};
   if (!make || !model) {
     return NextResponse.json({ error: "Make and model are required" }, { status: 400 });
   }
@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       color: color ?? null,
       plate: plate ?? null,
       notes: notes ?? null,
+      photo_paths: Array.isArray(photo_paths) ? photo_paths : [],
       is_default: !!is_default,
     })
     .select("*")

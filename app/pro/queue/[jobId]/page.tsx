@@ -18,7 +18,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
   const { data: job } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, customer_id, requested_washer_id, request_expires_at, request_declined_at, scheduled_window_start, scheduled_window_end, service_cents, customer_note, services(tier_name, duration_minutes, included), addresses(street, city, state, zip, notes), users:customer_id(full_name)"
+      "id, status, assigned_washer_id, customer_id, requested_washer_id, request_expires_at, request_declined_at, scheduled_window_start, scheduled_window_end, service_cents, customer_note, services(tier_name, duration_minutes, included, category), addresses(street, city, state, zip, notes), users:customer_id(full_name)"
     )
     .eq("id", params.jobId)
     .maybeSingle();
@@ -59,7 +59,22 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
       <Eyebrow className="!text-bone/60" prefix={null}>
         Job · #{job.id.slice(0, 8)}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">{(job as any).services?.tier_name ?? "Service"}</h1>
+      <div className="flex items-center gap-2 mt-3 mb-2">
+        {(() => {
+          const category = (job as any).services?.category ?? "auto";
+          const isHome = category === "home";
+          return (
+            <span
+              className={`font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 ${
+                isHome ? "bg-sol text-ink" : "bg-royal text-bone"
+              }`}
+            >
+              {isHome ? "Home" : "Auto"}
+            </span>
+          );
+        })()}
+      </div>
+      <h1 className="display text-3xl mb-2">{(job as any).services?.tier_name ?? "Service"}</h1>
       <div className="font-mono text-[11px] text-bone/60 uppercase">
         {new Date((job as any).scheduled_window_start).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
       </div>

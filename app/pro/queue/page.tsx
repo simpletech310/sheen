@@ -166,21 +166,36 @@ export default async function QueuePage() {
                     { lat: Number(j.addresses.lat), lng: Number(j.addresses.lng) }
                   ).toFixed(1)
                 : null;
+            const category = j.services?.category ?? "auto";
+            const isHome = category === "home";
             return (
               <Link
                 key={j.id}
                 href={`/pro/queue/${j.id}`}
-                className="block bg-white/5 hover:bg-white/10 p-4 transition"
+                className={`block p-4 transition border-l-2 ${
+                  isHome
+                    ? "bg-sol/10 hover:bg-sol/15 border-sol"
+                    : "bg-white/5 hover:bg-white/10 border-royal"
+                }`}
               >
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className={`font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 ${
+                      isHome ? "bg-sol text-ink" : "bg-royal text-bone"
+                    }`}
+                  >
+                    {isHome ? "Home" : "Auto"}
+                  </span>
+                  {j.vehicle_count > 1 && !isHome && (
+                    <span className="font-mono text-[9px] uppercase tracking-wider bg-bone/20 text-bone px-1.5 py-0.5">
+                      × {j.vehicle_count} vehicles
+                    </span>
+                  )}
+                </div>
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="text-sm font-bold uppercase">
                       {j.services?.tier_name ?? "Service"}
-                      {j.vehicle_count > 1 && (
-                        <span className="ml-2 font-mono text-[10px] tracking-wider text-sol">
-                          × {j.vehicle_count}
-                        </span>
-                      )}
                     </div>
                     <div className="text-xs text-bone/60 mt-1">
                       {j.addresses?.street}, {j.addresses?.city}

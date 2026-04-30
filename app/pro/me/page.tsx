@@ -42,6 +42,9 @@ export default async function ProMePage() {
         <Link href="/pro/availability" className="block bg-white/5 p-3 text-sm hover:bg-white/10">
           Availability →
         </Link>
+        <Link href="/pro/earnings" className="block bg-white/5 p-3 text-sm hover:bg-white/10">
+          Earnings · trend →
+        </Link>
         <Link href="/pro/wallet" className="block bg-white/5 p-3 text-sm hover:bg-white/10">
           Wallet & payouts →
         </Link>

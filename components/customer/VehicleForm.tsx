@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
+import { VehiclePhotoPicker } from "./VehiclePhotoPicker";
 
 type Vehicle = {
   id?: string;
@@ -12,6 +13,7 @@ type Vehicle = {
   color?: string | null;
   plate?: string | null;
   notes?: string | null;
+  photo_paths?: string[] | null;
   is_default?: boolean | null;
 };
 
@@ -23,6 +25,7 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
   const [color, setColor] = useState(initial?.color ?? "");
   const [plate, setPlate] = useState(initial?.plate ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
+  const [photoPaths, setPhotoPaths] = useState<string[]>(initial?.photo_paths ?? []);
   const [isDefault, setIsDefault] = useState(!!initial?.is_default);
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -44,6 +47,7 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
           color: color || null,
           plate: plate || null,
           notes: notes.trim() || null,
+          photo_paths: photoPaths,
           is_default: isDefault,
         }),
       });
@@ -116,6 +120,17 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
         <div className="text-[11px] text-smoke mt-1">
           Pros see this on every booking of this vehicle.
         </div>
+      </div>
+
+      <div>
+        <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-2">
+          Photos of this vehicle (optional)
+        </label>
+        <VehiclePhotoPicker
+          paths={photoPaths}
+          scope={`vehicle_${initial?.id ?? "new"}`}
+          onChange={setPhotoPaths}
+        />
       </div>
 
       <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
