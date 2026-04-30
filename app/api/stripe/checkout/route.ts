@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/server";
 import { computeFees } from "@/lib/stripe/fees";
 import { getAllowance, consumeAllowance } from "@/lib/membership";
@@ -18,7 +18,7 @@ const Body = z.object({
   category: z.enum(["auto", "home", "big_rig"]).default("auto"),
   vehicle_ids: z.array(z.string().uuid()).min(1).max(10).optional(),
   condition_photos: z.record(z.string(), z.array(z.string())).optional(),
-  requested_wash_handle: z.string().min(3).max(12).optional(),
+  requested_wash_handle: z.string().min(3).max(20).optional(),
   redeem_points: z.number().int().min(0).optional(),
   address: z
     .object({
@@ -124,13 +124,23 @@ export async function POST(req: Request) {
     const primaryVehicleId = usesVehicles ? vehicleIds[0] : null;
 
     // Resolve direct request handle, if provided.
+    // Use the service client — washer_profiles RLS only allows pros to
+    // read their OWN row, so a user-context lookup of someone else's
+    // handle returns null and surfaces as the misleading "No pro with
+    // that wash ID" error. /api/washers/lookup already uses the service
+    // client for the same reason.
     let requestedWasherId: string | null = null;
     let requestExpiresAt: string | null = null;
     if (body.requested_wash_handle) {
-      const { data: requestedWasher } = await supabase
+      const handle = body.requested_wash_handle
+        .trim()
+        .replace(/^@/, "")
+        .toUpperCase();
+      const svc = createServiceClient();
+      const { data: requestedWasher } = await svc
         .from("washer_profiles")
         .select("user_id, status")
-        .eq("wash_handle", body.requested_wash_handle.toUpperCase())
+        .eq("wash_handle", handle)
         .maybeSingle();
       if (!requestedWasher) {
         return NextResponse.json({ error: "No pro with that wash ID" }, { status: 400 });

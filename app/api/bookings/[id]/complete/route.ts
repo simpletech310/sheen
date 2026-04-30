@@ -85,36 +85,15 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     .select("id")
     .maybeSingle();
 
-  // Attempt Stripe transfer if we have a connected account + a successful charge
-  if (stripeAccountId && booking.stripe_payment_intent_id) {
-    try {
-      const pi = await stripe.paymentIntents.retrieve(booking.stripe_payment_intent_id);
-      if (pi.status === "succeeded") {
-        const transfer = await stripe.transfers.create({
-          amount: fees.washerOrPartnerNet,
-          currency: "usd",
-          destination: stripeAccountId,
-          source_transaction: pi.latest_charge as string,
-          metadata: {
-            booking_id: booking.id,
-            payout_id: payout?.id ?? "",
-          },
-        });
-        await supabase
-          .from("payouts")
-          .update({ stripe_transfer_id: transfer.id })
-          .eq("booking_id", booking.id);
-      }
-    } catch (e: any) {
-      // Don't fail the request — keep payout pending and let ops investigate.
-      await supabase.from("booking_events").insert({
-        booking_id: booking.id,
-        type: "transfer_failed",
-        actor_id: user.id,
-        payload: { error: e.message ?? String(e) },
-      });
-    }
-  }
+  // NOTE: Stripe transfer is intentionally NOT triggered here. Funds are
+  // held in escrow until the customer hits "Approve" on their tracking
+  // page (or 24h auto-approval, v2). The actual release is handled by
+  // /api/bookings/[id]/approve via lib/payout/release.ts. This guards
+  // against pros marking complete on a job that wasn't actually done.
+  void stripe;
+  void stripeAccountId;
+  void fees;
+  void payout;
 
   await supabase.from("booking_events").insert({
     booking_id: booking.id,
@@ -138,11 +117,11 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     const customerNew = await checkAchievements(booking.customer_id);
     const proNew = await checkAchievements(user.id);
 
-    // Push notifications
+    // Push notifications — funds held until customer approves.
     await sendPushToUser(booking.customer_id, {
-      title: "Your Sheen is done",
-      body: "Tap to rate and tip your pro.",
-      url: `/app/rate/${booking.id}`,
+      title: "Your Sheen is done — approve to release funds",
+      body: "Review the photos, rate the pro, and approve to release payment.",
+      url: `/app/tracking/${booking.id}`,
       tag: `booking-${booking.id}`,
     }).catch(() => {});
     for (const a of [...customerNew]) {

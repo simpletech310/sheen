@@ -8,6 +8,7 @@ import { WasherProfileCard } from "@/components/customer/WasherProfileCard";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
 import { signedUrls } from "@/lib/storage";
+import { ApprovalPanel } from "@/components/customer/ApprovalPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,9 @@ export default async function TrackingPage({ params }: { params: { id: string } 
   const { data: { user } } = await supabase.auth.getUser();
   const { data: booking } = await supabase
     .from("bookings")
-    .select("id, status, assigned_washer_id, total_cents, addresses(lat, lng), services(tier_name)")
+    .select(
+      "id, status, assigned_washer_id, total_cents, customer_approved_at, funds_released_at, completed_at, work_photo_paths, addresses(lat, lng), services(tier_name)"
+    )
     .eq("id", params.id)
     .maybeSingle();
 
@@ -114,12 +117,15 @@ export default async function TrackingPage({ params }: { params: { id: string } 
       </div>
 
       {booking.status === "completed" && (
-        <Link
-          href={`/app/rate/${booking.id}`}
-          className="mt-6 block text-center bg-royal text-bone py-4 text-sm font-bold uppercase tracking-wide hover:bg-ink"
-        >
-          Rate &amp; tip →
-        </Link>
+        <div className="mt-6">
+          <ApprovalPanel
+            bookingId={booking.id}
+            approvedAt={(booking as any).customer_approved_at}
+            fundsReleasedAt={(booking as any).funds_released_at}
+            completedAt={(booking as any).completed_at}
+            workPhotoPaths={(booking as any).work_photo_paths ?? []}
+          />
+        </div>
       )}
     </div>
   );
