@@ -113,6 +113,44 @@ export default function AutoPage() {
         </div>
       </section>
 
+      {/* Membership callout — Auto plans surface */}
+      <section className="px-6 md:px-14 py-16 bg-royal text-bone relative">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">
+          <div className="lg:col-span-2">
+            <Eyebrow className="!text-sol" prefix={null}>SHEEN+ for autos</Eyebrow>
+            <h2 className="display text-[40px] md:text-[64px] leading-tight mt-4">
+              WASH WEEKLY.
+              <br />
+              <span className="text-sol">PAY ONCE.</span>
+            </h2>
+            <p className="text-sm md:text-base text-bone/80 mt-5 max-w-[520px] leading-relaxed">
+              Sheen+ Basic is $59/mo for 2 Express washes — pays itself back at
+              your second wash. Pro is $129/mo for 4 Full Detail-tier washes.
+              Priority queue, no surge.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <div className="bg-bone/10 p-4 border-l-2 border-sol">
+              <div className="display text-xl">SHEEN+ Basic</div>
+              <div className="display tabular text-3xl text-sol mt-1">$59/mo</div>
+              <div className="text-xs text-bone/70 mt-1">2 Express washes</div>
+            </div>
+            <div className="bg-bone/10 p-4 border-l-2 border-sol">
+              <div className="display text-xl">SHEEN+ Pro</div>
+              <div className="display tabular text-3xl text-sol mt-1">$129/mo</div>
+              <div className="text-xs text-bone/70 mt-1">4 Full Detail washes</div>
+            </div>
+            <Link
+              href="/app/membership"
+              className="block w-full bg-sol text-ink py-3.5 mt-3 text-xs font-bold uppercase tracking-wide hover:bg-bone transition text-center"
+            >
+              Compare all plans →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Gallery */}
       <section className="px-6 md:px-14 py-20 bg-mist/40">
         <div className="flex justify-between items-end mb-10">

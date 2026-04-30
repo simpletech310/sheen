@@ -1,11 +1,46 @@
+import Link from "next/link";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 
-const cols = [
-  { h: "Services", items: ["Auto", "Home", "Commercial", "Fleet"] },
-  { h: "Pros", items: ["Become a washer", "Partner program", "Earnings calculator"] },
-  { h: "Trust", items: ["Insurance", "Damage guarantee", "Background checks", "Safety"] },
-  { h: "Company", items: ["About", "Cities", "Press", "Contact"] },
+type Item = { label: string; href: string };
+
+// Footer is now a real navigation surface — every label has a working
+// destination, and Big Rig + Sheen+ get top-level visibility.
+const cols: { h: string; items: Item[] }[] = [
+  {
+    h: "Services",
+    items: [
+      { label: "Auto detail", href: "/auto" },
+      { label: "Big rig wash", href: "/big-rig" },
+      { label: "Home power-wash", href: "/home" },
+      { label: "Commercial", href: "/business" },
+    ],
+  },
+  {
+    h: "Membership",
+    items: [
+      { label: "Sheen+ plans", href: "/app/membership" },
+      { label: "Auto plans", href: "/app/membership#auto" },
+      { label: "Big-rig plans", href: "/app/membership#big-rig" },
+      { label: "Combined", href: "/app/membership#combined" },
+    ],
+  },
+  {
+    h: "Pros",
+    items: [
+      { label: "Become a washer", href: "/wash" },
+      { label: "Pro sign-in", href: "/sign-in?role=washer" },
+      { label: "Partner program", href: "/partner" },
+    ],
+  },
+  {
+    h: "Trust",
+    items: [
+      { label: "Safety standards", href: "/safety" },
+      { label: "Help center", href: "/help" },
+      { label: "Contact", href: "mailto:hello@sheen.co" },
+    ],
+  },
 ];
 
 export function MFooter() {
@@ -14,29 +49,42 @@ export function MFooter() {
       {/* Gold horn stripe at top */}
       <div className="h-1 bg-sol -mx-6 md:-mx-14 -mt-14 mb-14" />
       <div className="max-w-screen mx-auto">
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-10">
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-10">
           <div className="col-span-2">
             <Wordmark size={36} invert highlight />
-            <p className="text-sm opacity-60 mt-5 max-w-[260px]">
-              On-demand wash & detail. Vetted local pros. Get it sheened.
+            <p className="text-sm opacity-60 mt-5 max-w-[260px] leading-relaxed">
+              On-demand wash &amp; detail. Vetted local pros. Auto, home,
+              big rig — get it sheened.
             </p>
+            <Link
+              href="/app/book"
+              className="mt-5 inline-block bg-sol text-ink px-5 py-3 text-xs font-bold uppercase tracking-wide hover:bg-bone transition"
+            >
+              Book a wash →
+            </Link>
           </div>
           {cols.map((col) => (
             <div key={col.h} className="flex flex-col gap-2.5">
               <Eyebrow className="!text-sol mb-1.5" prefix={null}>
                 {col.h}
               </Eyebrow>
-              {col.items.map((i) => (
-                <span key={i} className="text-sm text-bone/75">
-                  {i}
-                </span>
+              {col.items.map((it) => (
+                <Link
+                  key={it.label}
+                  href={it.href}
+                  className="text-sm text-bone/75 hover:text-bone transition"
+                >
+                  {it.label}
+                </Link>
               ))}
             </div>
           ))}
         </div>
-        <div className="flex justify-between items-center mt-12 pt-6 border-t border-bone/10 text-xs opacity-60 font-mono">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-12 pt-6 border-t border-bone/10 text-xs opacity-60 font-mono gap-2">
           <span>© 2026 SHEEN INC. ALL RIGHTS RESERVED.</span>
-          <span>sheen.co</span>
+          <span className="md:text-right">
+            sheen.co · Los Angeles · made for what shines
+          </span>
         </div>
       </div>
     </footer>

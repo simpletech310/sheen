@@ -6,8 +6,17 @@ import { Placeholder } from "@/components/marketing/Placeholder";
 
 const categories = [
   { tag: "01", label: "Auto", tiers: "4 tiers", from: "$35", desc: "Express wash → showroom-grade paint correction.", href: "/auto", img: "/img/auto.jpg" },
-  { tag: "02", label: "Home", tiers: "4 tiers", from: "$185", desc: "Driveways, siding, decks, solar panels.", href: "/home", tone: "royal" as const, img: "/img/home.jpg" },
-  { tag: "03", label: "Commercial", tiers: "Quoted", from: "Custom", desc: "Storefronts, fleets, post-construction.", href: "/business", tone: "sol" as const, img: "/img/business.jpg" },
+  { tag: "02", label: "Big Rig", tiers: "4 tiers", from: "$145", desc: "Tractors, trailers, sleepers — at the rest stop or yard.", href: "/big-rig", tone: "ink" as const, img: "/img/og-default.jpg" },
+  { tag: "03", label: "Home", tiers: "4 tiers", from: "$185", desc: "Driveways, siding, decks, solar panels.", href: "/home", tone: "royal" as const, img: "/img/home.jpg" },
+  { tag: "04", label: "Commercial", tiers: "Quoted", from: "Custom", desc: "Storefronts, fleets, post-construction.", href: "/business", tone: "sol" as const, img: "/img/business.jpg" },
+];
+
+const memberships = [
+  { name: "Sheen+ Basic", price: "$59/mo", desc: "2 Express OR 1 Full Detail per month.", href: "/app/membership", category: "Auto" },
+  { name: "Sheen+ Pro", price: "$129/mo", desc: "4 Full Detail-tier washes per month.", href: "/app/membership", category: "Auto", featured: true },
+  { name: "Rig Solo", price: "$199/mo", desc: "1 Trailer Wash for owner-operators.", href: "/app/membership", category: "Big Rig" },
+  { name: "Rig Pro", price: "$349/mo", desc: "2 big-rig washes up to Full Rig Detail.", href: "/app/membership", category: "Big Rig" },
+  { name: "Sheen+ Combined", price: "$199/mo", desc: "1 auto Premium + 1 big-rig Trailer Wash.", href: "/app/membership", category: "Combined" },
 ];
 
 const steps = [
@@ -70,34 +79,109 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Category picker */}
+      {/* Category picker — 4 services */}
       <section className="px-6 md:px-14 py-16 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex justify-between items-end mb-8">
+          <h2 className="display text-[36px] md:text-[56px] leading-tight">PICK YOUR LANE.</h2>
+          <Eyebrow>4 services · LA</Eyebrow>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {categories.map((c) => (
             <Link
               key={c.label}
               href={c.href}
-              className="group bg-bone border border-mist hover:border-ink transition-all min-h-[420px] flex flex-col"
+              className="group bg-bone border border-mist hover:border-ink transition-all min-h-[400px] flex flex-col"
             >
               <div className="flex justify-between text-[11px] font-mono text-smoke px-6 pt-5">
-                <span>{c.tag} / 03</span>
+                <span>
+                  {c.tag} / {String(categories.length).padStart(2, "0")}
+                </span>
                 <span>{c.tiers}</span>
               </div>
               <Placeholder
                 label={`${c.label.toLowerCase()}`}
-                height={200}
+                height={180}
                 tone={(c as any).tone ?? "mist"}
                 src={(c as any).img}
-                className="my-5 mx-6"
+                className="my-4 mx-6"
               />
               <div className="px-6 pb-5 mt-auto">
-                <div className="display text-[44px] leading-none mb-2 group-hover:text-royal transition-colors">{c.label}</div>
-                <p className="text-sm text-smoke mb-4 min-h-[36px]">{c.desc}</p>
+                <div className="display text-[36px] leading-none mb-2 group-hover:text-royal transition-colors">
+                  {c.label.toUpperCase()}
+                </div>
+                <p className="text-sm text-smoke mb-4 min-h-[36px] leading-relaxed">{c.desc}</p>
                 <div className="flex justify-between items-center pt-4 border-t border-mist">
                   <span className="font-mono text-xs tabular">FROM {c.from}</span>
-                  <span className="text-sm font-bold uppercase">Book →</span>
+                  <span className="text-sm font-bold uppercase group-hover:text-royal">Book →</span>
                 </div>
               </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Membership band — separate Auto / Big Rig / Combined plans
+          so customers see at a glance there's a plan for what they
+          actually drive. Royal Blue panel with sol-gold "Popular" pill. */}
+      <section className="px-6 md:px-14 py-20 bg-mist/30">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-10">
+          <div>
+            <Eyebrow className="!text-royal" prefix={null}>SHEEN+ Membership</Eyebrow>
+            <h2 className="display text-[44px] md:text-[56px] leading-tight mt-3">
+              SAVE EVERY <span className="text-royal">MONTH.</span>
+            </h2>
+            <p className="text-sm text-smoke mt-3 max-w-md leading-relaxed">
+              Auto, Big Rig, or both. Plans include guaranteed washes, priority
+              scheduling, and 100% loyalty-point earn rate.
+            </p>
+          </div>
+          <Link
+            href="/app/membership"
+            className="bg-ink text-bone px-6 py-4 text-sm font-bold uppercase tracking-wide hover:bg-royal transition self-start md:self-end"
+          >
+            Compare all plans →
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          {memberships.map((m) => (
+            <Link
+              key={m.name}
+              href={m.href}
+              className={`group block p-5 transition border-l-2 ${
+                m.featured
+                  ? "bg-royal text-bone border-sol hover:bg-ink"
+                  : "bg-bone text-ink border-royal hover:border-ink"
+              }`}
+            >
+              <div
+                className={`font-mono text-[10px] uppercase tracking-wider ${
+                  m.featured ? "text-sol" : "text-smoke"
+                }`}
+              >
+                {m.category}
+                {m.featured && (
+                  <span className="ml-2 px-1.5 py-0.5 border border-sol text-sol">
+                    Popular
+                  </span>
+                )}
+              </div>
+              <div className="display text-[24px] leading-tight mt-3">
+                {m.name.toUpperCase()}
+              </div>
+              <div
+                className={`display tabular text-3xl mt-2 ${
+                  m.featured ? "text-sol" : "text-royal"
+                }`}
+              >
+                {m.price}
+              </div>
+              <p
+                className={`text-xs mt-3 leading-relaxed ${
+                  m.featured ? "text-bone/80" : "text-smoke"
+                }`}
+              >
+                {m.desc}
+              </p>
             </Link>
           ))}
         </div>
