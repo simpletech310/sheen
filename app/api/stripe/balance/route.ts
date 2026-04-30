@@ -1,0 +1,47 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getStripe } from "@/lib/stripe/server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+/** GET /api/stripe/balance — returns Stripe balance for the calling user's
+ *  connected account (washer Express OR partner Standard). */
+export async function GET() {
+  const supabase = createClient();
+  const stripe = getStripe();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  let stripeAccountId: string | null = null;
+  const { data: wp } = await supabase
+    .from("washer_profiles")
+    .select("stripe_account_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (wp?.stripe_account_id) stripeAccountId = wp.stripe_account_id;
+  else {
+    const { data: pp } = await supabase
+      .from("partner_profiles")
+      .select("stripe_account_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (pp?.stripe_account_id) stripeAccountId = pp.stripe_account_id;
+  }
+
+  if (!stripeAccountId) {
+    return NextResponse.json({ available_cents: 0, pending_cents: 0, connected: false });
+  }
+
+  try {
+    const balance = await stripe.balance.retrieve(undefined, { stripeAccount: stripeAccountId });
+    const av = balance.available.find((b) => b.currency === "usd")?.amount ?? 0;
+    const pe = balance.pending.find((b) => b.currency === "usd")?.amount ?? 0;
+    return NextResponse.json({ available_cents: av, pending_cents: pe, connected: true });
+  } catch (e: any) {
+    return NextResponse.json(
+      { error: e.message, available_cents: 0, pending_cents: 0, connected: true },
+      { status: 200 }
+    );
+  }
+}

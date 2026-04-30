@@ -6,7 +6,8 @@ import { cn } from "@/lib/cn";
 
 const tabs = [
   { href: "/pro/queue", label: "Queue" },
-  { href: "/pro/earnings", label: "Earnings" },
+  { href: "/pro/availability", label: "Hours" },
+  { href: "/pro/wallet", label: "Wallet" },
   { href: "/pro/me", label: "Me" },
 ];
 
@@ -14,7 +15,7 @@ export function ProBottomNav() {
   const pathname = usePathname();
   return (
     <nav className="sticky bottom-0 left-0 right-0 z-30 border-t border-white/10 bg-ink">
-      <div className="max-w-md mx-auto grid grid-cols-3">
+      <div className="max-w-md mx-auto grid grid-cols-4">
         {tabs.map((t) => {
           const active = pathname.startsWith(t.href);
           return (
