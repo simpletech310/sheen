@@ -25,12 +25,26 @@ function SignUpInner() {
     setErr(null);
     setLoading(true);
     const supabase = createClient();
+    // Use the env'd public URL so the email-confirmation link points
+    // at production, not localhost. Falls back to the current origin
+    // if the env isn't set (local dev).
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+    // Pass role through ?next= so the auth callback knows where to
+    // route post-confirmation. The DB trigger reads role from
+    // raw_user_meta_data so the public.users row is created with the
+    // right role on first auth, but we still need a destination.
+    const next = isWasher
+      ? "/pro/onboard"
+      : isPartner
+      ? "/partner/apply"
+      : "/app";
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: name, role },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${baseUrl}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     setLoading(false);

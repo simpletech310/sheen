@@ -14,9 +14,6 @@ const categories = [
 const memberships = [
   { name: "Sheen+ Basic", price: "$59/mo", desc: "2 Express OR 1 Full Detail per month.", href: "/app/membership", category: "Auto" },
   { name: "Sheen+ Pro", price: "$129/mo", desc: "4 Full Detail-tier washes per month.", href: "/app/membership", category: "Auto", featured: true },
-  { name: "Rig Solo", price: "$199/mo", desc: "1 Trailer Wash for owner-operators.", href: "/app/membership", category: "Big Rig" },
-  { name: "Rig Pro", price: "$349/mo", desc: "2 big-rig washes up to Full Rig Detail.", href: "/app/membership", category: "Big Rig" },
-  { name: "Sheen+ Combined", price: "$199/mo", desc: "1 auto Premium + 1 big-rig Trailer Wash.", href: "/app/membership", category: "Combined" },
 ];
 
 const steps = [
@@ -30,7 +27,7 @@ const trust = [
   { k: "$2,500", v: "Damage guarantee" },
   { k: "$1M", v: "GL insurance · every wash" },
   { k: "100%", v: "Tips to the pro" },
-  { k: "4.9 ★", v: "14,200+ ratings" },
+  { k: "Escrow", v: "Held until you approve" },
 ];
 
 export default function Home() {
@@ -142,12 +139,12 @@ export default function Home() {
             Compare all plans →
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {memberships.map((m) => (
             <Link
               key={m.name}
               href={m.href}
-              className={`group block p-5 transition border-l-2 ${
+              className={`group block p-7 transition border-l-2 ${
                 m.featured
                   ? "bg-royal text-bone border-sol hover:bg-ink"
                   : "bg-bone text-ink border-royal hover:border-ink"
@@ -237,29 +234,6 @@ export default function Home() {
           <Placeholder label="Mustang · showroom" src="/img/showroom.jpg" height={260} />
           <Placeholder label="Panamera Turbo · premium" src="/img/og-default.jpg" height={260} />
           <Placeholder label="4Runner · full detail" src="/img/auto-detail.jpg" height={260} />
-        </div>
-      </section>
-
-      {/* Testimonial */}
-      <section className="px-6 md:px-14 py-24 bg-bone">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-14 items-center">
-          <div className="lg:col-span-2">
-            <Eyebrow className="!text-royal" prefix={null}>★ ★ ★ ★ ★</Eyebrow>
-            <blockquote className="text-[28px] md:text-[40px] leading-tight mt-5 font-bold tracking-tight">
-              &ldquo;Marcus showed up in a black truck, foam pre-soak, two-bucket method, the works. My GT3 has never
-              looked this clean. He&rsquo;ll be here every other Saturday.&rdquo;
-            </blockquote>
-            <div className="mt-8 flex gap-3 items-center">
-              <div className="w-12 h-12 rounded-full bg-royal text-bone flex items-center justify-center font-bold">
-                D
-              </div>
-              <div>
-                <div className="text-sm font-bold">Daniela R.</div>
-                <div className="text-xs text-smoke">Manhattan Beach · Premium Detail</div>
-              </div>
-            </div>
-          </div>
-          <Placeholder label="customer + car after wash" src="/img/gt3.jpg" height={400} />
         </div>
       </section>
 

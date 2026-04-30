@@ -104,26 +104,6 @@ export default function WashPage() {
         </div>
       </section>
 
-      <section className="px-6 md:px-14 py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center">
-          <Placeholder label="Pro at work" src="/img/washer.jpg" height={400} />
-          <div className="lg:col-span-2">
-            <Eyebrow className="!text-royal" prefix={null}>★ ★ ★ ★ ★</Eyebrow>
-            <blockquote className="text-[28px] md:text-[40px] leading-tight mt-5 font-bold tracking-tight">
-              &ldquo;Used to drive Uber. Now I do 22 details a week, $1,700+ net, and I&rsquo;m my own boss. Customers
-              come back. Tips actually hit my account same day.&rdquo;
-            </blockquote>
-            <div className="mt-7 flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-royal text-bone flex items-center justify-center font-bold">M</div>
-              <div>
-                <div className="text-sm font-bold">Marcus J.</div>
-                <div className="text-xs text-smoke">Long Beach · 412 jobs</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="px-6 md:px-14 py-20 bg-bone">
         <div className="flex justify-between items-end mb-10">
           <h2 className="display text-[40px] md:text-[56px] leading-tight">YOUR KIT.</h2>

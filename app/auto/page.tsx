@@ -4,6 +4,25 @@ import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { Placeholder } from "@/components/marketing/Placeholder";
 
+const why = [
+  {
+    h: "Two-bucket method, always",
+    d: "Wash bucket + rinse bucket on every car. Microfiber per panel — never the same towel on the wheels and the paint.",
+  },
+  {
+    h: "Ceramic-safe products",
+    d: "pH-balanced soap, hand-applied wax, leather-safe conditioner. Nothing on your paint we wouldn't put on our own.",
+  },
+  {
+    h: "We bring the rig",
+    d: "Self-contained water + power. No hose hookup, no power cord through your window. Zero footprint on your driveway.",
+  },
+  {
+    h: "Damage covered",
+    d: "$2,500 guarantee on every wash. File from the app within 24 hours. Paid out from a platform reserve, not the pro's pocket.",
+  },
+];
+
 const tiers = [
   { tag: "01", name: "Express", price: "$35", time: "30 min", items: ["Hand wash", "Tire shine", "Windows", "Door jambs"] },
   { tag: "02", name: "Full Detail", price: "$85", time: "75 min", items: ["Everything in Express", "Interior vacuum", "Dash + console wipe", "Floor mats"] },
@@ -60,8 +79,26 @@ export default function AutoPage() {
         </div>
       </section>
 
-      {/* Tier comparison */}
+      {/* Why band */}
       <section className="px-6 md:px-14 py-16">
+        <div className="flex justify-between items-end mb-10">
+          <h2 className="display text-[36px] md:text-[56px] leading-none">WHY US.</h2>
+          <Eyebrow>The standard</Eyebrow>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {why.map((w, i) => (
+            <div key={w.h} className="border-l-2 border-royal bg-mist/40 p-5">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-royal">
+                {String(i + 1).padStart(2, "0")} · {w.h}
+              </div>
+              <p className="text-sm text-ink/80 mt-3 leading-relaxed">{w.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Tier comparison */}
+      <section className="px-6 md:px-14 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border border-mist">
           {tiers.map((tier, i) => (
             <div

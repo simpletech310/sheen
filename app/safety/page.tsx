@@ -48,7 +48,7 @@ const trust = [
   { k: "$2,500", v: "Damage guarantee" },
   { k: "$1M", v: "GL · every pro" },
   { k: "100%", v: "Tips to the pro" },
-  { k: "4.9 ★", v: "14,200+ ratings" },
+  { k: "Escrow", v: "Held until you approve" },
 ];
 
 export default function SafetyPage() {
