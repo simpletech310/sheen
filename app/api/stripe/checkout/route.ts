@@ -151,7 +151,7 @@ export async function POST(req: Request) {
     // Check membership allowance — if covered, the booking is created with
     // total_cents=0 and we skip Stripe checkout entirely. Membership covers
     // a single wash; multi-vehicle bookings still pay for the extras.
-    const allowance = await getAllowance(user.id, body.tier_name);
+    const allowance = await getAllowance(user.id, body.tier_name, body.category);
     const isCoveredByMembership =
       allowance.canCoverTier &&
       allowance.membershipId !== null &&

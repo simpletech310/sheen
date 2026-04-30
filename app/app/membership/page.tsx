@@ -14,7 +14,7 @@ export default async function MembershipPage() {
 
   const { data: plans } = await supabase
     .from("membership_plans")
-    .select("id, tier, display_name, monthly_price_cents, included_washes, max_service_tier, description, stripe_price_id")
+    .select("id, tier, display_name, monthly_price_cents, included_washes, max_service_tier, description, stripe_price_id, service_categories, allowed_tier_names")
     .eq("active", true)
     .order("sort_order");
 
@@ -71,10 +71,28 @@ export default async function MembershipPage() {
               }`}
             >
               <div className="flex justify-between items-start">
-                <div>
+                <div className="flex-1 pr-3">
                   <div className="display text-2xl">{p.display_name?.toUpperCase()}</div>
                   <div className="text-xs text-smoke mt-1">
-                    {p.included_washes} washes · up to {p.max_service_tier} tier
+                    {p.included_washes} washes / month
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {((p as any).service_categories ?? ["auto"]).map((cat: string) => (
+                      <span
+                        key={cat}
+                        className="font-mono text-[9px] uppercase tracking-wider bg-royal text-bone px-1.5 py-0.5"
+                      >
+                        {cat}
+                      </span>
+                    ))}
+                    {((p as any).allowed_tier_names ?? []).map((tn: string) => (
+                      <span
+                        key={tn}
+                        className="font-mono text-[9px] uppercase tracking-wider bg-mist text-ink px-1.5 py-0.5"
+                      >
+                        {tn}
+                      </span>
+                    ))}
                   </div>
                   <p className="text-xs text-smoke mt-2">{p.description}</p>
                 </div>

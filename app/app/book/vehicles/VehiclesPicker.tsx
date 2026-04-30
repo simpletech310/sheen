@@ -21,10 +21,12 @@ type Vehicle = {
 export function VehiclesPicker({
   tier,
   price,
+  handle,
   initialVehicles,
 }: {
   tier: string;
   price: number;
+  handle?: string;
   initialVehicles: Vehicle[];
 }) {
   const router = useRouter();
@@ -73,6 +75,7 @@ export function VehiclesPicker({
     url.searchParams.set("tier", tier);
     url.searchParams.set("price", String(price));
     url.searchParams.set("count", String(selected.length));
+    if (handle) url.searchParams.set("handle", handle);
     router.push(url.pathname + url.search);
   }
 

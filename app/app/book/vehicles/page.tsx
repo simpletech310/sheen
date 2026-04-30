@@ -8,10 +8,11 @@ export const dynamic = "force-dynamic";
 export default async function VehiclesPage({
   searchParams,
 }: {
-  searchParams: { tier?: string; price?: string };
+  searchParams: { tier?: string; price?: string; handle?: string };
 }) {
   const tier = searchParams.tier ?? "Premium Detail";
   const price = Number(searchParams.price ?? "18500");
+  const handle = searchParams.handle ?? "";
 
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -38,6 +39,7 @@ export default async function VehiclesPage({
       <VehiclesPicker
         tier={tier}
         price={price}
+        handle={handle}
         initialVehicles={(vehicles ?? []) as any}
       />
     </div>

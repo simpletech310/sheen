@@ -23,15 +23,30 @@ export type AllowanceState = {
   maxTier: string;
   canCoverTier: boolean;
   planTier: string | null;
+  serviceCategories: string[];
+  allowedTierNames: string[];
 };
 
-/** Look up the calling user's active membership and figure out whether the
- *  given service tier is covered by their allowance for the current period. */
-export async function getAllowance(userId: string, serviceTierName: string): Promise<AllowanceState> {
+/**
+ * Look up the calling user's active membership and figure out whether the
+ * given (category, tier) is covered by their allowance for the current
+ * period. A plan covers a wash if:
+ *   1. plan.service_categories includes the booking category, AND
+ *   2. plan.allowed_tier_names includes the tier, OR if that array is
+ *      empty (legacy plans), the tier rank is <= max_service_tier rank.
+ *   3. remaining washes > 0.
+ */
+export async function getAllowance(
+  userId: string,
+  serviceTierName: string,
+  category: "auto" | "home" = "auto"
+): Promise<AllowanceState> {
   const supabase = createClient();
   const { data: m } = await supabase
     .from("memberships")
-    .select("id, washes_used, current_period_end, membership_plans(tier, included_washes, max_service_tier)")
+    .select(
+      "id, washes_used, current_period_end, membership_plans(tier, included_washes, max_service_tier, service_categories, allowed_tier_names)"
+    )
     .eq("user_id", userId)
     .eq("status", "active")
     .order("created_at", { ascending: false })
@@ -46,16 +61,32 @@ export async function getAllowance(userId: string, serviceTierName: string): Pro
       maxTier: "none",
       canCoverTier: false,
       planTier: null,
+      serviceCategories: [],
+      allowedTierNames: [],
     };
   }
 
   const plan = (m as any).membership_plans;
   const totalIncluded = plan?.included_washes ?? 0;
   const remaining = Math.max(0, totalIncluded - (m.washes_used ?? 0));
+  const serviceCategories: string[] = plan?.service_categories ?? ["auto"];
+  const allowedTierNames: string[] = plan?.allowed_tier_names ?? [];
 
-  const requestedRank = TIER_RANK[tierKeyFromName(serviceTierName)] ?? 1;
-  const maxRank = TIER_RANK[plan?.max_service_tier ?? "express"] ?? 1;
-  const canCoverTier = requestedRank <= maxRank && remaining > 0;
+  // 1. Category gate: plan must explicitly cover this category.
+  const categoryCovered = serviceCategories.includes(category);
+
+  // 2. Tier gate: prefer the explicit allowlist; fall back to the legacy
+  // tier-rank check for plans without an allowlist.
+  let tierCovered: boolean;
+  if (allowedTierNames.length > 0) {
+    tierCovered = allowedTierNames.includes(serviceTierName);
+  } else {
+    const requestedRank = TIER_RANK[tierKeyFromName(serviceTierName)] ?? 1;
+    const maxRank = TIER_RANK[plan?.max_service_tier ?? "express"] ?? 1;
+    tierCovered = requestedRank <= maxRank;
+  }
+
+  const canCoverTier = categoryCovered && tierCovered && remaining > 0;
 
   return {
     membershipId: m.id,
@@ -64,6 +95,8 @@ export async function getAllowance(userId: string, serviceTierName: string): Pro
     maxTier: plan?.max_service_tier ?? "express",
     canCoverTier,
     planTier: plan?.tier ?? null,
+    serviceCategories,
+    allowedTierNames,
   };
 }
 

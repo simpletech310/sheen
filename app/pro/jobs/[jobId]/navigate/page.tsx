@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { NavigateClient } from "./NavigateClient";
 import { StatusButtons } from "./StatusButtons";
+import { IssueFlagButton } from "@/components/pro/IssueFlagButton";
 
 export default async function NavigatePage({ params }: { params: { jobId: string } }) {
   const supabase = createClient();
@@ -42,6 +43,8 @@ export default async function NavigatePage({ params }: { params: { jobId: string
         jobId={job.id}
         mapsUrl={`https://maps.apple.com/?daddr=${fullAddress}`}
       />
+
+      <IssueFlagButton jobId={job.id} />
     </div>
   );
 }

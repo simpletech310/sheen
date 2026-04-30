@@ -22,6 +22,10 @@ function TierPickerInner() {
     const url = new URL("/app/book/vehicles", window.location.origin);
     url.searchParams.set("tier", tier.tier_name);
     url.searchParams.set("price", String(tier.base_price_cents));
+    // Pass through @handle from /r/[handle] referral links so the customer
+    // doesn't have to retype it at the address step.
+    const handle = params.get("handle");
+    if (handle) url.searchParams.set("handle", handle);
     router.push(url.pathname + url.search);
   }
 

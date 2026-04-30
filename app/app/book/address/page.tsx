@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { AddressAutocomplete } from "@/components/customer/AddressAutocomplete";
+import { WasherHandleInput } from "@/components/customer/WasherHandleInput";
 import type { GeocodeResult } from "@/lib/mapbox";
 
 const windows = [
@@ -45,7 +46,9 @@ function AddressFormInner() {
   const [notes, setNotes] = useState("");
   const [w, setW] = useState(windows[2].value);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
-  const [washHandle, setWashHandle] = useState("");
+  const [washHandle, setWashHandle] = useState(
+    (params.get("handle") ?? "").replace(/^@/, "").toUpperCase()
+  );
 
   // Load saved places.
   useEffect(() => {
@@ -247,15 +250,8 @@ function AddressFormInner() {
 
       <div className="mt-6">
         <Eyebrow>Request a specific pro · optional</Eyebrow>
-        <input
-          value={washHandle}
-          onChange={(e) => setWashHandle(e.target.value.toUpperCase().slice(0, 12))}
-          placeholder="Wash ID (e.g. ABC123)"
-          className="w-full mt-3 px-4 py-3.5 bg-bone border border-mist text-sm font-mono tracking-wider focus:outline-none focus:border-royal"
-        />
-        <div className="text-[11px] text-smoke mt-1 leading-relaxed">
-          Have a pro&rsquo;s wash ID? They get 5 minutes to accept before the
-          booking opens to the general queue.
+        <div className="mt-3">
+          <WasherHandleInput value={washHandle} onChange={setWashHandle} />
         </div>
       </div>
 

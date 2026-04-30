@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/server";
 import { sendPushToUser } from "@/lib/push";
+import { PENALTY_RULES, computePenaltyAmount } from "@/lib/penalties";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, customer_id, status, total_cents, points_redeemed, membership_id, stripe_payment_intent_id, assigned_washer_id"
+      "id, customer_id, status, total_cents, points_redeemed, membership_id, stripe_payment_intent_id, assigned_washer_id, scheduled_window_start"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -40,15 +41,62 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     );
   }
 
-  // Refund Stripe payment if there is one and it succeeded.
+  // ---------- Penalty assessment ----------
+  // Two penalty triggers on customer cancel:
+  //   - within 1h of window: late_cancel ($15)
+  //   - after pro is en_route/arrived: late_cancel_after_enroute ($25)
+  // We record the penalty regardless of refund status so admin can see it.
+  const minutesToWindow =
+    (new Date(booking.scheduled_window_start).getTime() - Date.now()) / 60_000;
+  let penaltyAmount = 0;
+  let penaltyReason: string | null = null;
+  let penaltyDescription: string | null = null;
+
+  if (booking.status === "en_route" || booking.status === "arrived") {
+    const rule = PENALTY_RULES.late_cancel_after_enroute;
+    penaltyAmount = computePenaltyAmount(rule, booking.total_cents);
+    penaltyReason = rule.reason;
+    penaltyDescription = rule.description;
+  } else if (minutesToWindow < 60) {
+    const rule = PENALTY_RULES.late_cancel;
+    penaltyAmount = computePenaltyAmount(rule, booking.total_cents);
+    penaltyReason = rule.reason;
+    penaltyDescription = rule.description;
+  }
+
+  if (penaltyAmount > 0 && penaltyReason) {
+    await supabase.from("penalties").insert({
+      booking_id: booking.id,
+      user_id: booking.customer_id,
+      party: "customer",
+      reason: penaltyReason,
+      amount_cents: penaltyAmount,
+      status: "applied",
+      applied_at: new Date().toISOString(),
+      notes: penaltyDescription,
+    });
+  }
+
+  // Refund the customer's payment, minus the late-cancel fee if any.
+  // The penalty is withheld from the refund (if there was a payment); for
+  // unpaid bookings the penalty becomes an open balance handled by ops.
   if (booking.stripe_payment_intent_id) {
     try {
       const pi = await stripe.paymentIntents.retrieve(booking.stripe_payment_intent_id);
       if (pi.status === "succeeded") {
+        const refundAmount = Math.max(0, booking.total_cents - penaltyAmount);
         await stripe.refunds.create({
           payment_intent: booking.stripe_payment_intent_id,
+          // Stripe rejects amount=0; only specify when partial.
+          ...(refundAmount > 0 && refundAmount < booking.total_cents
+            ? { amount: refundAmount }
+            : {}),
+          ...(refundAmount === 0 ? { amount: 0 } : {}),
           reason: "requested_by_customer",
-          metadata: { booking_id: booking.id },
+          metadata: {
+            booking_id: booking.id,
+            penalty_cents: String(penaltyAmount),
+          },
         });
       } else if (pi.status === "requires_payment_method" || pi.status === "requires_confirmation") {
         // Customer never finished paying — just cancel the intent.

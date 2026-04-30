@@ -28,6 +28,15 @@ export default async function WalletPage() {
     .limit(1)
     .maybeSingle();
 
+  // Outstanding penalties — customer should know what they owe.
+  const { data: penalties } = await supabase
+    .from("penalties")
+    .select("id, reason, amount_cents, status, notes, created_at")
+    .eq("user_id", user?.id ?? "")
+    .in("status", ["applied", "pending"])
+    .order("created_at", { ascending: false })
+    .limit(10);
+
   return (
     <div className="px-5 pt-10 pb-8">
       <Eyebrow>Wallet</Eyebrow>
@@ -78,6 +87,40 @@ export default async function WalletPage() {
           <div className="text-smoke text-2xl">→</div>
         </div>
       </Link>
+
+      {(penalties ?? []).length > 0 && (
+        <div className="bg-bad/10 border-l-2 border-bad p-4 mb-5">
+          <div className="font-mono text-[10px] uppercase tracking-wider text-bad mb-2">
+            Outstanding fees
+          </div>
+          <div className="space-y-2">
+            {(penalties ?? []).map((p: any) => (
+              <div key={p.id} className="flex justify-between items-start text-sm">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium capitalize">
+                    {p.reason.replace(/_/g, " ")}
+                  </div>
+                  {p.notes && (
+                    <div className="text-xs text-smoke truncate">{p.notes}</div>
+                  )}
+                  <div className="font-mono text-[10px] text-smoke mt-0.5">
+                    {new Date(p.created_at).toLocaleDateString([], {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </div>
+                </div>
+                <div className="display tabular text-bad">−${(p.amount_cents / 100).toFixed(2)}</div>
+              </div>
+            ))}
+          </div>
+          <div className="text-[11px] text-smoke mt-3 leading-relaxed">
+            Fees apply when a wash is cancelled late, or when a pro flags an
+            issue on site (no water/power, no-show). Disputes go to{" "}
+            <a href="mailto:hello@sheen.co" className="underline">hello@sheen.co</a>.
+          </div>
+        </div>
+      )}
 
       <Eyebrow>Points history</Eyebrow>
       <div className="mt-3 space-y-2">

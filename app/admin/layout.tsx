@@ -11,6 +11,7 @@ const navItems = [
   { l: "Bookings", h: "/admin/bookings" },
   { l: "Revenue", h: "/admin/revenue" },
   { l: "Claims", h: "/admin/claims" },
+  { l: "Penalties", h: "/admin/penalties" },
   { l: "Leads", h: "/admin/leads" },
   { l: "Audit log", h: "/admin/audit" },
 ];
