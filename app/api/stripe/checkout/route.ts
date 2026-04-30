@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { stripe } from "@/lib/stripe/server";
+import { getStripe } from "@/lib/stripe/server";
 import { computeFees } from "@/lib/stripe/fees";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // Create a PaymentIntent for a booking. Funds are held until the booking is marked complete;
 // then we transfer to the assigned washer (or partner) via /api/bookings/[id]/complete.
@@ -22,7 +25,7 @@ export async function POST(req: Request) {
 
   const fees = computeFees({ serviceCents: booking.service_cents, routedTo: "solo_washer" });
 
-  const intent = await stripe.paymentIntents.create({
+  const intent = await getStripe().paymentIntents.create({
     amount: fees.customerCharge,
     currency: "usd",
     automatic_payment_methods: { enabled: true },

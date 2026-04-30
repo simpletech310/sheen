@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { stripe } from "@/lib/stripe/server";
+import { getStripe } from "@/lib/stripe/server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST() {
   const supabase = createClient();
@@ -16,7 +19,7 @@ export async function POST() {
   let acctId = profile?.stripe_account_id ?? null;
 
   if (!acctId) {
-    const acct = await stripe.accounts.create({
+    const acct = await getStripe().accounts.create({
       type: "express",
       email: user.email!,
       capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
@@ -28,7 +31,7 @@ export async function POST() {
   }
 
   const origin = process.env.NEXT_PUBLIC_APP_URL ?? new URL("/", "http://localhost:3000").origin;
-  const link = await stripe.accountLinks.create({
+  const link = await getStripe().accountLinks.create({
     account: acctId,
     refresh_url: `${origin}/pro/onboard`,
     return_url: `${origin}/pro/queue`,

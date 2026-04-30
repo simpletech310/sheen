@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe/server";
+import { getStripe } from "@/lib/stripe/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import type Stripe from "stripe";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
@@ -14,7 +17,7 @@ export async function POST(req: Request) {
       // Dev fallback: parse without verification
       event = JSON.parse(body) as Stripe.Event;
     } else {
-      event = stripe.webhooks.constructEvent(body, sig, secret);
+      event = getStripe().webhooks.constructEvent(body, sig, secret);
     }
   } catch (err: any) {
     return NextResponse.json({ error: `Webhook signature verification failed: ${err.message}` }, { status: 400 });
