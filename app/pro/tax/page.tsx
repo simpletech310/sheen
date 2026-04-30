@@ -163,23 +163,24 @@ export default async function TaxPage({
         </div>
       )}
 
-      {/* Stripe deep link — Stripe Express handles the actual 1099-K. */}
+      {/* Payments dashboard deep-link — our payments processor
+          generates the actual 1099-K. */}
       <Eyebrow className="!text-bone/60" prefix={null}>
         Tax forms
       </Eyebrow>
       <div className="mt-3 bg-white/5 p-5">
         <p className="text-sm text-bone/85 leading-relaxed">
-          Stripe Express prepares and delivers your{" "}
-          <span className="font-bold">1099-K</span> directly. Sign in to your Stripe
-          dashboard to download tax documents and update your tax profile.
+          Your <span className="font-bold">1099-K</span> is prepared and delivered
+          by our payments partner. Open your payouts dashboard to download tax
+          documents and update your tax profile.
         </p>
         <StripeDashboardLink connected={!!profile?.stripe_account_id} />
       </div>
 
       <p className="text-[11px] text-bone/40 mt-6 leading-relaxed">
-        Sheen does not file taxes for you. This summary is for your records. Numbers
-        reflect platform payouts only — refer to your Stripe dashboard for the official
-        1099-K.
+        Sheen does not file taxes for you. This summary is for your records.
+        Numbers reflect platform payouts only — refer to your payouts dashboard
+        for the official 1099-K.
       </p>
     </div>
   );

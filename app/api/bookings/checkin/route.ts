@@ -83,7 +83,7 @@ export async function POST(req: Request) {
   // Tell the pro the timer just started.
   sendPushToUser(booking.assigned_washer_id, {
     title: "Customer checked you in",
-    body: "Timer's running. Funds held until they approve.",
+    body: "Timer's running. You'll be paid once the customer approves.",
     url: `/pro/jobs/${booking.id}/timer`,
     tag: `booking-${booking.id}-checkin`,
   }).catch(() => {});

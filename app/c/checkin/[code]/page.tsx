@@ -80,7 +80,7 @@ export default async function CustomerCheckIn({
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
       <p className="text-sm text-smoke mb-7 leading-relaxed">
         Confirm the pro is on site and we&rsquo;ll start the timer. Funds stay
-        held in escrow until you approve the finished work.
+        held until you approve the finished work — no payment leaves your card without your okay.
       </p>
 
       <div className="bg-mist/40 p-5 mb-6 border-l-2 border-royal">

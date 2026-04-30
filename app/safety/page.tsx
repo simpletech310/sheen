@@ -6,7 +6,7 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 export const metadata = {
   title: "Trust & Safety — Sheen",
   description:
-    "Vetted pros, $1M GL insurance, $2,500 damage guarantee, QR check-in, escrow until you approve.",
+    "Vetted pros, $1M insurance, $2,500 damage guarantee, QR check-in, payment held until you approve.",
 };
 
 const items: { h: string; d: string }[] = [
@@ -27,20 +27,20 @@ const items: { h: string; d: string }[] = [
     d: "When the pro arrives they show a QR code — you scan with your phone camera or read off the 8-character code. Timer doesn't start until you confirm.",
   },
   {
-    h: "Funds held in escrow",
+    h: "Payment held until you approve",
     d: "Your card is charged at booking, but funds are held until the pro finishes AND you approve the work. One tap to release. We hold the line for you.",
   },
   {
     h: "Live arrival tracking",
-    d: "Pro photo, vehicle, and live map from claimed → en-route → arrived. Geofence auto-flips status when they're within 150m.",
+    d: "See your pro's photo, vehicle, and live location on the way. We let you know the moment they pull up to your address.",
   },
   {
-    h: "Tipping floor",
-    d: "Pros can't see your tip until you submit a rating. No retaliation, no awkwardness. 100% goes to the pro, no platform cut.",
+    h: "Tips stay private",
+    d: "Pros don't see what you tipped until after you've rated them. No retaliation, no awkwardness. 100% goes to the pro.",
   },
   {
-    h: "Penalty engine",
-    d: "Automatic fees for late cancels, no-shows, and on-site issues — the same rules apply to you and the pro. Disputes go to ops within 48h.",
+    h: "Fair on both sides",
+    d: "Late cancels, no-shows, and on-site issues are charged the same way to customers and pros. Disputes are reviewed within 48 hours.",
   },
 ];
 
@@ -48,7 +48,7 @@ const trust = [
   { k: "$2,500", v: "Damage guarantee" },
   { k: "$1M", v: "GL · every pro" },
   { k: "100%", v: "Tips to the pro" },
-  { k: "Escrow", v: "Held until you approve" },
+  { k: "Held", v: "Payment until you approve" },
 ];
 
 export default function SafetyPage() {

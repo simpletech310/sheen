@@ -76,7 +76,7 @@ export default async function ProDashboard() {
   const actions: { label: string; href: string; tone: "sol" | "royal" | "bad" }[] = [];
   if (!profile?.stripe_account_id) {
     actions.push({
-      label: "Set up Stripe payouts so you can get paid",
+      label: "Set up payouts so you can get paid",
       href: "/pro/verify",
       tone: "sol",
     });

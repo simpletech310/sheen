@@ -104,7 +104,7 @@ export default async function QueuePage() {
         >
           <div className="font-bold uppercase text-sm">Finish onboarding</div>
           <div className="text-xs mt-1">
-            Status: {profile?.status ?? "pending"} — set up Stripe + insurance to start receiving jobs.
+            Status: {profile?.status ?? "pending"} — finish payouts + insurance to start receiving jobs.
           </div>
         </Link>
       )}

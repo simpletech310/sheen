@@ -139,7 +139,7 @@ export async function releaseFundsForBooking(
     const recipient = booking.assigned_washer_id ?? booking.assigned_partner_id;
     if (recipient) {
       sendPushToUser(recipient, {
-        title: "Funds released ✓",
+        title: "Customer approved · you've been paid ✓",
         body: `$${(fees.washerOrPartnerNet / 100).toFixed(2)} on the way to your account.`,
         url: "/pro/wallet",
         tag: `payout-${booking.id}`,

@@ -52,13 +52,13 @@ export default async function CheckInPage({
             hour: "numeric",
             minute: "2-digit",
           })}
-          . Timer&rsquo;s running. Funds are held until the customer approves
-          the finished work.
+          . Timer&rsquo;s running. You get paid as soon as the customer
+          approves the finished work.
         </p>
       ) : (
         <p className="text-sm text-bone/60 mb-7">
           They scan with the camera app, or read off the code below. Once they
-          confirm, the timer starts and we hold their funds until they approve
+          confirm, the timer starts. You get paid as soon as they approve
           the finished work.
         </p>
       )}

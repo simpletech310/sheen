@@ -27,7 +27,7 @@ const trust = [
   { k: "$2,500", v: "Damage guarantee" },
   { k: "$1M", v: "GL insurance · every wash" },
   { k: "100%", v: "Tips to the pro" },
-  { k: "Escrow", v: "Held until you approve" },
+  { k: "Held", v: "Payment until you approve" },
 ];
 
 export default function Home() {

@@ -16,8 +16,8 @@ export default function PaymentMethodsPage() {
 
       <p className="text-xs text-smoke mt-6 leading-relaxed">
         We save the card you used at checkout for one-tap booking next
-        time. Add a new card by booking a wash — Stripe attaches it
-        automatically.
+        time. Add a new card by booking a wash — we&rsquo;ll save it
+        securely on file.
       </p>
     </div>
   );

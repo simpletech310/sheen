@@ -16,7 +16,7 @@ export function StripeStep({ connected }: { connected: boolean }) {
       const r = await fetch(path, { method: "POST" });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || `Stripe ${action} failed`);
+        throw new Error(d.error || `Payouts ${action} failed`);
       }
       const { url } = await r.json();
       window.location.href = url;
@@ -38,10 +38,11 @@ export function StripeStep({ connected }: { connected: boolean }) {
             Step 01 · Payouts
           </div>
           <div className="text-sm font-bold mt-1">
-            {connected ? "Stripe payouts connected" : "Connect Stripe payouts"}
+            {connected ? "Payouts connected" : "Set up payouts"}
           </div>
           <p className="text-[12px] text-bone/65 mt-1.5 leading-relaxed">
-            Bank or debit card for instant payouts. Tips paid same-day.
+            Link your bank or debit card. Tips paid same-day, instant cash-out
+            available for 1.5%.
           </p>
         </div>
         <span
@@ -61,7 +62,7 @@ export function StripeStep({ connected }: { connected: boolean }) {
             : "bg-sol text-ink hover:bg-bone"
         }`}
       >
-        {busy ? "…" : connected ? "View Stripe dashboard →" : "Connect Stripe →"}
+        {busy ? "…" : connected ? "View payouts dashboard →" : "Set up payouts →"}
       </button>
     </div>
   );

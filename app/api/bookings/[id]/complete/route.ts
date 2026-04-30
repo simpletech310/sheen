@@ -119,8 +119,8 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
     // Push notifications — funds held until customer approves.
     await sendPushToUser(booking.customer_id, {
-      title: "Your Sheen is done — approve to release funds",
-      body: "Review the photos, rate the pro, and approve to release payment.",
+      title: "Your Sheen is done — tap to approve",
+      body: "Review the photos and approve to pay your pro.",
       url: `/app/tracking/${booking.id}`,
       tag: `booking-${booking.id}`,
     }).catch(() => {});

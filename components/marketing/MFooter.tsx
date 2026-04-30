@@ -30,7 +30,7 @@ const cols: { h: string; items: Item[] }[] = [
     items: [
       { label: "Become a washer", href: "/wash" },
       { label: "Pro sign-in", href: "/sign-in?role=washer" },
-      { label: "Partner program", href: "/partner" },
+      { label: "Earnings calculator", href: "/wash#calculator" },
     ],
   },
   {

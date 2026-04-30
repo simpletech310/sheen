@@ -11,7 +11,7 @@ const faq = [
   },
   {
     q: "When do I get paid?",
-    a: "Same-day standard payout for completed jobs. Tips are 100% yours and hit your Stripe account same-day. Instant payouts cost 1.5%.",
+    a: "Same-day standard payout to your bank for completed jobs. Tips are 100% yours and land same-day. Instant payouts cost 1.5%.",
   },
   {
     q: "What if a customer is a no-show?",
@@ -31,7 +31,7 @@ const faq = [
   },
   {
     q: "How do I get verified?",
-    a: "Three steps on /pro/verify: connect Stripe, upload insurance, submit for background check. Admin approves within 48 hours.",
+    a: "Three steps on /pro/verify: set up payouts, upload insurance, submit for background check. Admin approves within 48 hours.",
   },
   {
     q: "How do I unlock big-rig jobs?",

@@ -9,7 +9,7 @@ export const metadata = { title: "Become a washer — Sheen" };
 
 const split = [
   { side: "You bring", items: ["Your rig (water, power, tools)", "$1M GL insurance", "Reliable transport", "5★ standards"] },
-  { side: "We bring", items: ["Customers in your radius", "Stripe payouts (same-day or instant)", "Background-check + Checkr", "Ratings + repeat-customer flow"] },
+  { side: "We bring", items: ["Customers in your radius", "Same-day or instant payouts", "Background check + verification", "Ratings + repeat-customer flow"] },
 ];
 
 const equipment = [
@@ -23,7 +23,7 @@ const equipment = [
 
 const steps = [
   { n: "01", t: "Apply", d: "2-minute form. Tell us your equipment + service area." },
-  { n: "02", t: "Verify", d: "Stripe payouts, insurance upload, background check. 24–48h." },
+  { n: "02", t: "Verify", d: "Set up payouts, upload insurance, submit for background check. 24–48h." },
   { n: "03", t: "Start", d: "Jobs hit your queue. Accept, navigate, wash, get paid." },
 ];
 

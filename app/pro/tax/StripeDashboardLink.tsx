@@ -17,7 +17,7 @@ export function StripeDashboardLink({ connected }: { connected: boolean }) {
       const { url } = await r.json();
       window.location.href = url;
     } catch (e: any) {
-      toast(e.message || "Could not open Stripe", "error");
+      toast(e.message || "Could not open payouts dashboard", "error");
       setBusy(false);
     }
   }
@@ -28,7 +28,7 @@ export function StripeDashboardLink({ connected }: { connected: boolean }) {
         href="/pro/verify"
         className="mt-4 block w-full py-3 text-center text-xs font-bold uppercase tracking-wide bg-bone/10 text-bone hover:bg-bone hover:text-ink transition"
       >
-        Connect Stripe first →
+        Set up payouts first →
       </a>
     );
   }
@@ -39,7 +39,7 @@ export function StripeDashboardLink({ connected }: { connected: boolean }) {
       disabled={busy}
       className="mt-4 w-full py-3 text-xs font-bold uppercase tracking-wide bg-sol text-ink hover:bg-bone disabled:opacity-50"
     >
-      {busy ? "Opening…" : "Open Stripe dashboard →"}
+      {busy ? "Opening…" : "Open payouts dashboard →"}
     </button>
   );
 }

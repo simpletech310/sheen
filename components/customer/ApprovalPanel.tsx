@@ -45,8 +45,8 @@ export function ApprovalPanel({
       if (!r.ok) throw new Error(d.error || "Could not approve");
       toast(
         d.released
-          ? "Approved · funds released"
-          : "Approved · funds will release shortly",
+          ? "Approved · pro paid"
+          : "Approved · pro will be paid shortly",
         "success"
       );
       router.refresh();
@@ -62,11 +62,11 @@ export function ApprovalPanel({
     return (
       <div className="bg-good/10 border-l-2 border-good p-5">
         <div className="font-mono text-[10px] uppercase tracking-wider text-good mb-1">
-          {fundsReleasedAt ? "Approved · funds released" : "Approved"}
+          {fundsReleasedAt ? "Approved · pro paid" : "Approved"}
         </div>
         <div className="text-sm text-ink">
           {fundsReleasedAt
-            ? "Pro's been paid. Thanks for the trust."
+            ? "Your pro's been paid. Thanks for the trust."
             : "Your pro will be paid shortly. We'll let you know if anything's off."}
         </div>
         <Link
@@ -82,7 +82,7 @@ export function ApprovalPanel({
   return (
     <div className="bg-mist/40 p-5 border-l-2 border-sol">
       <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-1">
-        Approval pending · funds held
+        Waiting for your approval · payment on hold
       </div>
       <div className="text-sm font-bold mb-1">Review the finished work</div>
       <p className="text-xs text-smoke leading-relaxed">
@@ -93,7 +93,7 @@ export function ApprovalPanel({
               minute: "2-digit",
             })}`
           : ""}
-        . Approve to release payment, or flag an issue and we&rsquo;ll review.
+        . Approve to pay your pro, or flag an issue and we&rsquo;ll review.
       </p>
 
       {workPhotoPaths.length > 0 && (
@@ -119,7 +119,7 @@ export function ApprovalPanel({
         disabled={busy}
         className="mt-4 w-full bg-royal text-bone py-4 text-sm font-bold uppercase tracking-wide hover:bg-ink disabled:opacity-50 transition"
       >
-        {busy ? "Releasing funds…" : "Approve · release payment →"}
+        {busy ? "Approving…" : "Approve · pay your pro →"}
       </button>
 
       <button
