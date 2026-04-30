@@ -4,6 +4,8 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
+import { AddressAutocomplete } from "@/components/customer/AddressAutocomplete";
+import type { GeocodeResult } from "@/lib/mapbox";
 
 const windows = [
   { label: "Today · 2–4 PM", value: "today_14_16" },
@@ -19,21 +21,23 @@ function AddressFormInner() {
   const tier = params.get("tier") ?? "Premium Detail";
   const price = params.get("price") ?? "18500";
 
-  const [street, setStreet] = useState("");
-  const [city, setCity] = useState("Manhattan Beach");
-  const [state, setState] = useState("CA");
-  const [zip, setZip] = useState("");
+  const [picked, setPicked] = useState<GeocodeResult | null>(null);
+  const [unit, setUnit] = useState("");
   const [notes, setNotes] = useState("");
   const [w, setW] = useState(windows[2].value);
 
   function next() {
+    if (!picked) return;
     const url = new URL("/app/book/pay", window.location.origin);
     url.searchParams.set("tier", tier);
     url.searchParams.set("price", price);
-    url.searchParams.set("street", street);
-    url.searchParams.set("city", city);
-    url.searchParams.set("state", state);
-    url.searchParams.set("zip", zip);
+    url.searchParams.set("street", picked.name);
+    url.searchParams.set("city", picked.city ?? "");
+    url.searchParams.set("state", picked.state ?? "CA");
+    url.searchParams.set("zip", picked.zip ?? "");
+    url.searchParams.set("lat", String(picked.lat));
+    url.searchParams.set("lng", String(picked.lng));
+    url.searchParams.set("unit", unit);
     url.searchParams.set("notes", notes);
     url.searchParams.set("window", w);
     router.push(url.pathname + url.search);
@@ -47,47 +51,34 @@ function AddressFormInner() {
         </Link>
       </div>
       <Eyebrow>Step 2 / 3 · Address &amp; window</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-6">Where &amp; when</h1>
-
-      <div className="bg-cobalt/10 h-40 mb-5 flex items-center justify-center text-cobalt text-xs font-mono uppercase">
-        ▢ Map (Mapbox stub — set NEXT_PUBLIC_MAPBOX_TOKEN to enable)
-      </div>
+      <h1 className="display text-3xl mt-3 mb-6">WHERE &amp; WHEN</h1>
 
       <div className="space-y-3">
-        <input
-          value={street}
-          onChange={(e) => setStreet(e.target.value)}
-          placeholder="Street address"
-          required
-          className="w-full px-4 py-3.5 bg-bone border border-mist rounded-md text-sm"
+        <AddressAutocomplete
+          onSelect={(r) => setPicked(r)}
+          placeholder="Start typing your street address…"
         />
-        <div className="grid grid-cols-3 gap-2">
-          <input
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="City"
-            className="col-span-2 px-4 py-3.5 bg-bone border border-mist rounded-md text-sm"
-          />
-          <input
-            value={state}
-            onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))}
-            placeholder="ST"
-            className="px-4 py-3.5 bg-bone border border-mist rounded-md text-sm uppercase"
-          />
-        </div>
+        {picked && (
+          <div className="bg-mist/40 px-4 py-3 text-sm">
+            <div className="font-bold">{picked.name}</div>
+            <div className="text-xs text-smoke">
+              {picked.city ? `${picked.city}, ` : ""}
+              {picked.state} {picked.zip}
+            </div>
+          </div>
+        )}
         <input
-          value={zip}
-          onChange={(e) => setZip(e.target.value)}
-          placeholder="ZIP"
-          inputMode="numeric"
-          className="w-full px-4 py-3.5 bg-bone border border-mist rounded-md text-sm"
+          value={unit}
+          onChange={(e) => setUnit(e.target.value)}
+          placeholder="Apt / unit (optional)"
+          className="w-full px-4 py-3.5 bg-bone border border-mist text-sm"
         />
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Driveway notes (water spigot, parking, gate code…)"
           rows={2}
-          className="w-full px-4 py-3.5 bg-bone border border-mist rounded-md text-sm"
+          className="w-full px-4 py-3.5 bg-bone border border-mist text-sm"
         />
       </div>
 
@@ -98,7 +89,7 @@ function AddressFormInner() {
             <button
               key={opt.value}
               onClick={() => setW(opt.value)}
-              className={`text-left p-3 text-sm ${
+              className={`text-left p-3 text-sm font-medium ${
                 w === opt.value ? "bg-ink text-bone" : "bg-mist/50 hover:bg-mist"
               }`}
             >
@@ -110,8 +101,8 @@ function AddressFormInner() {
 
       <button
         onClick={next}
-        disabled={!street || !zip}
-        className="mt-7 w-full bg-cobalt text-bone rounded-full py-4 text-sm font-semibold disabled:opacity-50"
+        disabled={!picked}
+        className="mt-7 w-full bg-royal text-bone py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50 hover:bg-ink"
       >
         Continue · Pay →
       </button>

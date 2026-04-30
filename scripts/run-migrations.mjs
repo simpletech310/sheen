@@ -89,6 +89,33 @@ async function run(label, sql) {
   }
 }
 
+// Bootstrap a tracking table so re-runs are idempotent
+await client.query(`
+  create table if not exists public._migrations (
+    name text primary key,
+    applied_at timestamptz default now()
+  )
+`);
+
+// Back-fill: if any of the original tables already exist but the tracker is empty,
+// mark 0001_init.sql and seed.sql as applied so we don't try to re-run them.
+const introspect = await client.query(`
+  select 1 from information_schema.tables where table_schema='public' and table_name='services' limit 1
+`);
+if (introspect.rowCount > 0) {
+  await client.query(
+    "insert into public._migrations (name) values ('0001_init.sql'), ('seed.sql') on conflict do nothing"
+  );
+}
+
+async function isApplied(name) {
+  const r = await client.query("select 1 from public._migrations where name = $1", [name]);
+  return r.rowCount > 0;
+}
+async function markApplied(name) {
+  await client.query("insert into public._migrations (name) values ($1) on conflict do nothing", [name]);
+}
+
 const migrations = fs
   .readdirSync(path.join(root, "supabase/migrations"))
   .filter((f) => f.endsWith(".sql"))
@@ -96,13 +123,22 @@ const migrations = fs
 
 try {
   for (const f of migrations) {
+    if (await isApplied(f)) {
+      console.log(`Skipping ${f} (already applied)`);
+      continue;
+    }
     const sql = fs.readFileSync(path.join(root, "supabase/migrations", f), "utf8");
     await run(f, sql);
+    await markApplied(f);
   }
   const seedPath = path.join(root, "supabase/seed.sql");
-  if (fs.existsSync(seedPath)) {
+  const seedKey = "seed.sql";
+  if (fs.existsSync(seedPath) && !(await isApplied(seedKey))) {
     const sql = fs.readFileSync(seedPath, "utf8");
-    await run("seed.sql", sql);
+    await run(seedKey, sql);
+    await markApplied(seedKey);
+  } else if (fs.existsSync(seedPath)) {
+    console.log(`Skipping seed.sql (already applied)`);
   }
   console.log(`\nAll done via ${usedHost.label}.`);
 } catch {
