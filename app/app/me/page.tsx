@@ -12,7 +12,7 @@ export default async function MePage() {
     .maybeSingle();
 
   const sections = [
-    { h: "Account", items: [{ l: "Profile", href: "#" }, { l: "Email", href: "#" }, { l: "2FA", href: "#" }] },
+    { h: "Membership", items: [{ l: "Sheen+ plans", href: "/app/membership" }, { l: "Achievements", href: "/app/me/achievements" }] },
     { h: "Booking", items: [{ l: "Garage", href: "/app/garage" }, { l: "Places", href: "/app/places" }, { l: "Trips", href: "/app/trips" }, { l: "Wallet", href: "/app/wallet" }] },
     { h: "Trust", items: [{ l: "Damage claims", href: "/safety" }, { l: "Refer a friend · $25", href: "#" }] },
     { h: "Support", items: [{ l: "Help", href: "/help" }, { l: "Contact", href: "mailto:hello@sheen.co" }] },

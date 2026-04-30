@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/server";
 import { computeFees } from "@/lib/stripe/fees";
+import { getAllowance, consumeAllowance } from "@/lib/membership";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -82,6 +83,11 @@ export async function POST(req: Request) {
     const fees = computeFees({ serviceCents: body.service_cents, routedTo: "solo_washer" });
     const { start, end } = parseWindow(body.window);
 
+    // Check membership allowance — if covered, the booking is created with
+    // total_cents=0 and we skip Stripe checkout entirely.
+    const allowance = await getAllowance(user.id, body.tier_name);
+    const isCoveredByMembership = allowance.canCoverTier && allowance.membershipId !== null;
+
     const { data: booking, error: bookingErr } = await supabase
       .from("bookings")
       .insert({
@@ -91,10 +97,11 @@ export async function POST(req: Request) {
         scheduled_window_start: start.toISOString(),
         scheduled_window_end: end.toISOString(),
         service_cents: fees.serviceCents,
-        fees_cents: fees.trustFee,
-        total_cents: fees.customerCharge,
+        fees_cents: isCoveredByMembership ? 0 : fees.trustFee,
+        total_cents: isCoveredByMembership ? 0 : fees.customerCharge,
         status: "pending",
         customer_note: body.address.notes ?? null,
+        membership_id: isCoveredByMembership ? allowance.membershipId : null,
       })
       .select("id, total_cents, service_cents")
       .single();
@@ -107,8 +114,25 @@ export async function POST(req: Request) {
       booking_id: bookingId,
       type: "created",
       actor_id: user.id,
-      payload: { tier: body.tier_name, total_cents: booking.total_cents },
+      payload: {
+        tier: body.tier_name,
+        total_cents: booking.total_cents,
+        covered_by_membership: isCoveredByMembership,
+      },
     });
+
+    // If membership covers it, debit allowance and short-circuit (no Stripe).
+    if (isCoveredByMembership) {
+      await consumeAllowance(allowance.membershipId!);
+      // Mark the booking as paid immediately by flipping status from pending → matched
+      // happens later when a washer claims it. No PaymentIntent needed.
+      return NextResponse.json({
+        booking_id: bookingId,
+        client_secret: null,
+        amount_cents: 0,
+        covered_by_membership: true,
+      });
+    }
   } else {
     const { data: existing } = await supabase
       .from("bookings")

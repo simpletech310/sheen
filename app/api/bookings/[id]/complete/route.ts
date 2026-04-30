@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/server";
 import { computeFees } from "@/lib/stripe/fees";
+import { awardPoints, pointsForService, checkAchievements } from "@/lib/loyalty";
+import { sendPushToUser } from "@/lib/push";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -119,6 +121,45 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     actor_id: user.id,
     payload: { net_to_pro_cents: fees.washerOrPartnerNet },
   });
+
+  // Loyalty: award points to the customer + check achievements both sides
+  try {
+    const earned = pointsForService(booking.service_cents);
+    if (earned > 0) {
+      await awardPoints({
+        userId: booking.customer_id,
+        points: earned,
+        reason: "wash_completed",
+        bookingId: booking.id,
+      });
+    }
+    await supabase.from("bookings").update({ points_earned: earned }).eq("id", booking.id);
+    const customerNew = await checkAchievements(booking.customer_id);
+    const proNew = await checkAchievements(user.id);
+
+    // Push notifications
+    await sendPushToUser(booking.customer_id, {
+      title: "Your Sheen is done",
+      body: "Tap to rate and tip your pro.",
+      url: `/app/rate/${booking.id}`,
+      tag: `booking-${booking.id}`,
+    }).catch(() => {});
+    for (const a of [...customerNew]) {
+      await sendPushToUser(booking.customer_id, {
+        title: "New badge unlocked",
+        body: a.replace(/_/g, " "),
+        url: "/app/me/achievements",
+      }).catch(() => {});
+    }
+    for (const a of [...proNew]) {
+      await sendPushToUser(user.id, {
+        title: "New badge unlocked",
+        body: a.replace(/_/g, " "),
+      }).catch(() => {});
+    }
+  } catch (e) {
+    console.error("Loyalty/push error:", e);
+  }
 
   return NextResponse.json({ ok: true });
 }

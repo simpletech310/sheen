@@ -62,6 +62,11 @@ function PayInner() {
           throw new Error(e.error || `Status ${res.status}`);
         }
         const data = await res.json();
+        if (data.covered_by_membership) {
+          // Membership ate the cost — bounce straight to tracking
+          router.replace(`/app/tracking/${data.booking_id}`);
+          return;
+        }
         setClientSecret(data.client_secret);
         setBookingId(data.booking_id);
       } catch (e: any) {
