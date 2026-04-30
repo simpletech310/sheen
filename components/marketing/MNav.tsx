@@ -28,6 +28,12 @@ export function MNav() {
           ))}
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/sign-in?role=washer"
+            className="text-xs text-royal hover:text-ink hidden sm:inline uppercase font-bold"
+          >
+            Pro sign-in
+          </Link>
           <Link href="/sign-in" className="text-xs text-ink/85 hover:text-ink hidden sm:inline uppercase font-bold">
             Sign in
           </Link>

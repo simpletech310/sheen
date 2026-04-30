@@ -6,7 +6,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const Body = z.object({
-  bucket: z.enum(["booking-photos", "insurance-docs", "partner-portfolio", "claim-evidence"]),
+  bucket: z.enum([
+    "booking-photos",
+    "insurance-docs",
+    "partner-portfolio",
+    "claim-evidence",
+    "washer-documents",
+  ]),
   // booking_id / claim_id / etc. for path namespacing — caller supplies whatever it needs
   scope: z.string().min(1).max(64).regex(/^[a-zA-Z0-9_\-]+$/),
   // file extension only (no dots), e.g. "jpg", "png", "pdf"
