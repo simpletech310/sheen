@@ -47,6 +47,7 @@ function AddressFormInner() {
   const [unit, setUnit] = useState("");
   const [notes, setNotes] = useState("");
   const [w, setW] = useState(windows[2].value);
+  const [isRush, setIsRush] = useState(false);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [washHandle, setWashHandle] = useState(
     (params.get("handle") ?? "").replace(/^@/, "").toUpperCase()
@@ -131,7 +132,11 @@ function AddressFormInner() {
     if (lng != null) url.searchParams.set("lng", String(lng));
     url.searchParams.set("unit", unit);
     url.searchParams.set("notes", placeNotes);
-    url.searchParams.set("window", w);
+    if (isRush) {
+      url.searchParams.set("rush", "1");
+    } else {
+      url.searchParams.set("window", w);
+    }
     if (washHandle.trim()) url.searchParams.set("handle", washHandle.trim().toUpperCase());
     router.push(url.pathname + url.search);
   }
@@ -262,22 +267,72 @@ function AddressFormInner() {
         </div>
       </div>
 
+      {/* Rush — promise of a pro within the hour. Customer pays a small
+          surcharge; window picker disappears when this is on. */}
       <div className="mt-6">
-        <Eyebrow>Pick a window</Eyebrow>
-        <div className="mt-3 grid grid-cols-1 gap-2">
-          {windows.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setW(opt.value)}
-              className={`text-left p-3 text-sm font-medium ${
-                w === opt.value ? "bg-ink text-bone" : "bg-mist/50 hover:bg-mist"
+        <Eyebrow>Need it now?</Eyebrow>
+        <button
+          type="button"
+          onClick={() => setIsRush((v) => !v)}
+          aria-pressed={isRush}
+          className={`mt-3 w-full text-left p-4 transition border-l-2 ${
+            isRush
+              ? "bg-sol border-sol text-ink"
+              : "bg-mist/40 border-royal hover:bg-mist"
+          }`}
+        >
+          <div className="flex justify-between items-start gap-3">
+            <div className="flex-1">
+              <div
+                className={`font-mono text-[10px] uppercase tracking-wider ${
+                  isRush ? "text-ink/70" : "text-royal"
+                }`}
+              >
+                {isRush ? "Rush · ON" : "Rush"}
+              </div>
+              <div className="text-sm font-bold mt-1 uppercase tracking-wide">
+                Pro within the hour
+              </div>
+              <p
+                className={`text-xs mt-1 leading-relaxed ${
+                  isRush ? "text-ink/80" : "text-smoke"
+                }`}
+              >
+                Skip the window. We&rsquo;ll route the closest pro to you in
+                under 60 minutes. +15% on the wash. If the pro&rsquo;s late,
+                you get money back.
+              </p>
+            </div>
+            <span
+              className={`shrink-0 w-6 h-6 mt-0.5 flex items-center justify-center border-2 ${
+                isRush ? "bg-ink border-ink text-sol" : "border-smoke"
               }`}
+              aria-hidden
             >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+              {isRush ? "✓" : ""}
+            </span>
+          </div>
+        </button>
       </div>
+
+      {!isRush && (
+        <div className="mt-6">
+          <Eyebrow>Pick a window</Eyebrow>
+          <div className="mt-3 grid grid-cols-1 gap-2">
+            {windows.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setW(opt.value)}
+                className={`text-left p-3 text-sm font-medium ${
+                  w === opt.value ? "bg-ink text-bone" : "bg-mist/50 hover:bg-mist"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <button
         onClick={next}

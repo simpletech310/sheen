@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const { data: enroute } = await svc
       .from("bookings")
       .select(
-        "id, customer_id, addresses(lat, lng), services(tier_name), assigned_washer_id"
+        "id, customer_id, is_rush, rush_deadline, arrived_at, rush_made_in_time, addresses(lat, lng), services(tier_name), assigned_washer_id"
       )
       .eq("assigned_washer_id", user.id)
       .eq("status", "en_route")
@@ -62,9 +62,27 @@ export async function POST(req: Request) {
         }
       );
       if (dist <= ARRIVAL_RADIUS_MILES) {
+        // Lock in the rush verdict + arrival timestamp in the same
+        // update so /api/payout/release can read a consistent picture.
+        const arrivedAtIso =
+          (enroute as any).arrived_at ?? new Date().toISOString();
+        let madeInTime: boolean | null = (enroute as any).rush_made_in_time;
+        if (
+          (enroute as any).is_rush &&
+          madeInTime === null &&
+          (enroute as any).rush_deadline
+        ) {
+          madeInTime =
+            new Date(arrivedAtIso).getTime() <=
+            new Date((enroute as any).rush_deadline).getTime();
+        }
         await svc
           .from("bookings")
-          .update({ status: "arrived" })
+          .update({
+            status: "arrived",
+            arrived_at: arrivedAtIso,
+            rush_made_in_time: madeInTime,
+          })
           .eq("id", enroute.id)
           .eq("status", "en_route"); // re-check to avoid races
 

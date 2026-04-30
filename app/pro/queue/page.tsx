@@ -27,10 +27,11 @@ export default async function QueuePage() {
   const { data: jobsRaw } = await supabase
     .from("bookings")
     .select(
-      "id, scheduled_window_start, service_cents, total_cents, vehicle_count, requested_washer_id, request_expires_at, services(tier_name, category), addresses(street, city, lat, lng)"
+      "id, scheduled_window_start, service_cents, total_cents, vehicle_count, requested_washer_id, request_expires_at, is_rush, rush_deadline, rush_bonus_cents, services(tier_name, category), addresses(street, city, lat, lng)"
     )
     .eq("status", "pending")
     .is("assigned_washer_id", null)
+    .order("is_rush", { ascending: false })
     .order("scheduled_window_start", { ascending: true })
     .limit(40);
 
@@ -56,8 +57,12 @@ export default async function QueuePage() {
     if (directRequestIds.has(j.id)) return false;
     // Big-rig jobs only show to pros who've opted in (and have the gear).
     if (j.services?.category === "big_rig" && !canWashBigRig) return false;
+    // Rush jobs bypass the availability window — they're time-critical
+    // and shouldn't be hidden because the pro hasn't set hours for now.
+    // Radius still applies so we don't flood far-away pros.
+    const isRush = !!j.is_rush;
     const start = new Date(j.scheduled_window_start);
-    if (avail && avail.length) {
+    if (!isRush && avail && avail.length) {
       const day = start.getDay();
       const time = start.toTimeString().slice(0, 8);
       const dateStr = start.toISOString().slice(0, 10);
@@ -161,7 +166,10 @@ export default async function QueuePage() {
       {jobs && jobs.length > 0 ? (
         <div className="space-y-3">
           {jobs.map((j: any) => {
-            const net = computeFees({ serviceCents: j.service_cents, routedTo: "solo_washer" }).washerOrPartnerNet;
+            const baseNet = computeFees({ serviceCents: j.service_cents, routedTo: "solo_washer" }).washerOrPartnerNet;
+            const isRush = !!j.is_rush;
+            const rushBonus = isRush ? (j.rush_bonus_cents ?? 0) : 0;
+            const net = baseNet + rushBonus;
             const dist =
               myLat && myLng && j.addresses?.lat && j.addresses?.lng
                 ? distanceMiles(
@@ -169,10 +177,17 @@ export default async function QueuePage() {
                     { lat: Number(j.addresses.lat), lng: Number(j.addresses.lng) }
                   ).toFixed(1)
                 : null;
+            // Live countdown (server-rendered) — minutes left until rush
+            // deadline. Refreshes on the next page render.
+            const minsLeft = isRush && j.rush_deadline
+              ? Math.max(0, Math.ceil((new Date(j.rush_deadline).getTime() - now) / 60_000))
+              : null;
             const category = j.services?.category ?? "auto";
             const isHome = category === "home";
             const isBigRig = category === "big_rig";
-            const containerClass = isBigRig
+            const containerClass = isRush
+              ? "bg-sol/15 hover:bg-sol/25 border-sol"
+              : isBigRig
               ? "bg-royal/15 hover:bg-royal/25 border-sol"
               : isHome
               ? "bg-sol/10 hover:bg-sol/15 border-sol"
@@ -189,7 +204,13 @@ export default async function QueuePage() {
                 href={`/pro/queue/${j.id}`}
                 className={`block p-4 transition border-l-2 ${containerClass}`}
               >
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  {isRush && (
+                    <span className="font-mono text-[9px] uppercase tracking-wider bg-sol text-ink px-1.5 py-0.5 inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-ink animate-pulse" />
+                      Rush · {minsLeft != null ? `${minsLeft} min left` : "now"}
+                    </span>
+                  )}
                   <span
                     className={`font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 ${pillClass}`}
                   >
@@ -211,14 +232,21 @@ export default async function QueuePage() {
                       {dist ? ` · ${dist} mi` : ""}
                     </div>
                     <div className="font-mono text-[10px] text-bone/50 uppercase mt-1.5 tabular">
-                      {new Date(j.scheduled_window_start).toLocaleString([], {
-                        month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-                      })}
+                      {isRush
+                        ? "ASAP · pick up now"
+                        : new Date(j.scheduled_window_start).toLocaleString([], {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="display tabular text-2xl text-sol">{fmtUSD(net)}</div>
-                    <div className="font-mono text-[10px] text-bone/50">YOU GET</div>
+                    <div className="font-mono text-[10px] text-bone/50">
+                      YOU GET{isRush && rushBonus > 0 ? ` (+${fmtUSD(rushBonus)} rush)` : ""}
+                    </div>
                   </div>
                 </div>
               </Link>

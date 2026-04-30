@@ -40,7 +40,11 @@ function PayInner() {
   const lng = params.get("lng");
   const notes = params.get("notes") ?? "";
   const win = params.get("window") ?? "tomorrow_10_12";
+  const isRush = params.get("rush") === "1";
   const requestedHandle = params.get("handle") ?? "";
+  // Mirror the server-side calc — surfaces the surcharge inline on the
+  // pay summary so the customer sees exactly what they're paying.
+  const rushSurchargeCents = isRush ? Math.round(totalServiceCents * 0.15) : 0;
 
   useEffect(() => {
     if (!street || !zip) {
@@ -84,7 +88,8 @@ function PayInner() {
               lng: lng ? Number(lng) : undefined,
               notes,
             },
-            window: win,
+            window: isRush ? undefined : win,
+            is_rush: isRush,
           }),
         });
         if (!res.ok) {
@@ -217,14 +222,28 @@ function PayInner() {
           <span className="text-smoke">Trust fee (10%)</span>
           <span className="tabular">{fmtUSD(fees.trustFee)}</span>
         </div>
+        {isRush && (
+          <div className="flex justify-between">
+            <span className="text-royal font-bold">Rush · pro within the hour</span>
+            <span className="tabular text-royal">+{fmtUSD(rushSurchargeCents)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-xs text-smoke">
           <span>Tip — added after wash</span>
           <span>—</span>
         </div>
         <div className="flex justify-between pt-3 border-t border-mist">
           <span className="font-bold">Total today</span>
-          <span className="display tabular text-2xl">{fmtUSD(fees.customerCharge)}</span>
+          <span className="display tabular text-2xl">
+            {fmtUSD(fees.customerCharge + rushSurchargeCents)}
+          </span>
         </div>
+        {isRush && (
+          <p className="text-[11px] text-smoke leading-relaxed pt-1">
+            If your pro doesn&rsquo;t make it within 60 minutes, you&rsquo;ll
+            get a partial refund automatically.
+          </p>
+        )}
       </div>
 
       {loading && (
@@ -235,7 +254,7 @@ function PayInner() {
       {clientSecret && bookingId && (
         <StripePaymentElement
           clientSecret={clientSecret}
-          amountLabel={fmtUSD(fees.customerCharge)}
+          amountLabel={fmtUSD(fees.customerCharge + rushSurchargeCents)}
           onSuccess={onPaymentSuccess}
         />
       )}

@@ -33,6 +33,10 @@ const Body = z.object({
     })
     .optional(),
   window: z.string().optional(),
+  // ASAP / Rush — customer pays a small surcharge, we promise a pro
+  // within 60 minutes. When set, the regular `window` field is
+  // ignored (the booking gets a now/now+60 window).
+  is_rush: z.boolean().default(false),
 });
 
 function parseWindow(w: string): { start: Date; end: Date } {
@@ -57,7 +61,13 @@ export async function POST(req: Request) {
   let serviceCents: number;
 
   if (!bookingId) {
-    if (!body.tier_name || !body.service_cents || !body.address || !body.window) {
+    // Rush bookings don't need an explicit window — we set one automatically.
+    if (
+      !body.tier_name ||
+      !body.service_cents ||
+      !body.address ||
+      (!body.window && !body.is_rush)
+    ) {
       return NextResponse.json({ error: "Missing booking fields" }, { status: 400 });
     }
     const usesVehicles = body.category === "auto" || body.category === "big_rig";
@@ -118,7 +128,27 @@ export async function POST(req: Request) {
     if (!addr) return NextResponse.json({ error: "Could not save address" }, { status: 400 });
 
     const fees = computeFees({ serviceCents: body.service_cents, routedTo: "solo_washer" });
-    const { start, end } = parseWindow(body.window);
+    // Rush: bypass the window picker and use now → +60min. Compute the
+    // surcharge + bonus up front so the math is locked in even if the
+    // RUSH_* constants change later.
+    let start: Date;
+    let end: Date;
+    let rushSurchargeCents = 0;
+    let rushBonusCents = 0;
+    let rushDeadline: string | null = null;
+    if (body.is_rush) {
+      const { computeRushAmounts, RUSH_DEADLINE_MIN } = await import("@/lib/rush");
+      start = new Date();
+      end = new Date(start.getTime() + RUSH_DEADLINE_MIN * 60 * 1000);
+      rushDeadline = end.toISOString();
+      const amts = computeRushAmounts(body.service_cents);
+      rushSurchargeCents = amts.customerSurchargeCents;
+      rushBonusCents = amts.washerBonusCents;
+    } else {
+      const w = parseWindow(body.window!);
+      start = w.start;
+      end = w.end;
+    }
     const vehicleIds = body.vehicle_ids ?? [];
     const vehicleCount = usesVehicles ? vehicleIds.length : 1;
     const primaryVehicleId = usesVehicles ? vehicleIds[0] : null;
@@ -183,10 +213,12 @@ export async function POST(req: Request) {
       vehicleCount === 1 &&
       pointsRedeemed === 0;
 
-    const finalCustomerCharge = Math.max(
-      0,
-      isCoveredByMembership ? 0 : fees.customerCharge - discountCents
-    );
+    // Rush surcharge sits on top of the regular charge — never
+    // covered by membership and never reduced by points (those would
+    // defeat the "pay extra to skip the queue" idea).
+    const baseCharge = isCoveredByMembership ? 0 : fees.customerCharge - discountCents;
+    const finalCustomerCharge = Math.max(0, baseCharge) + rushSurchargeCents;
+
     const { data: booking, error: bookingErr } = await supabase
       .from("bookings")
       .insert({
@@ -207,6 +239,10 @@ export async function POST(req: Request) {
         membership_id: isCoveredByMembership ? allowance.membershipId : null,
         requested_washer_id: requestedWasherId,
         request_expires_at: requestExpiresAt,
+        is_rush: body.is_rush,
+        rush_deadline: rushDeadline,
+        rush_surcharge_cents: rushSurchargeCents,
+        rush_bonus_cents: rushBonusCents,
       })
       .select("id, total_cents, service_cents")
       .single();

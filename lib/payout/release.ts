@@ -26,7 +26,7 @@ export async function releaseFundsForBooking(
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, assigned_partner_id, customer_id, service_cents, stripe_payment_intent_id, customer_approved_at, funds_released_at"
+      "id, status, assigned_washer_id, assigned_partner_id, customer_id, service_cents, stripe_payment_intent_id, customer_approved_at, funds_released_at, is_rush, rush_made_in_time, rush_bonus_cents, rush_surcharge_cents"
     )
     .eq("id", bookingId)
     .maybeSingle();
@@ -65,6 +65,27 @@ export async function releaseFundsForBooking(
     serviceCents: booking.service_cents,
     routedTo: isPartner ? "partner" : "solo_washer",
   });
+
+  // Rush adjustments. The base payout from computeFees is the regular
+  // 78%-of-service-cents number. Rush layers a delta on top:
+  //   - on time: +rush_bonus_cents
+  //   - late:    -RUSH_LATE_WASHER_PENALTY_PCT * service_cents
+  // Late jobs also refund a chunk of the customer's rush surcharge.
+  let washerNet = fees.washerOrPartnerNet;
+  let customerRefundCents = 0;
+  if (booking.is_rush) {
+    const { resolveRushPayoutDeltas } = await import("@/lib/rush");
+    // If rush_made_in_time is still null at payout time, treat it as
+    // a miss — the pro never showed up before the deadline.
+    const madeInTime = booking.rush_made_in_time === true;
+    const deltas = resolveRushPayoutDeltas({
+      serviceCents: booking.service_cents,
+      bonusCents: booking.rush_bonus_cents ?? 0,
+      madeInTime,
+    });
+    washerNet = Math.max(0, washerNet + deltas.washerDeltaCents);
+    customerRefundCents = deltas.customerRefundCents;
+  }
 
   // Connected Stripe account.
   let stripeAccountId: string | null = null;
@@ -108,8 +129,34 @@ export async function releaseFundsForBooking(
     if (pi.status !== "succeeded") {
       return { ok: false, reason: "pi_not_succeeded" };
     }
+
+    // If the rush deadline was missed, refund the customer their share
+    // of the surcharge BEFORE the transfer. The remaining surcharge
+    // stays with the platform (covers operational risk + late routing).
+    if (customerRefundCents > 0) {
+      try {
+        await stripe.refunds.create({
+          payment_intent: booking.stripe_payment_intent_id,
+          amount: customerRefundCents,
+          metadata: {
+            booking_id: booking.id,
+            reason: "rush_deadline_missed",
+          },
+        });
+      } catch (refErr: any) {
+        // Refund failure shouldn't block the pro's payout — log it and
+        // keep going. Ops can manually refund from the dashboard.
+        await supabase.from("booking_events").insert({
+          booking_id: booking.id,
+          type: "rush_refund_failed",
+          actor_id: actorId,
+          payload: { error: refErr.message ?? String(refErr) },
+        });
+      }
+    }
+
     const transfer = await stripe.transfers.create({
-      amount: fees.washerOrPartnerNet,
+      amount: washerNet,
       currency: "usd",
       destination: stripeAccountId,
       source_transaction: pi.latest_charge as string,
@@ -117,11 +164,18 @@ export async function releaseFundsForBooking(
         booking_id: booking.id,
         payout_id: payout?.id ?? "",
         approved_by: actorId,
+        rush: booking.is_rush ? "1" : "0",
+        rush_made_in_time:
+          booking.rush_made_in_time === true
+            ? "yes"
+            : booking.rush_made_in_time === false
+            ? "no"
+            : "unknown",
       },
     });
     await supabase
       .from("payouts")
-      .update({ stripe_transfer_id: transfer.id, status: "paid" })
+      .update({ stripe_transfer_id: transfer.id, status: "paid", amount_cents: washerNet })
       .eq("booking_id", booking.id)
       .eq("kind", "wash");
     await supabase
@@ -132,15 +186,26 @@ export async function releaseFundsForBooking(
       booking_id: booking.id,
       type: "funds_released",
       actor_id: actorId,
-      payload: { transfer_id: transfer.id, amount_cents: fees.washerOrPartnerNet },
+      payload: {
+        transfer_id: transfer.id,
+        amount_cents: washerNet,
+        rush_refund_cents: customerRefundCents,
+      },
     });
 
     // Tell the pro the money's on its way.
     const recipient = booking.assigned_washer_id ?? booking.assigned_partner_id;
     if (recipient) {
+      const rushNote = booking.is_rush
+        ? booking.rush_made_in_time === true
+          ? " (rush bonus included)"
+          : booking.rush_made_in_time === false
+          ? " (rush deadline missed — bonus forfeited)"
+          : ""
+        : "";
       sendPushToUser(recipient, {
         title: "Customer approved · you've been paid ✓",
-        body: `$${(fees.washerOrPartnerNet / 100).toFixed(2)} on the way to your account.`,
+        body: `$${(washerNet / 100).toFixed(2)} on the way to your account${rushNote}.`,
         url: "/pro/wallet",
         tag: `payout-${booking.id}`,
       }).catch(() => {});
