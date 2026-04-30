@@ -6,7 +6,7 @@ import { Placeholder } from "@/components/marketing/Placeholder";
 
 const categories = [
   { tag: "01", label: "Auto", tiers: "4 tiers", from: "$35", desc: "Express wash → showroom-grade paint correction.", href: "/auto", img: "/img/auto.jpg" },
-  { tag: "02", label: "Big Rig", tiers: "4 tiers", from: "$145", desc: "Tractors, trailers, sleepers — at the rest stop or yard.", href: "/big-rig", tone: "ink" as const, img: "/img/og-default.jpg" },
+  { tag: "02", label: "Big Rig", tiers: "4 tiers", from: "$145", desc: "Tractors, trailers, sleepers — at the rest stop or yard.", href: "/big-rig", tone: "ink" as const, img: "/img/big-rig-card.jpg" },
   { tag: "03", label: "Home", tiers: "4 tiers", from: "$185", desc: "Driveways, siding, decks, solar panels.", href: "/home", tone: "royal" as const, img: "/img/home.jpg" },
   { tag: "04", label: "Commercial", tiers: "Quoted", from: "Custom", desc: "Storefronts, fleets, post-construction.", href: "/business", tone: "sol" as const, img: "/img/business.jpg" },
 ];
@@ -230,10 +230,10 @@ export default function Home() {
           <Eyebrow>Recent jobs · LA</Eyebrow>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Placeholder label="GT-R · pressure wash" src="/img/washer.jpg" height={260} />
-          <Placeholder label="Mustang · showroom" src="/img/showroom.jpg" height={260} />
-          <Placeholder label="Panamera Turbo · premium" src="/img/og-default.jpg" height={260} />
-          <Placeholder label="4Runner · full detail" src="/img/auto-detail.jpg" height={260} />
+          <Placeholder label="GT-R · pressure wash" src="/img/work-gtr.jpg" height={260} />
+          <Placeholder label="Mustang · showroom" src="/img/work-mustang.jpg" height={260} />
+          <Placeholder label="Panamera Turbo · premium" src="/img/work-panamera.jpg" height={260} />
+          <Placeholder label="4Runner · full detail" src="/img/work-4runner.jpg" height={260} />
         </div>
       </section>
 

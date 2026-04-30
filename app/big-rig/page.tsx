@@ -126,7 +126,7 @@ export default function BigRigPage() {
       <section className="relative overflow-hidden bg-ink text-bone">
         <div className="absolute inset-0 z-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/img/og-default.jpg" alt="" className="w-full h-full object-cover opacity-40" />
+          <img src="/img/big-rig-hero.jpg" alt="" className="w-full h-full object-cover opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-r from-royal/95 via-ink/85 to-ink/40" />
         </div>
         <div className="relative z-10 px-6 md:px-14 pt-16 md:pt-20 pb-14">

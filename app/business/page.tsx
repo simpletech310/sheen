@@ -44,7 +44,7 @@ export default function BusinessPage() {
       <section className="relative overflow-hidden bg-ink text-bone">
         <div className="absolute inset-0 z-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/img/business.jpg" alt="" className="w-full h-full object-cover opacity-50" />
+          <img src="/img/commercial.jpg" alt="" className="w-full h-full object-cover opacity-50" />
           <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/70 to-ink/30" />
         </div>
         <div className="relative z-10 px-6 md:px-14 pt-16 md:pt-20 pb-14">
