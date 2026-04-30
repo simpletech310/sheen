@@ -31,7 +31,8 @@ export default async function WalletPage() {
   return (
     <div className="px-5 pt-10 pb-8">
       <Eyebrow>Wallet</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-6">YOUR WALLET</h1>
+      <h1 className="display text-3xl mt-3 mb-2">YOUR WALLET</h1>
+      <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
       <div className="bg-royal text-bone p-6 mb-5 relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />

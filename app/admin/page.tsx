@@ -48,38 +48,43 @@ export default async function AdminOverviewPage() {
   return (
     <div>
       <Eyebrow>Today · {new Date().toLocaleDateString()}</Eyebrow>
-      <h1 className="display text-[40px] md:text-[64px] leading-tight mt-3 mb-8">PLATFORM OVERVIEW</h1>
+      <h1 className="display text-[40px] md:text-[64px] leading-tight mt-3 mb-2">PLATFORM OVERVIEW</h1>
+      <div className="h-[3px] w-24 bg-gradient-to-r from-royal to-sol mb-8" />
+
+      {/* Hero KPI strip — bigger Anton numerals, brand accents */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+        <div className="bg-ink text-bone p-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
+          <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">GMV today</div>
+          <div className="display tabular text-[56px] leading-none mt-3">{fmtUSD(gmvToday)}</div>
+        </div>
+        <div className="bg-royal text-bone p-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
+          <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">Active washers</div>
+          <div className="display tabular text-[56px] leading-none mt-3">{washerCount ?? 0}</div>
+        </div>
+        <div className="bg-sol text-ink p-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-ink" />
+          <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">Jobs · 30d</div>
+          <div className="display tabular text-[56px] leading-none mt-3">{(completed30 ?? []).length}</div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
-        <div className="bg-mist/40 p-5">
-          <div className="font-mono text-[10px] uppercase text-smoke">GMV today</div>
-          <div className="display tabular text-3xl mt-1">{fmtUSD(gmvToday)}</div>
-        </div>
         <div className="bg-mist/40 p-5">
           <div className="font-mono text-[10px] uppercase text-smoke">GMV · 7d</div>
           <div className="display tabular text-3xl mt-1">{fmtUSD(gmv7)}</div>
         </div>
-        <div className="bg-royal/15 p-5">
+        <div className="bg-mist/40 p-5">
           <div className="font-mono text-[10px] uppercase text-smoke">GMV · 30d</div>
           <div className="display tabular text-3xl mt-1 text-royal">{fmtUSD(gmv30)}</div>
         </div>
-        <div className="bg-sol/15 p-5">
-          <div className="font-mono text-[10px] uppercase text-smoke">Jobs · 30d</div>
-          <div className="display tabular text-3xl mt-1">{(completed30 ?? []).length}</div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-10">
         <div className="bg-mist/40 p-5">
           <div className="font-mono text-[10px] uppercase text-smoke">Customers</div>
           <div className="display tabular text-3xl mt-1">{customerCount ?? 0}</div>
         </div>
         <div className="bg-mist/40 p-5">
-          <div className="font-mono text-[10px] uppercase text-smoke">Active washers</div>
-          <div className="display tabular text-3xl mt-1">{washerCount ?? 0}</div>
-        </div>
-        <div className="bg-mist/40 p-5">
-          <div className="font-mono text-[10px] uppercase text-smoke">Active memberships (MRR)</div>
+          <div className="font-mono text-[10px] uppercase text-smoke">Active members</div>
           <div className="display tabular text-3xl mt-1">{activeMembers ?? 0}</div>
         </div>
       </div>

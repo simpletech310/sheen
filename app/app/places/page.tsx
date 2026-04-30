@@ -1,40 +1,54 @@
+import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { createClient } from "@/lib/supabase/server";
+import { PlaceRow } from "@/components/customer/PlaceRow";
+
+export const dynamic = "force-dynamic";
 
 export default async function PlacesPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: addresses } = await supabase
     .from("addresses")
-    .select("id, tag, street, city, state, zip, notes, is_default")
+    .select("id, tag, street, unit, city, state, zip, lat, lng, notes, is_default")
     .eq("user_id", user?.id ?? "")
     .order("created_at", { ascending: false });
 
   return (
     <div className="px-5 pt-10 pb-8">
       <Eyebrow>Saved places</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-6">Places</h1>
+      <h1 className="display text-3xl mt-3 mb-2">Places</h1>
+      <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
+
+      <Link
+        href="/app/places/new"
+        className="block w-full bg-ink text-bone py-3.5 text-center text-sm font-bold uppercase tracking-wide hover:bg-royal transition mb-6"
+      >
+        + Add place
+      </Link>
 
       {addresses && addresses.length > 0 ? (
         <div className="space-y-3">
-          {addresses.map((a) => (
-            <div key={a.id} className="bg-mist/40 p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="font-mono text-[10px] text-smoke uppercase">{a.tag ?? "ADDRESS"}</div>
-                  <div className="text-sm font-semibold mt-1">{a.street}</div>
-                  <div className="text-xs text-smoke">
-                    {a.city}, {a.state} {a.zip}
-                  </div>
-                  {a.notes && <div className="text-xs text-smoke mt-1">{a.notes}</div>}
-                </div>
-                {a.is_default && <span className="font-mono text-[10px] text-cobalt uppercase">Default</span>}
-              </div>
-            </div>
+          {addresses.map((a: any) => (
+            <PlaceRow key={a.id} place={a} />
           ))}
         </div>
       ) : (
-        <p className="text-sm text-smoke">No places saved yet.</p>
+        <div className="relative overflow-hidden">
+          <div
+            className="aspect-[16/9] bg-cover bg-center"
+            style={{ backgroundImage: "url(/img/og-default.jpg)" }}
+          />
+          <div className="absolute inset-0 bg-ink/55 flex flex-col items-center justify-center text-center px-6">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-2">
+              No places yet
+            </div>
+            <h2 className="display text-xl text-bone mb-1">Save a spot</h2>
+            <p className="text-xs text-bone/80 max-w-xs">
+              Home, office, the studio — save it once, book faster every time.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
