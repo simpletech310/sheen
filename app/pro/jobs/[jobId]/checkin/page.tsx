@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { CheckInPolling } from "./CheckInPolling";
+import { StartWorkButton } from "./StartWorkButton";
 
 export const dynamic = "force-dynamic";
 
@@ -92,16 +93,28 @@ export default async function CheckInPage({
           have to manually proceed. */}
       <CheckInPolling jobId={params.jobId} initialStartedAt={job.started_at} />
 
-      <Link
-        href={`/pro/jobs/${params.jobId}/timer`}
-        className={`block w-full ${
-          checkedIn
-            ? "bg-sol text-ink hover:bg-bone"
-            : "bg-bone/10 text-bone hover:bg-bone hover:text-ink"
-        } rounded-full py-4 text-sm font-bold uppercase tracking-wide text-center transition`}
-      >
-        {checkedIn ? "Open timer →" : "Skip · open timer anyway →"}
-      </Link>
+      {checkedIn ? (
+        <Link
+          href={`/pro/jobs/${params.jobId}/timer`}
+          className="block w-full bg-sol text-ink hover:bg-bone py-4 text-sm font-bold uppercase tracking-wide text-center transition"
+        >
+          Open timer →
+        </Link>
+      ) : (
+        <>
+          {/* Primary path: customer scans, page auto-flips. Manual fallback
+              for when the customer's offline / phone dead / not technical:
+              the pro starts the timer themselves. The button calls
+              /api/bookings/[id]/start with proper error surfacing — the
+              old silent-fail in /timer's useEffect was what was leaving
+              jobs stuck on 'arrived'. */}
+          <StartWorkButton jobId={params.jobId} primary />
+          <p className="text-[11px] text-bone/45 mt-3 text-center leading-relaxed">
+            No QR? Start manually. The customer can still confirm via the
+            tracking link, and the timer is your record either way.
+          </p>
+        </>
+      )}
 
       {user && (
         <ChatPanel

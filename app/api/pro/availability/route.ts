@@ -39,15 +39,38 @@ export async function GET() {
   return NextResponse.json({ rules: data ?? [] });
 }
 
-/** Replaces all availability rules for the calling washer. Simple PUT-style overwrite. */
+/** Replaces all availability rules for the calling washer. Simple PUT-style overwrite.
+ *
+ *  Surfaces errors from BOTH the delete and the insert — silent
+ *  failures here were why "saved" toasts appeared but reloads showed
+ *  no rules persisted (RLS or schema-mismatch failures used to fall
+ *  through to the 200 ok response).
+ */
 export async function PUT(req: Request) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const body = Body.parse(await req.json());
+  let body: z.infer<typeof Body>;
+  try {
+    body = Body.parse(await req.json());
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: `Invalid request: ${err.message ?? "schema error"}` },
+      { status: 400 }
+    );
+  }
 
-  await supabase.from("availability").delete().eq("washer_id", user.id);
+  const { error: delErr } = await supabase
+    .from("availability")
+    .delete()
+    .eq("washer_id", user.id);
+  if (delErr) {
+    return NextResponse.json(
+      { error: `Couldn't clear old hours: ${delErr.message}` },
+      { status: 400 }
+    );
+  }
 
   const rows = body.rules.map((r) => {
     if (r.type === "recurring") {
@@ -77,7 +100,12 @@ export async function PUT(req: Request) {
 
   if (rows.length) {
     const { error } = await supabase.from("availability").insert(rows);
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) {
+      return NextResponse.json(
+        { error: `Couldn't save hours: ${error.message}` },
+        { status: 400 }
+      );
+    }
   }
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, saved: rows.length });
 }

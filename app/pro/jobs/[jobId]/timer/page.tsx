@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
+import { toast } from "@/components/ui/Toast";
 
 /**
  * Live timer for the in-progress job. The real per-tier QA checklist
@@ -17,15 +18,29 @@ export default function TimerPage({
 }) {
   const { jobId } = use(params);
   const [elapsed, setElapsed] = useState(0);
+  const [startError, setStartError] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // Mark booking as in_progress on first mount (best-effort).
+  // Mark booking as in_progress on first mount. Surface failures so a
+  // silently-failed UPDATE doesn't leave the booking stuck on 'arrived'
+  // while the pro thinks they've started.
   useEffect(() => {
-    fetch(`/api/bookings/${jobId}/start`, { method: "POST" }).catch(() => {});
+    (async () => {
+      try {
+        const r = await fetch(`/api/bookings/${jobId}/start`, { method: "POST" });
+        if (!r.ok) {
+          const d = await r.json().catch(() => ({}));
+          throw new Error(d.error || `Could not start (status ${r.status})`);
+        }
+      } catch (e: any) {
+        setStartError(e.message);
+        toast(e.message || "Could not start work", "error");
+      }
+    })();
   }, [jobId]);
 
   const hr = Math.floor(elapsed / 3600);
@@ -42,10 +57,45 @@ export default function TimerPage({
         <span className="text-bone/30">:</span>
         {String(sec).padStart(2, "0")}
       </div>
-      <div className="font-mono text-[11px] text-good uppercase tracking-wider">
-        ● Live · timer running
+      <div
+        className={`font-mono text-[11px] uppercase tracking-wider ${
+          startError ? "text-bad" : "text-good"
+        }`}
+      >
+        {startError ? "● Status not updated — see error below" : "● Live · timer running"}
       </div>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mt-5 mb-6" />
+
+      {startError && (
+        <div className="bg-bad/15 border-l-2 border-bad p-4 mb-6">
+          <div className="font-mono text-[10px] uppercase tracking-wider text-bad mb-1">
+            Could not flip status to in-progress
+          </div>
+          <div className="text-sm text-bone/85">{startError}</div>
+          <p className="text-[11px] text-bone/55 mt-2 leading-relaxed">
+            The timer&rsquo;s still recording your time. Tap the button below to
+            retry — if it keeps failing, finish the job and email
+            hello@sheen.co with the booking ID.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setStartError(null);
+              fetch(`/api/bookings/${jobId}/start`, { method: "POST" }).then(
+                async (r) => {
+                  if (!r.ok) {
+                    const d = await r.json().catch(() => ({}));
+                    setStartError(d.error || `Status ${r.status}`);
+                  }
+                }
+              );
+            }}
+            className="mt-3 px-3 py-2 bg-bad text-bone text-xs font-bold uppercase tracking-wide hover:bg-bone hover:text-bad transition"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       <p className="text-sm text-bone/65 leading-relaxed mb-6">
         Work through the per-job checklist as you go. Photos for required steps

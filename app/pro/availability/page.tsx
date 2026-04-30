@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
+import { toast } from "@/components/ui/Toast";
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -67,13 +68,23 @@ export default function AvailabilityPage() {
       })),
       ...blocks.map((d) => ({ type: "block" as const, specific_date: d })),
     ];
-    await fetch("/api/pro/availability", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rules }),
-    });
-    setSaving(false);
-    setSavedAt(new Date());
+    try {
+      const r = await fetch("/api/pro/availability", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rules }),
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.error || `Save failed (status ${r.status})`);
+      }
+      setSavedAt(new Date());
+      toast("Hours saved", "success");
+    } catch (e: any) {
+      toast(e.message || "Could not save hours", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
