@@ -51,12 +51,12 @@ export default async function TrackingPage({ params }: { params: { id: string } 
   return (
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/app/trips" className="text-smoke text-sm">
-          ← Trips
+        <Link href="/app/washes" className="text-smoke text-sm">
+          ← Washes
         </Link>
       </div>
 
-      <Eyebrow>Booking · #{booking.id.slice(0, 8)}</Eyebrow>
+      <Eyebrow>Wash · #{booking.id.slice(0, 8)} · live</Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">
         {(booking as any).services?.tier_name ?? "Service"}
       </h1>

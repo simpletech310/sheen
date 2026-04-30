@@ -32,8 +32,8 @@ function TierPickerInner() {
           ← Back
         </Link>
       </div>
-      <Eyebrow>Step 1 / 3 · Pick a tier</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-6">Auto detail</h1>
+      <Eyebrow>Step 1 / 3 · Pick your wash</Eyebrow>
+      <h1 className="display text-3xl mt-3 mb-6">Choose a tier</h1>
       <div className="space-y-3">
         {AUTO_TIERS.map((t) => (
           <button

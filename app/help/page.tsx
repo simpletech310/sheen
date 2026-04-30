@@ -6,9 +6,9 @@ export const metadata = { title: "Help — Sheen" };
 
 const items = [
   ["Booking & cancellation", "Free reschedule up to 1 hour before window. Cancel anytime — refunded to original payment if pro hasn't started."],
-  ["Damage claims", "File from the trip in /app/trips within 24 hours of completion. Up to $2,500 covered automatically."],
+  ["Damage claims", "Open the wash in the Washes tab and tap “Report damage” within 24 hours of completion. Up to $2,500 covered automatically."],
   ["Tipping", "Default 18 / 22 / 25%, custom amounts allowed. 100% goes to your pro, no platform cut."],
-  ["Receipts", "Emailed at job completion. View any time from /app/trips."],
+  ["Receipts", "Emailed at job completion. View any time from the Washes tab."],
 ];
 
 export default function HelpPage() {

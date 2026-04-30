@@ -15,8 +15,8 @@ export default async function CustomerHome() {
 
   const firstName = (profile?.full_name ?? user?.email ?? "there").split(" ")[0]?.split("@")[0];
 
-  // Trip count for the hero strip
-  const { count: tripCount } = await supabase
+  // Lifetime completed wash count for the hero strip
+  const { count: washCount } = await supabase
     .from("bookings")
     .select("id", { head: true, count: "exact" })
     .eq("customer_id", user?.id ?? "")
@@ -42,8 +42,8 @@ export default async function CustomerHome() {
           </h1>
           <div className="mt-5 flex gap-6 text-xs">
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">Trips</div>
-              <div className="display tabular text-xl mt-0.5">{tripCount ?? 0}</div>
+              <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">Washes</div>
+              <div className="display tabular text-xl mt-0.5">{washCount ?? 0}</div>
             </div>
             <div>
               <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">Status</div>
@@ -106,8 +106,8 @@ export default async function CustomerHome() {
         </div>
 
         <div className="mt-8 grid grid-cols-3 gap-2">
-          <Link href="/app/trips" className="bg-mist/40 hover:bg-mist transition p-3 text-center">
-            <div className="font-mono text-[10px] uppercase tracking-wider text-smoke">Trips</div>
+          <Link href="/app/washes" className="bg-mist/40 hover:bg-mist transition p-3 text-center">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-smoke">Washes</div>
             <div className="display text-lg mt-1">→</div>
           </Link>
           <Link href="/app/wallet" className="bg-mist/40 hover:bg-mist transition p-3 text-center">

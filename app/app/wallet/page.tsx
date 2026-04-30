@@ -36,10 +36,10 @@ export default async function WalletPage() {
 
       <div className="bg-royal text-bone p-6 mb-5 relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
-        <div className="font-mono text-[10px] uppercase opacity-80">Loyalty credit</div>
-        <div className="display tabular text-5xl mt-2">${creditDollars}</div>
-        <div className="text-xs opacity-80 mt-2 tabular">{balance.toLocaleString()} points · 100 pts = $1</div>
-        <div className="text-[11px] opacity-70 mt-1">Applied automatically at next checkout.</div>
+        <div className="font-mono text-[10px] uppercase opacity-80">Loyalty balance</div>
+        <div className="display tabular text-5xl mt-2">{balance.toLocaleString()}<span className="text-2xl ml-2 opacity-80">pts</span></div>
+        <div className="text-xs opacity-80 mt-2 tabular">≈ ${creditDollars} in credit · 100 pts = $1</div>
+        <div className="text-[11px] opacity-70 mt-1">Earn 1 pt for every $1 spent on a wash.</div>
       </div>
 
       {membership ? (
@@ -79,25 +79,25 @@ export default async function WalletPage() {
         </div>
       </Link>
 
-      <Eyebrow>Recent activity</Eyebrow>
+      <Eyebrow>Points history</Eyebrow>
       <div className="mt-3 space-y-2">
         {(ledger ?? []).map((r, i) => (
           <div key={i} className="bg-mist/40 p-3 flex justify-between text-sm">
             <div>
               <div className="font-medium capitalize">{r.reason.replace(/_|:/g, " ")}</div>
               <div className="text-xs text-smoke font-mono mt-0.5">
-                {new Date(r.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
+                {new Date(r.created_at).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
               </div>
             </div>
             <div className={`display tabular ${r.points >= 0 ? "text-good" : "text-bad"}`}>
               {r.points >= 0 ? "+" : ""}
-              {r.points}
+              {r.points} pts
             </div>
           </div>
         ))}
         {(ledger ?? []).length === 0 && (
           <div className="bg-mist/40 p-6 text-center text-sm text-smoke">
-            No points earned yet. Book a wash and start collecting.
+            No points yet. Book a wash and start collecting.
           </div>
         )}
       </div>

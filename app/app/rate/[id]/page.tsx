@@ -36,7 +36,7 @@ export default function RatePage({ params }: { params: Promise<{ id: string }> }
         tipPct > 0 ? "Rating + tip sent · thanks!" : "Rating sent · thanks!",
         "success"
       );
-      router.push("/app/trips");
+      router.push("/app/washes");
     } catch (e: any) {
       toast(e.message || "Could not submit rating", "error");
     } finally {

@@ -43,7 +43,7 @@ export default async function GaragePage() {
             <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-2">
               Empty garage
             </div>
-            <h2 className="display text-xl text-bone mb-1">Add your first ride</h2>
+            <h2 className="display text-xl text-bone mb-1">Add your first vehicle</h2>
             <p className="text-xs text-bone/80 max-w-xs">
               Save vehicles once and they pre-fill on every booking.
             </p>

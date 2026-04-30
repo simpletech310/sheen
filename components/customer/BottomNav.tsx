@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 
 const tabs = [
   { href: "/app", label: "Book", icon: "▢" },
-  { href: "/app/trips", label: "Trips", icon: "≡" },
+  { href: "/app/washes", label: "Washes", icon: "≡" },
   { href: "/app/wallet", label: "Wallet", icon: "$" },
   { href: "/app/me", label: "Me", icon: "○" },
 ];

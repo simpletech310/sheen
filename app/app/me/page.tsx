@@ -26,15 +26,15 @@ export default async function MePage() {
       items: [
         { l: "Garage", href: "/app/garage" },
         { l: "Places", href: "/app/places" },
-        { l: "Trips", href: "/app/trips" },
+        { l: "Washes", href: "/app/washes" },
         { l: "Wallet", href: "/app/wallet" },
       ],
     },
     {
       h: "Trust",
       items: [
-        // Damage claims start from a specific trip — point at the trips list.
-        { l: "Damage claims", href: "/app/trips" },
+        // Damage claims start from a specific wash — point at the wash list.
+        { l: "Damage claims", href: "/app/washes" },
         { l: "Refer a friend · $25", href: "/app/me/refer" },
       ],
     },
