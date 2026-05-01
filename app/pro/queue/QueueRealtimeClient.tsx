@@ -143,8 +143,8 @@ export function QueueRealtimeClient({
             setDirectRequests((prev) => {
               if (prev.some((j) => j.id === row.id)) return prev;
               // Flash
-              setNewIds((n) => new Set([...n, row.id]));
-              setTimeout(() => setNewIds((n) => { const next = new Set(n); next.delete(row.id); return next; }), 1800);
+              setNewIds((n) => { const a = Array.from(n); a.push(row.id); return new Set(a); });
+              setTimeout(() => setNewIds((n) => { const next = new Set(Array.from(n)); next.delete(row.id); return next; }), 1800);
               return [row as QueueJob, ...prev];
             });
             // Remove from general list if it was there
@@ -160,8 +160,8 @@ export function QueueRealtimeClient({
                 return prev.map((j) => (j.id === row.id ? (row as QueueJob) : j));
               }
               // New INSERT — flash and prepend
-              setNewIds((n) => new Set([...n, row.id]));
-              setTimeout(() => setNewIds((n) => { const next = new Set(n); next.delete(row.id); return next; }), 1800);
+              setNewIds((n) => { const a = Array.from(n); a.push(row.id); return new Set(a); });
+              setTimeout(() => setNewIds((n) => { const next = new Set(Array.from(n)); next.delete(row.id); return next; }), 1800);
               return [row as QueueJob, ...prev];
             });
           }
