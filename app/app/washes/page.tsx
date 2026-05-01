@@ -4,10 +4,7 @@ import { fmtUSD } from "@/lib/pricing";
 import { WashesFilterClient, Booking } from "./WashesFilterClient";
 
 export const dynamic = "force-dynamic";
-  completed: "Completed",
-  cancelled: "Cancelled",
-  disputed: "Under review",
-};
+
 
 export default async function WashesPage() {
   const supabase = createClient();
