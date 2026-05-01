@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
@@ -12,8 +12,9 @@ const tips = [
   { pct: 25, label: "25%" },
 ];
 
-export default function RatePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+// Next 14: params is a plain sync object. Don't wrap in Promise + use().
+export default function RatePage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const router = useRouter();
   const [stars, setStars] = useState(5);
   const [tipPct, setTipPct] = useState(22);

@@ -1,5 +1,11 @@
 // SHEEN service worker — minimal offline shell + Web Push handlers.
-const CACHE = "sheen-v1";
+//
+// Bumped cache to v2 — the old fetch handler could resolve with
+// undefined when both network and cache miss, which blew up
+// respondWith() and surfaced as "FetchEvent for /pro resulted in a
+// network error response". The bump forces clients to install this
+// version on next page load.
+const CACHE = "sheen-v2";
 const APP_SHELL = ["/", "/app", "/pro/queue", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -16,29 +22,69 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Bare-minimum fallback so respondWith always resolves with a real
+// Response — never undefined, which is what was causing the SW to
+// reject the FetchEvent.
+function offlineFallback() {
+  return new Response(
+    "<!doctype html><meta charset=utf-8><title>Offline</title><style>body{font:16px system-ui;background:#0a0a0a;color:#fafaf7;padding:48px 24px;text-align:center}h1{font-size:24px}a{color:#FFA300}</style><h1>Offline</h1><p>Reconnect and try again.</p><a href=\"/\">Reload</a>",
+    { status: 503, headers: { "content-type": "text/html; charset=utf-8" } }
+  );
+}
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET" || !req.url.startsWith(self.location.origin)) return;
-  // Network-first for HTML, cache-first for everything else
+
+  // Don't intercept Next.js internals, API routes, or auth — let the
+  // browser hit the network directly. Caching session-aware server
+  // routes leads to stale-auth surprises (the user seeing someone
+  // else's /pro page after a sign-in switch).
+  const url = new URL(req.url);
+  if (
+    url.pathname.startsWith("/_next/") ||
+    url.pathname.startsWith("/api/") ||
+    url.pathname.startsWith("/auth/")
+  ) {
+    return;
+  }
+
+  // Network-first for HTML, cache-first for everything else.
+  // Every branch resolves with a real Response so respondWith never
+  // gets undefined.
   if (req.headers.get("accept")?.includes("text/html")) {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const cloned = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, cloned));
+          if (res && res.ok) {
+            const cloned = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, cloned)).catch(() => {});
+          }
           return res;
         })
-        .catch(() => caches.match(req).then((m) => m || caches.match("/")))
+        .catch(async () => {
+          const m = await caches.match(req);
+          if (m) return m;
+          const root = await caches.match("/");
+          if (root) return root;
+          return offlineFallback();
+        })
     );
   } else {
     event.respondWith(
-      caches.match(req).then((m) =>
-        m || fetch(req).then((res) => {
-          const cloned = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, cloned));
+      caches.match(req).then(async (m) => {
+        if (m) return m;
+        try {
+          const res = await fetch(req);
+          if (res && res.ok) {
+            const cloned = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, cloned)).catch(() => {});
+          }
           return res;
-        })
-      )
+        } catch {
+          return offlineFallback();
+        }
+      })
     );
   }
 });

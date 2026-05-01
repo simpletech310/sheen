@@ -59,8 +59,21 @@ export default function AvailabilityPage() {
 
   async function save() {
     setSaving(true);
+    // Drop any windows the pro hasn't fully filled in. A time input
+    // returns "" when cleared — passing that through built ":00" which
+    // Postgres rejected and we silently lost the save.
+    const isHHMM = (s: string) => /^\d{2}:\d{2}$/.test(s);
+    const cleanRecurring = recurring.filter(
+      (b) => isHHMM(b.start) && isHHMM(b.end) && b.start < b.end
+    );
+    if (cleanRecurring.length !== recurring.length) {
+      toast(
+        "Skipped windows that were missing a start or end time",
+        "info"
+      );
+    }
     const rules = [
-      ...recurring.map((b) => ({
+      ...cleanRecurring.map((b) => ({
         type: "recurring" as const,
         day_of_week: b.day_of_week,
         start_time: b.start + ":00",

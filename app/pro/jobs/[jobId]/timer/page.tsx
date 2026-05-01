@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { toast } from "@/components/ui/Toast";
@@ -10,13 +10,16 @@ import { toast } from "@/components/ui/Toast";
  * lives at /pro/jobs/[id]/checklist — this page is a stopwatch + a
  * one-tap link there. We don't duplicate the checklist here so the
  * source of truth stays single.
+ *
+ * Next 14: params is a plain sync object. Don't wrap in Promise + use()
+ * — that's a Next 15 pattern and crashes here with React error #438.
  */
 export default function TimerPage({
   params,
 }: {
-  params: Promise<{ jobId: string }>;
+  params: { jobId: string };
 }) {
-  const { jobId } = use(params);
+  const { jobId } = params;
   const [elapsed, setElapsed] = useState(0);
   const [startError, setStartError] = useState<string | null>(null);
 
