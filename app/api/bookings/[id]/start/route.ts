@@ -12,7 +12,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   const { data: booking } = await supabase
     .from("bookings")
-    .select("id, customer_id, assigned_washer_id, assigned_partner_id, status, started_at")
+    .select("id, customer_id, assigned_washer_id, assigned_partner_id, status, started_at, paused_at, total_paused_ms")
     .eq("id", params.id)
     .maybeSingle();
   if (!booking) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -41,5 +41,11 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   notifyCustomerStatus(booking.customer_id, params.id, STEPS.in_progress).catch(() => {});
 
-  return NextResponse.json({ ok: true, started_at });
+  return NextResponse.json({
+    ok: true,
+    started_at,
+    paused_at: booking.paused_at ?? null,
+    total_paused_ms: (booking as any).total_paused_ms ?? 0,
+    status: STEPS.in_progress.status,
+  });
 }
