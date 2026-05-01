@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { toast } from "@/components/ui/Toast";
+import { StripePaymentElement } from "@/components/customer/StripePaymentElement";
+import { fmtUSD } from "@/lib/pricing";
 
 const tips = [
   { pct: 18, label: "18%" },
@@ -12,14 +14,46 @@ const tips = [
   { pct: 25, label: "25%" },
 ];
 
-// Next 14: params is a plain sync object. Don't wrap in Promise + use().
-export default function RatePage({ params }: { params: { id: string } }) {
+function RateInner({ params }: { params: { id: string } }) {
   const { id } = params;
   const router = useRouter();
   const [stars, setStars] = useState(5);
   const [tipPct, setTipPct] = useState(22);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [booking, setBooking] = useState<any>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const tipCents = booking ? Math.round((booking.service_cents * tipPct) / 100) : 0;
+
+  useEffect(() => {
+    fetch(`/api/bookings/${id}`)
+      .then(r => r.json())
+      .then(d => {
+        setBooking(d);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [id]);
+
+  useEffect(() => {
+    if (tipCents > 0) {
+      setClientSecret(null);
+      fetch("/api/stripe/checkout-tip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_id: id, amount_cents: tipCents }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.client_secret) setClientSecret(d.client_secret);
+        })
+        .catch(() => {});
+    } else {
+      setClientSecret(null);
+    }
+  }, [id, tipCents]);
 
   async function submit() {
     setSubmitting(true);
@@ -44,6 +78,9 @@ export default function RatePage({ params }: { params: { id: string } }) {
       setSubmitting(false);
     }
   }
+
+  if (loading) return <div className="p-10 text-center text-smoke">Loading…</div>;
+  if (!booking) return <div className="p-10 text-center text-bad">Booking not found</div>;
 
   return (
     <div className="px-5 pt-10 pb-8">
@@ -74,31 +111,56 @@ export default function RatePage({ params }: { params: { id: string } }) {
           <button
             key={t.pct}
             onClick={() => setTipPct(t.pct)}
-            className={`p-3 text-sm ${tipPct === t.pct ? "bg-ink text-bone" : "bg-mist/50"}`}
+            className={`p-3 text-sm font-bold uppercase tracking-wide ${tipPct === t.pct ? "bg-ink text-bone" : "bg-mist/50"}`}
           >
             {t.label}
           </button>
         ))}
-        <button onClick={() => setTipPct(0)} className={`p-3 text-sm ${tipPct === 0 ? "bg-ink text-bone" : "bg-mist/50"}`}>
-          Custom
+        <button onClick={() => setTipPct(0)} className={`p-3 text-sm font-bold uppercase tracking-wide ${tipPct === 0 ? "bg-ink text-bone" : "bg-mist/50"}`}>
+          Skip
         </button>
       </div>
+
+      {tipCents > 0 && (
+        <div className="mb-6 bg-mist/20 p-5 border border-mist rounded-sm">
+          <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-3">Secure Tip Payment · {fmtUSD(tipCents)}</div>
+          {clientSecret ? (
+            <StripePaymentElement
+              clientSecret={clientSecret}
+              amountLabel={fmtUSD(tipCents)}
+              onSuccess={submit}
+            />
+          ) : (
+            <div className="py-4 text-center text-xs text-smoke">Setting up payment…</div>
+          )}
+        </div>
+      )}
 
       <textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         placeholder="Anything to say? (optional)"
         rows={3}
-        className="w-full px-4 py-3 bg-bone border border-mist rounded-md text-sm"
+        className="w-full px-4 py-3 bg-bone border border-mist rounded-sm text-sm mb-6"
       />
 
-      <button
-        onClick={submit}
-        disabled={submitting}
-        className="mt-6 w-full bg-cobalt text-bone rounded-full py-4 text-sm font-semibold disabled:opacity-50"
-      >
-        {submitting ? "Submitting…" : "Submit & rebook →"}
-      </button>
+      {tipPct === 0 && (
+        <button
+          onClick={submit}
+          disabled={submitting}
+          className="w-full bg-cobalt text-bone rounded-sm py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
+        >
+          {submitting ? "Submitting…" : "Submit Rating →"}
+        </button>
+      )}
     </div>
+  );
+}
+
+export default function RatePage({ params }: { params: { id: string } }) {
+  return (
+    <Suspense>
+      <RateInner params={params} />
+    </Suspense>
   );
 }

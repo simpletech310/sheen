@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { sendPushToUser } from "@/lib/push";
 import type Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -56,7 +57,38 @@ export async function POST(req: Request) {
       case "payment_intent.succeeded": {
         const pi = event.data.object as Stripe.PaymentIntent;
         const bookingId = pi.metadata?.booking_id;
-        if (bookingId) {
+        const kind = pi.metadata?.kind;
+
+        if (bookingId && kind === "tip") {
+          const proId = pi.metadata.pro_id;
+          const amountCents = pi.amount;
+          const isPartner = pi.metadata.is_partner === "true";
+
+          // Record the tip payout
+          await supabase.from("payouts").insert({
+            washer_id: isPartner ? null : proId,
+            partner_id: isPartner ? proId : null,
+            booking_id: bookingId,
+            amount_cents: amountCents,
+            status: "paid",
+            kind: "tip",
+          });
+
+          await supabase.from("booking_events").insert({
+            booking_id: bookingId,
+            type: "tip_transferred",
+            payload: { amount_cents: amountCents, payment_intent: pi.id },
+          });
+
+          if (proId) {
+            sendPushToUser(proId, {
+              title: "Tip received 🎁",
+              body: `$${(amountCents / 100).toFixed(2)} just landed in your wallet.`,
+              url: "/pro/wallet",
+              tag: `tip-${bookingId}`,
+            }).catch(() => {});
+          }
+        } else if (bookingId) {
           await supabase
             .from("bookings")
             .update({ status: "matched" })
