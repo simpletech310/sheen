@@ -38,8 +38,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     .maybeSingle();
 
   if (!booking) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (booking.status !== "completed" && booking.status !== "funded") {
-    return NextResponse.json({ error: "Job must be completed to fund" }, { status: 400 });
+  if (["funded", "cancelled", "disputed"].includes(booking.status)) {
+    return NextResponse.json({ error: "Job status prevents funding" }, { status: 400 });
   }
 
   // Force approve

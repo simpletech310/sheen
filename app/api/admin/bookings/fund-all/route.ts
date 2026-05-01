@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   const { data: bookings, error: fetchError } = await supabase
     .from("bookings")
     .select("id, status, customer_approved_at")
-    .eq("status", "completed");
+    .not("status", "in", "(funded,cancelled,disputed)");
 
   if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 });
   if (!bookings || bookings.length === 0) {

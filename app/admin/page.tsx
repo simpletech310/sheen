@@ -24,7 +24,7 @@ export default async function AdminOverviewPage() {
     supabase
       .from("bookings")
       .select("total_cents, fees_cents, completed_at")
-      .eq("status", "completed")
+      .in("status", ["completed", "funded"])
       .gte("completed_at", since30),
     supabase.from("users").select("*", { count: "exact", head: true }).eq("role", "customer"),
     supabase.from("washer_profiles").select("*", { count: "exact", head: true }).eq("status", "active"),
@@ -40,7 +40,7 @@ export default async function AdminOverviewPage() {
     supabase
       .from("bookings")
       .select("total_cents, completed_at, services(category)")
-      .eq("status", "completed")
+      .in("status", ["completed", "funded"])
       .gte("completed_at", since30),
   ]);
 

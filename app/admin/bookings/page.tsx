@@ -15,20 +15,21 @@ export default async function AdminBookingsPage({
   const supabase = createServiceClient();
   let q = supabase
     .from("bookings")
-    .select("id, status, total_cents, scheduled_window_start, customer_id, services(tier_name), users:customer_id(email)")
+    .select("id, status, total_cents, scheduled_window_start, customer_id, services(tier_name), users:customer_id(email), payouts(status)")
     .order("created_at", { ascending: false })
     .limit(200);
   if (searchParams.status) q = q.eq("status", searchParams.status as any);
   const { data: bookings } = await q;
 
-  const completedCount = (bookings ?? []).filter(b => b.status === "completed").length;
+  const canFund = (b: any) => !["funded", "cancelled", "disputed"].includes(b.status);
+  const fundableCount = (bookings ?? []).filter(canFund).length;
 
   return (
     <div>
       <Eyebrow>Admin · Bookings</Eyebrow>
       <div className="flex justify-between items-end mt-3 mb-6">
         <h1 className="display text-[40px] md:text-[56px] leading-tight">BOOKINGS</h1>
-        <FundAllButton count={completedCount} />
+        <FundAllButton count={fundableCount} />
       </div>
 
       <div className="flex flex-wrap gap-2 mb-5">
@@ -54,6 +55,7 @@ export default async function AdminBookingsPage({
               <th className="px-4 py-3 font-mono text-[10px] uppercase text-smoke">Service</th>
               <th className="px-4 py-3 font-mono text-[10px] uppercase text-smoke">Window</th>
               <th className="px-4 py-3 font-mono text-[10px] uppercase text-smoke">Status</th>
+              <th className="px-4 py-3 font-mono text-[10px] uppercase text-smoke">Payout</th>
               <th className="px-4 py-3 font-mono text-[10px] uppercase text-smoke">Total</th>
               <th className="px-4 py-3 font-mono text-[10px] uppercase text-smoke">Action</th>
             </tr>
@@ -72,9 +74,16 @@ export default async function AdminBookingsPage({
                 <td className="px-4 py-3 text-xs">
                   <span className="px-2 py-0.5 bg-mist font-mono text-[10px] uppercase">{b.status}</span>
                 </td>
+                <td className="px-4 py-3 text-xs">
+                  {b.payouts?.[0]?.status ? (
+                    <span className={`px-2 py-0.5 font-mono text-[10px] uppercase ${b.payouts[0].status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {b.payouts[0].status}
+                    </span>
+                  ) : "—"}
+                </td>
                 <td className="px-4 py-3 text-xs tabular display">{fmtUSD(b.total_cents)}</td>
                 <td className="px-4 py-3 text-xs">
-                  {b.status === "completed" && <FundButton id={b.id} />}
+                  {!["funded", "cancelled", "disputed"].includes(b.status) && <FundButton id={b.id} />}
                 </td>
               </tr>
             ))}
