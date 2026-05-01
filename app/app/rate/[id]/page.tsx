@@ -122,7 +122,7 @@ function RateInner({ params }: { params: { id: string } }) {
       </div>
 
       {tipCents > 0 && (
-        <div className="mb-6 bg-mist/20 p-5 border border-mist rounded-sm">
+        <div className="mb-6 bg-mist/20 p-5 border border-mist rounded-none">
           <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-3">Secure Tip Payment · {fmtUSD(tipCents)}</div>
           {clientSecret ? (
             <StripePaymentElement
@@ -141,14 +141,14 @@ function RateInner({ params }: { params: { id: string } }) {
         onChange={(e) => setComment(e.target.value)}
         placeholder="Anything to say? (optional)"
         rows={3}
-        className="w-full px-4 py-3 bg-bone border border-mist rounded-sm text-sm mb-6"
+        className="w-full px-4 py-3 bg-bone border border-mist rounded-none text-sm mb-6"
       />
 
       {tipPct === 0 && (
         <button
           onClick={submit}
           disabled={submitting}
-          className="w-full bg-cobalt text-bone rounded-sm py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
+          className="w-full bg-cobalt text-bone rounded-none py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
         >
           {submitting ? "Submitting…" : "Submit Rating →"}
         </button>
