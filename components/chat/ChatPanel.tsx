@@ -30,8 +30,12 @@ export function ChatPanel({
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  // Keep open in a ref so the realtime subscription doesn't need to
+  // re-subscribe every time the panel opens/closes.
+  const openRef = useRef(open);
+  useEffect(() => { openRef.current = open; }, [open]);
 
-  // Load history (and on open, mark read).
+  // Load history on mount.
   useEffect(() => {
     let alive = true;
     async function load() {
@@ -50,12 +54,10 @@ export function ChatPanel({
       }
     }
     load();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [bookingId, currentUserId]);
 
-  // Subscribe to realtime inserts.
+  // Subscribe to realtime inserts — stable subscription for component lifetime.
   useEffect(() => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -74,16 +76,17 @@ export function ChatPanel({
         (payload) => {
           const m = payload.new as Message;
           setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
-          if (m.sender_id !== currentUserId && !open) {
+          // Only bump unread badge when the panel is closed
+          if (m.sender_id !== currentUserId && !openRef.current) {
             setUnread((n) => n + 1);
           }
         }
       )
       .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [bookingId, currentUserId, open]);
+    return () => { supabase.removeChannel(channel); };
+  // Intentionally omit `open` — use openRef instead to keep the channel stable
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingId, currentUserId]);
 
   // Auto-scroll on new messages when panel is open.
   useEffect(() => {
