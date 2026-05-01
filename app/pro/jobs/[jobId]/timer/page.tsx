@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { toast } from "@/components/ui/Toast";
@@ -10,6 +10,11 @@ import { toast } from "@/components/ui/Toast";
  * lives at /pro/jobs/[id]/checklist — this page is a stopwatch + a
  * one-tap link there. We don't duplicate the checklist here so the
  * source of truth stays single.
+ *
+ * Timer is PERSISTENT: on first mount we call /start (which returns
+ * started_at), store it in localStorage keyed by jobId, and compute
+ * elapsed from the real DB timestamp. Refreshing the page restores
+ * the same start time so the clock never resets.
  *
  * Next 14: params is a plain sync object. Don't wrap in Promise + use()
  * — that's a Next 15 pattern and crashes here with React error #438.
@@ -22,29 +27,58 @@ export default function TimerPage({
   const { jobId } = params;
   const [elapsed, setElapsed] = useState(0);
   const [startError, setStartError] = useState<string | null>(null);
+  // Anchor: unix ms when the job actually started (from DB / cache).
+  const anchorRef = useRef<number | null>(null);
 
+  // On mount: call /start. If already started, the API returns the
+  // existing started_at unchanged. Cache it in localStorage so
+  // subsequent refreshes don't lose the origin even if the API is slow.
   useEffect(() => {
-    const t = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(t);
-  }, []);
+    const storageKey = `sheen_job_start_${jobId}`;
 
-  // Mark booking as in_progress on first mount. Surface failures so a
-  // silently-failed UPDATE doesn't leave the booking stuck on 'arrived'
-  // while the pro thinks they've started.
-  useEffect(() => {
-    (async () => {
+    async function initTimer() {
+      // Fast path: use cached anchor so the clock shows immediately.
+      const cached = localStorage.getItem(storageKey);
+      if (cached) {
+        anchorRef.current = Number(cached);
+        setElapsed(Math.floor((Date.now() - anchorRef.current) / 1000));
+      }
+
       try {
         const r = await fetch(`/api/bookings/${jobId}/start`, { method: "POST" });
         if (!r.ok) {
           const d = await r.json().catch(() => ({}));
           throw new Error(d.error || `Could not start (status ${r.status})`);
         }
+        const d = await r.json();
+        // started_at is the canonical DB value (already set if this is
+        // a re-open/refresh, newly set if this is the first call).
+        if (d.started_at) {
+          const anchor = new Date(d.started_at).getTime();
+          anchorRef.current = anchor;
+          localStorage.setItem(storageKey, String(anchor));
+          setElapsed(Math.floor((Date.now() - anchor) / 1000));
+        }
       } catch (e: any) {
         setStartError(e.message);
         toast(e.message || "Could not start work", "error");
       }
-    })();
+    }
+
+    initTimer();
   }, [jobId]);
+
+  // Tick every second from the anchor, not from a local counter.
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (anchorRef.current !== null) {
+        setElapsed(Math.floor((Date.now() - anchorRef.current) / 1000));
+      } else {
+        setElapsed((e) => e + 1);
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const hr = Math.floor(elapsed / 3600);
   const min = Math.floor((elapsed % 3600) / 60);

@@ -23,11 +23,13 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Booking is closed" }, { status: 409 });
   }
 
+  const started_at = booking.started_at ?? new Date().toISOString();
+
   await supabase
     .from("bookings")
     .update({
       status: STEPS.in_progress.status,
-      started_at: booking.started_at ?? new Date().toISOString(),
+      started_at,
     })
     .eq("id", params.id);
 
@@ -39,5 +41,5 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   notifyCustomerStatus(booking.customer_id, params.id, STEPS.in_progress).catch(() => {});
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, started_at });
 }
