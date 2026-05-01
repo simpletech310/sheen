@@ -33,7 +33,7 @@ export default async function WalletPage() {
 
   if (wp?.stripe_account_id) {
     try {
-      const balance = await stripe.balance.retrieve({ stripeAccount: wp.stripe_account_id });
+      const balance = await stripe.balance.retrieve({}, { stripeAccount: wp.stripe_account_id });
       stripeAvailable = balance.available.reduce((a, b) => a + b.amount, 0);
       stripePending = balance.pending.reduce((a, b) => a + b.amount, 0);
       connected = true;

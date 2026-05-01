@@ -23,7 +23,7 @@ export function FundAllButton({ count }: { count: number }) {
         console.log("Bulk funding results:", data.results);
         router.refresh();
       }
-    } catch (e: any) {
+    } catch (error) {
       alert("Error triggering bulk funding");
     } finally {
       setBusy(false);

@@ -19,8 +19,8 @@ export function FundButton({ id }: { id: string }) {
         alert("Washer funded successfully.");
         router.refresh();
       }
-    } catch (_e: any) {
-      alert("Error funding washer");
+    } catch (error) {
+      alert("Failed to fund washer");
     } finally {
       setBusy(false);
     }

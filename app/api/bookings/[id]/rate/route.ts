@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getStripe } from "@/lib/stripe/server";
-import { sendPushToUser } from "@/lib/push";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -15,7 +13,6 @@ const Body = z.object({
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const supabase = createClient();
-  const stripe = getStripe();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   const body = Body.parse(await req.json());

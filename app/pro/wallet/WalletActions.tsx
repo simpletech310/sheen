@@ -5,7 +5,6 @@ import { fmtUSD } from "@/lib/pricing";
 
 export function WalletActions() {
   const [available, setAvailable] = useState<number | null>(null);
-  const [pendingStripe, setPendingStripe] = useState<number | null>(null);
   const [connected, setConnected] = useState<boolean>(false);
   const [busy, setBusy] = useState<"none" | "instant" | "dashboard">("none");
   const [msg, setMsg] = useState<string | null>(null);
@@ -15,7 +14,6 @@ export function WalletActions() {
       const r = await fetch("/api/stripe/balance");
       const d = await r.json();
       setAvailable(d.available_cents ?? 0);
-      setPendingStripe(d.pending_cents ?? 0);
       setConnected(!!d.connected);
     })();
   }, []);

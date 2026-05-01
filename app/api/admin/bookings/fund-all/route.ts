@@ -5,7 +5,7 @@ import { releaseFundsForBooking } from "@/lib/payout/release";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
+export async function POST() {
   const supabase = createClient();
   const {
     data: { user },
