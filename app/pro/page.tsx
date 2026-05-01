@@ -250,10 +250,10 @@ export default async function ProDashboard() {
                       <div className="text-sm font-bold uppercase">
                         {j.services?.tier_name ?? "Service"}
                       </div>
-                      <div className="text-xs text-bone/60 mt-1">
+                      <div className="text-xs text-bone/90 mt-1">
                         {j.addresses?.street}, {j.addresses?.city}
                       </div>
-                      <div className="font-mono text-[10px] text-bone/50 uppercase mt-1.5 tabular">
+                      <div className="font-mono text-[10px] text-bone/75 uppercase mt-1.5 tabular">
                         {winStart.toLocaleTimeString([], {
                           hour: "numeric",
                           minute: "2-digit",
@@ -274,7 +274,7 @@ export default async function ProDashboard() {
                           }).washerOrPartnerNet
                         )}
                       </div>
-                      <div className="font-mono text-[10px] text-bone/50">YOU GET</div>
+                      <div className="font-mono text-[10px] text-bone/75">YOU GET</div>
                     </div>
                   </div>
                 </Link>
@@ -331,11 +331,11 @@ export default async function ProDashboard() {
                   <div className="flex justify-between items-baseline">
                     <div className="text-sol text-sm">
                       {"★".repeat(r.rating_int)}
-                      <span className="text-bone/30">
+                      <span className="text-bone/50">
                         {"★".repeat(5 - r.rating_int)}
                       </span>
                     </div>
-                    <div className="font-mono text-[10px] text-bone/50">
+                    <div className="font-mono text-[10px] text-bone/70">
                       {new Date(r.created_at).toLocaleDateString([], {
                         month: "short",
                         day: "numeric",
@@ -343,7 +343,7 @@ export default async function ProDashboard() {
                     </div>
                   </div>
                   {r.comment && (
-                    <p className="text-xs text-bone/75 mt-1.5 line-clamp-2">
+                    <p className="text-xs text-bone/90 mt-1.5 line-clamp-2">
                       {r.comment}
                     </p>
                   )}

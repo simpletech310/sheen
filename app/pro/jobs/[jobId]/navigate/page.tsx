@@ -34,7 +34,7 @@ export default async function NavigatePage({ params }: { params: { jobId: string
 
       <div className="bg-white/5 p-4 mb-5">
         <div className="text-sm font-bold">{addr?.street}</div>
-        <div className="text-xs text-bone/60">
+        <div className="text-xs text-bone/85 mt-0.5">
           {addr?.city}, {addr?.state} {addr?.zip}
         </div>
       </div>

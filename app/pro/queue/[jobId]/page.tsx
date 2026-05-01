@@ -52,7 +52,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
   return (
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/pro/queue" className="text-bone/50 text-sm">
+        <Link href="/pro/queue" className="text-bone/75 text-sm">
           ← Queue
         </Link>
       </div>
@@ -75,7 +75,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
         })()}
       </div>
       <h1 className="display text-3xl mb-2">{(job as any).services?.tier_name ?? "Service"}</h1>
-      <div className="font-mono text-[11px] text-bone/60 uppercase">
+      <div className="font-mono text-[11px] text-bone/90 uppercase">
         {new Date((job as any).scheduled_window_start).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
       </div>
 
@@ -83,9 +83,9 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
         <div className="flex justify-between items-baseline">
           <div>
             <div className="display tabular text-3xl text-cobalt">{fmtUSD(fees.washerOrPartnerNet)}</div>
-            <div className="font-mono text-[10px] text-bone/60 mt-1">YOU GET</div>
+            <div className="font-mono text-[10px] text-bone/75 mt-1">YOU GET</div>
           </div>
-          <div className="text-right text-xs text-bone/60">
+          <div className="text-right text-xs text-bone/85">
             <div className="tabular">Gross {fmtUSD(fees.serviceCents)}</div>
             <div className="tabular">−22% commission</div>
           </div>
@@ -101,7 +101,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
           {(job as any).addresses?.zip}
         </div>
         {(job as any).addresses?.notes && (
-          <div className="text-xs text-bone/60 mt-1">{(job as any).addresses.notes}</div>
+          <div className="text-xs text-bone/85 mt-1">{(job as any).addresses.notes}</div>
         )}
       </div>
 
@@ -139,7 +139,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
           </Link>
         )}
         {claimed && !mine && (
-          <div className="text-center text-bone/60 text-sm py-4">Claimed by another washer</div>
+          <div className="text-center text-bone/80 text-sm py-4">Claimed by another washer</div>
         )}
       </div>
 

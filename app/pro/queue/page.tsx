@@ -90,10 +90,10 @@ export default async function QueuePage() {
       {/* Sticky header so the queue is always anchored when scrolling jobs. */}
       <div className="sticky top-0 z-20 bg-ink/95 backdrop-blur supports-[backdrop-filter]:bg-ink/80 px-5 pt-6 pb-4 -mt-px border-b border-bone/10">
         <div className="flex justify-between items-center mb-2">
-          <Eyebrow className="!text-bone/60" prefix={null}>
+          <Eyebrow className="!text-bone/75" prefix={null}>
             Available · {radius} mi radius · {jobs.length} job{jobs.length === 1 ? "" : "s"}
           </Eyebrow>
-          <Link href="/pro/availability" className="text-[10px] text-bone/60 underline uppercase tracking-wide">
+          <Link href="/pro/availability" className="text-[10px] text-bone/75 underline uppercase tracking-wide">
             Hours
           </Link>
         </div>
@@ -147,13 +147,13 @@ export default async function QueuePage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-bone/70 mt-1">
+                      <div className="text-xs text-bone/90 mt-1">
                         {j.addresses?.street}, {j.addresses?.city}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="display tabular text-2xl text-sol">{fmtUSD(net)}</div>
-                      <div className="font-mono text-[10px] text-bone/60">YOU GET</div>
+                      <div className="font-mono text-[10px] text-bone/75">YOU GET</div>
                     </div>
                   </div>
                 </Link>
@@ -227,11 +227,11 @@ export default async function QueuePage() {
                     <div className="text-sm font-bold uppercase">
                       {j.services?.tier_name ?? "Service"}
                     </div>
-                    <div className="text-xs text-bone/60 mt-1">
+                    <div className="text-xs text-bone/90 mt-1">
                       {j.addresses?.street}, {j.addresses?.city}
                       {dist ? ` · ${dist} mi` : ""}
                     </div>
-                    <div className="font-mono text-[10px] text-bone/50 uppercase mt-1.5 tabular">
+                    <div className="font-mono text-[10px] text-bone/75 uppercase mt-1.5 tabular">
                       {isRush
                         ? "ASAP · pick up now"
                         : new Date(j.scheduled_window_start).toLocaleString([], {
@@ -244,7 +244,7 @@ export default async function QueuePage() {
                   </div>
                   <div className="text-right">
                     <div className="display tabular text-2xl text-sol">{fmtUSD(net)}</div>
-                    <div className="font-mono text-[10px] text-bone/50">
+                    <div className="font-mono text-[10px] text-bone/75">
                       YOU GET{isRush && rushBonus > 0 ? ` (+${fmtUSD(rushBonus)} rush)` : ""}
                     </div>
                   </div>
