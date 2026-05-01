@@ -35,6 +35,9 @@ export default async function TrackingPage({ params }: { params: { id: string } 
   const photoPaths = (bvRows ?? []).flatMap((r: any) => r.condition_photo_paths ?? []);
   const photoUrls = await signedUrls("booking-photos", photoPaths);
 
+  const workPhotoPaths = (booking as any).work_photo_paths ?? [];
+  const workPhotoUrls = await signedUrls("booking-photos", workPhotoPaths);
+
   const addr = (booking as any).addresses;
   const customerLat = addr?.lat ? Number(addr.lat) : 34.0522;
   const customerLng = addr?.lng ? Number(addr.lng) : -118.2437;
@@ -123,7 +126,7 @@ export default async function TrackingPage({ params }: { params: { id: string } 
             approvedAt={(booking as any).customer_approved_at}
             fundsReleasedAt={(booking as any).funds_released_at}
             completedAt={(booking as any).completed_at}
-            workPhotoPaths={(booking as any).work_photo_paths ?? []}
+            workPhotoUrls={workPhotoUrls}
           />
         </div>
       )}

@@ -25,7 +25,17 @@ export function ChecklistClient({
 }) {
   const router = useRouter();
   const [progress, setProgress] = useState<Progress>(initialProgress);
-  // Per-row UI state — which item is currently uploading.
+  const [finalPhotos, setFinalPhotos] = useState<{
+    front: string | null;
+    back: string | null;
+    left: string | null;
+    right: string | null;
+  }>({
+    front: null,
+    back: null,
+    left: null,
+    right: null,
+  });
   const [uploading, setUploading] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
 
@@ -40,7 +50,13 @@ export function ChecklistClient({
       }).length,
     [items, progress]
   );
-  const allDone = total > 0 && done === total;
+  const checklistDone = total > 0 && done === total;
+  const finalPhotosDone = 
+    !!finalPhotos.front && 
+    !!finalPhotos.back && 
+    !!finalPhotos.left && 
+    !!finalPhotos.right;
+  const allDone = checklistDone && finalPhotosDone;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   async function setItem(item: Item, doneFlag: boolean, photoPath?: string | null) {
@@ -120,6 +136,34 @@ export function ChecklistClient({
     }
   }
 
+  async function uploadFinalPhoto(key: keyof typeof finalPhotos, file: File) {
+    setUploading(key);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const sig = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bucket: "booking-photos", scope: jobId, ext: ext.slice(0, 6) || "jpg" }),
+      });
+      if (!sig.ok) throw new Error("Upload setup failed");
+      const { signed_url, path } = await sig.json();
+
+      const put = await fetch(signed_url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!put.ok) throw new Error("Photo upload failed");
+
+      setFinalPhotos((prev) => ({ ...prev, [key]: path }));
+      toast("Photo saved", "success");
+    } catch (e: any) {
+      toast(e.message || "Could not upload", "error");
+    } finally {
+      setUploading(null);
+    }
+  }
+
   function toggle(item: Item) {
     const isDone = !!progress[item.id]?.done_at;
     if (isDone) {
@@ -138,8 +182,11 @@ export function ChecklistClient({
     if (!allDone) return;
     setCompleting(true);
     try {
+      const paths = [finalPhotos.front, finalPhotos.back, finalPhotos.left, finalPhotos.right].filter(Boolean) as string[];
       const r = await fetch(`/api/bookings/${jobId}/complete`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ work_photo_paths: paths }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) {
@@ -322,6 +369,55 @@ export function ChecklistClient({
         })}
       </div>
 
+      {/* Mandatory Final Photos */}
+      <div className="mt-8 mb-6">
+        <h2 className="text-sm font-bold uppercase tracking-wide mb-1">Final Results</h2>
+        <p className="text-xs text-bone/60 mb-4">
+          Upload 4 photos of the finished job before completing.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {(["front", "back", "left", "right"] as const).map((key) => {
+            const path = finalPhotos[key];
+            const isUploading = uploading === key;
+            const labels: Record<string, string> = {
+              front: "Front",
+              back: "Back",
+              left: "Driver Side",
+              right: "Passenger Side",
+            };
+            return (
+              <div key={key} className={`border p-3 transition ${path ? "bg-good/10 border-good" : "bg-white/5 border-bone/20"}`}>
+                <div className="text-xs font-bold uppercase mb-2">
+                  {labels[key]}
+                </div>
+                {path ? (
+                  <div className="text-xs font-mono text-good flex items-center gap-1.5">
+                    <span className="shrink-0 w-4 h-4 rounded-full bg-good text-ink flex items-center justify-center">✓</span>
+                    Uploaded
+                  </div>
+                ) : (
+                  <label className={`block w-full text-center py-2 text-[10px] font-bold uppercase tracking-wide cursor-pointer transition ${isUploading ? "bg-bone/10 text-bone/50" : "bg-sol text-ink hover:bg-bone"}`}>
+                    {isUploading ? "Uploading…" : "+ Add photo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      disabled={isUploading}
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadFinalPhoto(key, f);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Complete CTA — disabled until all items done. */}
       <button
         onClick={complete}
@@ -332,7 +428,9 @@ export function ChecklistClient({
           ? "Completing…"
           : allDone
           ? "Mark job complete →"
-          : `Finish ${total - done} more to complete`}
+          : !checklistDone
+          ? `Finish ${total - done} more to complete`
+          : "Upload final photos"}
       </button>
       <p className="text-[11px] text-bone/45 mt-3 text-center leading-relaxed">
         Once you mark complete, the customer gets a notification to approve the

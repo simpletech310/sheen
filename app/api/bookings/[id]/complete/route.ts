@@ -62,10 +62,32 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     );
   }
 
+  // Expect 4 mandatory final photos
+  let workPhotoPaths: string[] = [];
+  try {
+    const body = await req.json();
+    if (Array.isArray(body.work_photo_paths)) {
+      workPhotoPaths = body.work_photo_paths;
+    }
+  } catch (e) {
+    // Body is optional if fetch didn't send one, but in this case we require it
+  }
+
+  if (workPhotoPaths.length !== 4) {
+    return NextResponse.json(
+      { error: "Must upload exactly 4 final photos (front, back, left, right)" },
+      { status: 400 }
+    );
+  }
+
   // Mark complete
   await supabase
     .from("bookings")
-    .update({ status: "completed", completed_at: new Date().toISOString() })
+    .update({ 
+      status: "completed", 
+      completed_at: new Date().toISOString(),
+      work_photo_paths: workPhotoPaths
+    })
     .eq("id", params.id);
 
   // Compute fees and look up the recipient's connected account

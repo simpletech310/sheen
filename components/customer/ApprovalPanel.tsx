@@ -26,7 +26,7 @@ export function ApprovalPanel({
   approvedAt: string | null;
   fundsReleasedAt: string | null;
   completedAt: string | null;
-  workPhotoPaths: string[];
+  workPhotoUrls: Record<string, string>;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -96,11 +96,20 @@ export function ApprovalPanel({
         . Approve to pay your pro, or flag an issue and we&rsquo;ll review.
       </p>
 
-      {workPhotoPaths.length > 0 && (
-        <p className="text-[11px] text-smoke mt-3 italic">
-          {workPhotoPaths.length} after-photo{workPhotoPaths.length === 1 ? "" : "s"}{" "}
-          uploaded — they appear in the photo grid above.
-        </p>
+      {Object.keys(workPhotoUrls).length > 0 && (
+        <div className="mt-4">
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(workPhotoUrls).map(([path, url]) => (
+              <div key={path} className="aspect-square bg-bone/50 border border-mist relative overflow-hidden">
+                <img
+                  src={url}
+                  alt="Finished work"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {showNote && (

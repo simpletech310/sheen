@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { computeFees } from "@/lib/stripe/fees";
+import { ProJobsFilterClient, ProJob } from "./ProJobsFilterClient";
 
 export const dynamic = "force-dynamic";
 
@@ -39,22 +40,26 @@ export default async function ProDashboard() {
     .split(" ")[0]
     .split("@")[0];
 
-  // Today's claimed jobs
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date(todayStart);
-  todayEnd.setDate(todayEnd.getDate() + 1);
-
-  const { data: todayJobs } = await supabase
+  // Recent jobs (active + history)
+  const { data: allJobs } = await supabase
     .from("bookings")
     .select(
       "id, status, scheduled_window_start, total_cents, service_cents, services(tier_name, category), addresses(street, city)"
     )
     .eq("assigned_washer_id", userId)
-    .in("status", ACTIVE)
-    .gte("scheduled_window_start", todayStart.toISOString())
-    .lt("scheduled_window_start", todayEnd.toISOString())
-    .order("scheduled_window_start", { ascending: true });
+    .order("scheduled_window_start", { ascending: false })
+    .limit(50);
+  
+  // For the hero strip, we still count today's active jobs
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+  const todayJobs = (allJobs ?? []).filter(j => 
+    ACTIVE.includes(j.status) &&
+    new Date(j.scheduled_window_start) >= todayStart &&
+    new Date(j.scheduled_window_start) < todayEnd
+  );
 
   // This-week earnings (Mon-aligned, payouts.amount_cents on completed jobs)
   const weekStart = startOfWeekMon();
@@ -228,66 +233,12 @@ export default async function ProDashboard() {
           </div>
         )}
 
-        {/* Today */}
+        {/* Jobs List */}
         <Eyebrow className="!text-bone/60" prefix={null}>
-          Today
+          Your Jobs
         </Eyebrow>
-        <div className="mt-3 mb-6 space-y-2">
-          {todayJobs && todayJobs.length > 0 ? (
-            todayJobs.map((j: any) => {
-              const winStart = new Date(j.scheduled_window_start);
-              const minsAway = Math.round(
-                (winStart.getTime() - Date.now()) / 60_000
-              );
-              return (
-                <Link
-                  key={j.id}
-                  href={`/pro/jobs/${j.id}/navigate`}
-                  className="block bg-white/5 hover:bg-white/10 p-4 border-l-2 border-royal transition"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="text-sm font-bold uppercase">
-                        {j.services?.tier_name ?? "Service"}
-                      </div>
-                      <div className="text-xs text-bone/90 mt-1">
-                        {j.addresses?.street}, {j.addresses?.city}
-                      </div>
-                      <div className="font-mono text-[10px] text-bone/75 uppercase mt-1.5 tabular">
-                        {winStart.toLocaleTimeString([], {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                        {minsAway > 0 && minsAway < 240 && (
-                          <span className="text-sol ml-2">
-                            in {minsAway < 60 ? `${minsAway} min` : `${Math.round(minsAway / 60)}h`}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="display tabular text-xl text-sol">
-                        {fmtUSD(
-                          computeFees({
-                            serviceCents: j.service_cents,
-                            routedTo: "solo_washer",
-                          }).washerOrPartnerNet
-                        )}
-                      </div>
-                      <div className="font-mono text-[10px] text-bone/75">YOU GET</div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })
-          ) : (
-            <div className="bg-white/5 p-5 text-sm text-bone/60 text-center">
-              No jobs on the books for today.{" "}
-              <Link href="/pro/queue" className="text-sol underline">
-                Open queue →
-              </Link>
-            </div>
-          )}
+        <div className="mt-3 mb-6">
+          <ProJobsFilterClient jobs={(allJobs as ProJob[]) ?? []} />
         </div>
 
         {/* This week earnings */}
