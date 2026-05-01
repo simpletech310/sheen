@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { FundButton } from "./FundButton";
+import { FundAllButton } from "./FundAllButton";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +21,15 @@ export default async function AdminBookingsPage({
   if (searchParams.status) q = q.eq("status", searchParams.status as any);
   const { data: bookings } = await q;
 
+  const completedCount = (bookings ?? []).filter(b => b.status === "completed").length;
+
   return (
     <div>
       <Eyebrow>Admin · Bookings</Eyebrow>
-      <h1 className="display text-[40px] md:text-[56px] leading-tight mt-3 mb-6">BOOKINGS</h1>
+      <div className="flex justify-between items-end mt-3 mb-6">
+        <h1 className="display text-[40px] md:text-[56px] leading-tight">BOOKINGS</h1>
+        <FundAllButton count={completedCount} />
+      </div>
 
       <div className="flex flex-wrap gap-2 mb-5">
         {["all", "pending", "matched", "in_progress", "completed", "funded", "cancelled", "disputed"].map((s) => (
