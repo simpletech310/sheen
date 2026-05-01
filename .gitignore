@@ -28,6 +28,10 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# Local tool state (Claude Code session, Supabase CLI temp).
+.claude/
+supabase/.temp/
+
 # vercel
 .vercel
 

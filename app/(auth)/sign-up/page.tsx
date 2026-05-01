@@ -57,10 +57,14 @@ function SignUpInner() {
       // Update role on public.users immediately so getDefaultLandingForRole works.
       await supabase.from("users").update({ full_name: name, role }).eq("id", data.user!.id);
       toast("Account created — welcome to Sheen", "success");
+      // Tag the destination with ?welcome=1 so the install + push welcome
+      // flow fires once on first paint. Same handling as the email-confirm
+      // path in /auth/callback.
+      const withWelcome = (path: string) => `${path}${path.includes("?") ? "&" : "?"}welcome=1`;
       // Washers detour through onboarding before the dashboard.
-      if (isWasher) router.push("/pro/onboard");
-      else if (isPartner) router.push("/partner/apply");
-      else router.push(getDefaultLandingForRole(role));
+      if (isWasher) router.push(withWelcome("/pro/onboard"));
+      else if (isPartner) router.push(withWelcome("/partner/apply"));
+      else router.push(withWelcome(getDefaultLandingForRole(role)));
       router.refresh();
     } else {
       setErr("Check your email to confirm.");

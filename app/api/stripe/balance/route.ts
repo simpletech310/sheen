@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/server";
+import { getCachedBalance, setCachedBalance } from "@/lib/stripe/balance-cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,11 +34,18 @@ export async function GET() {
     return NextResponse.json({ available_cents: 0, pending_cents: 0, connected: false });
   }
 
+  const cached = getCachedBalance(stripeAccountId);
+  if (cached) {
+    return NextResponse.json({ ...cached, connected: true, cached: true });
+  }
+
   try {
     const balance = await stripe.balance.retrieve(undefined, { stripeAccount: stripeAccountId });
     const av = balance.available.find((b) => b.currency === "usd")?.amount ?? 0;
     const pe = balance.pending.find((b) => b.currency === "usd")?.amount ?? 0;
-    return NextResponse.json({ available_cents: av, pending_cents: pe, connected: true });
+    const value = { available_cents: av, pending_cents: pe };
+    setCachedBalance(stripeAccountId, value);
+    return NextResponse.json({ ...value, connected: true });
   } catch (e: any) {
     return NextResponse.json(
       { error: e.message, available_cents: 0, pending_cents: 0, connected: true },

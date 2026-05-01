@@ -8,37 +8,52 @@ export const metadata = {
   title: "Home power-wash — Sheen",
   description:
     "Driveways, siding, decks, solar panels. Soft-wash certified pros, deck-safe pH, transparent pricing.",
+  openGraph: {
+    title: "Home power-wash — Sheen",
+    description: "Driveways, siding, decks, solar panels. Soft-wash certified pros.",
+    images: [{ url: "/img/home.jpg", width: 1200, height: 630, alt: "Sheen home power-wash" }],
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    title: "Home power-wash — Sheen",
+    description: "Driveways, siding, decks, solar panels.",
+    images: ["/img/home.jpg"],
+  },
 };
 
 const tiers = [
   {
     tag: "01",
     name: "Driveway & Walkway",
-    desc: "Up to 800 sq ft of concrete or pavers. Oil spot pre-treatment included.",
-    price: "$185",
+    desc: "Up to 800 sq ft of concrete or pavers. Oil-spot pre-treat, concrete-safe rinse.",
+    price: "$129",
+    was: "$159",
     time: "90 min",
   },
   {
     tag: "02",
     name: "Full Exterior",
-    desc: "House siding + driveway + walkways. Soft-wash on siding, pressure on hardscape.",
-    price: "$385",
+    desc: "Siding + drive + walks. Soft-wash on siding, pressure on hardscape — biodegradable cleaners.",
+    price: "$249",
+    was: "$299",
     time: "4 hr",
     featured: true,
   },
   {
     tag: "03",
     name: "Deck / Patio Add-on",
-    desc: "Deck or patio cleaning with deck-safe pH. Pairs with any tier above.",
-    price: "$95",
+    desc: "Wood-safe pH soft-wash. Furniture moved & replaced. Pairs with any tier above.",
+    price: "$79",
+    was: "$95",
     time: "60 min",
   },
   {
     tag: "04",
     name: "Solar Panel Wash",
-    desc: "Per panel, deionized water. Recovers 5–15% output on dusty arrays.",
-    price: "$12",
-    time: "5 min/panel",
+    desc: "Deionised water rinse, soft-touch finish. No chemicals near the panels — recovers real watts.",
+    price: "$99",
+    was: "$129",
+    time: "60 min",
   },
 ];
 
@@ -172,12 +187,22 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="mt-6">
-                <div
-                  className={`display tabular text-[40px] leading-none mb-4 ${
-                    tier.featured ? "text-sol" : "text-royal"
-                  }`}
-                >
-                  {tier.price}
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span
+                    className={`display tabular text-[40px] leading-none ${
+                      tier.featured ? "text-sol" : "text-royal"
+                    }`}
+                  >
+                    {tier.price}
+                  </span>
+                  {tier.was && (
+                    <span className={`font-mono text-sm tabular line-through ${tier.featured ? "text-bone/50" : "text-smoke"}`}>
+                      {tier.was}
+                    </span>
+                  )}
+                </div>
+                <div className={`font-mono text-[10px] uppercase tracking-wider mb-4 ${tier.featured ? "text-sol/80" : "text-royal"}`}>
+                  Launch promo · 90 days
                 </div>
                 <Link
                   href={`/app/book?category=home&tier=${encodeURIComponent(tier.name)}`}

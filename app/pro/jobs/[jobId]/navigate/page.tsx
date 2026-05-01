@@ -9,13 +9,19 @@ export default async function NavigatePage({ params }: { params: { jobId: string
   const supabase = createClient();
   const { data: job } = await supabase
     .from("bookings")
-    .select("id, address:addresses(street, city, state, zip, lat, lng), services(tier_name)")
+    .select("id, status, address:addresses(street, city, state, zip, lat, lng), services(tier_name)")
     .eq("id", params.jobId)
     .maybeSingle();
   if (!job) notFound();
 
   const addr = (job as any).address;
-  const fullAddress = addr ? encodeURIComponent(`${addr.street}, ${addr.city}, ${addr.state} ${addr.zip}`) : "";
+  // Once the job is funded, the customer's address gets scrubbed from the
+  // washer's view — only city + state remain. Pre-fund the washer needs the
+  // full address to navigate; after-fund this page is just history.
+  const isFunded = (job as any).status === "funded";
+  const fullAddress = addr && !isFunded
+    ? encodeURIComponent(`${addr.street}, ${addr.city}, ${addr.state} ${addr.zip}`)
+    : "";
 
   return (
     <div className="px-5 pt-10 pb-8">
@@ -33,10 +39,21 @@ export default async function NavigatePage({ params }: { params: { jobId: string
       />
 
       <div className="bg-white/5 p-4 mb-5">
-        <div className="text-sm font-bold">{addr?.street}</div>
-        <div className="text-xs text-bone/85 mt-0.5">
-          {addr?.city}, {addr?.state} {addr?.zip}
-        </div>
+        {isFunded ? (
+          <>
+            <div className="text-sm font-bold">{addr?.city}, {addr?.state}</div>
+            <div className="text-xs text-bone/55 mt-1 leading-snug">
+              Address removed once the wash funded. Customer privacy stays protected.
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="text-sm font-bold">{addr?.street}</div>
+            <div className="text-xs text-bone/85 mt-0.5">
+              {addr?.city}, {addr?.state} {addr?.zip}
+            </div>
+          </>
+        )}
       </div>
 
       <StatusButtons

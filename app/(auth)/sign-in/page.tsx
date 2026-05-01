@@ -18,6 +18,8 @@ function SignInInner() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [magicSending, setMagicSending] = useState(false);
+  const [magicSent, setMagicSent] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,6 +49,35 @@ function SignInInner() {
     toast("Welcome back", "success");
     router.push(dest || "/app");
     router.refresh();
+  }
+
+  // Passwordless option — sends a one-tap link the user can open from their
+  // email. Lands at /auth/callback which routes by role just like a normal
+  // sign-in. Uses the env'd public URL so the link doesn't bounce to localhost.
+  async function sendMagicLink() {
+    setErr(null);
+    if (!email) {
+      setErr("Enter your email above first.");
+      return;
+    }
+    setMagicSending(true);
+    const supabase = createClient();
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+    const nextParam = explicitNext ? `?next=${encodeURIComponent(explicitNext)}` : "";
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${baseUrl}/auth/callback${nextParam}`,
+      },
+    });
+    setMagicSending(false);
+    if (error) {
+      setErr(error.message);
+      toast(error.message, "error");
+      return;
+    }
+    setMagicSent(true);
+    toast("Magic link sent — check your email", "success");
   }
 
   // Both surfaces are now full-bleed image heroes — washer hero is
@@ -131,6 +162,29 @@ function SignInInner() {
             {loading ? "Signing in…" : "Sign in →"}
           </button>
         </form>
+
+        {/* Passwordless + recovery options. Both fall under the password
+            field so muscle-memory typers don't get distracted. */}
+        <div className="mt-4 flex items-center justify-between text-xs">
+          <button
+            type="button"
+            onClick={sendMagicLink}
+            disabled={magicSending || magicSent}
+            className="text-bone/70 hover:text-sol underline transition disabled:opacity-50"
+          >
+            {magicSent
+              ? "✓ Magic link sent"
+              : magicSending
+              ? "Sending…"
+              : "Email me a magic link"}
+          </button>
+          <Link
+            href="/forgot-password"
+            className="text-bone/70 hover:text-sol underline transition"
+          >
+            Forgot password?
+          </Link>
+        </div>
 
         {isWasher ? (
           <div className="mt-7 space-y-2.5 text-sm">

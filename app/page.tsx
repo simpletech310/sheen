@@ -5,15 +5,15 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { Placeholder } from "@/components/marketing/Placeholder";
 
 const categories = [
-  { tag: "01", label: "Auto", tiers: "4 tiers", from: "$35", desc: "Express wash → showroom-grade paint correction.", href: "/auto", img: "/img/auto.jpg" },
-  { tag: "02", label: "Big Rig", tiers: "4 tiers", from: "$145", desc: "Tractors, trailers, sleepers — at the rest stop or yard.", href: "/big-rig", tone: "ink" as const, img: "/img/big-rig-card.jpg" },
-  { tag: "03", label: "Home", tiers: "4 tiers", from: "$185", desc: "Driveways, siding, decks, solar panels.", href: "/home", tone: "royal" as const, img: "/img/home.jpg" },
-  { tag: "04", label: "Commercial", tiers: "Quoted", from: "Custom", desc: "Storefronts, fleets, post-construction.", href: "/business", tone: "sol" as const, img: "/img/commercial.jpg" },
+  { tag: "01", label: "Auto",       tiers: "4 tiers", from: "$24",  was: "$29",  desc: "Express hand-wash → concours-grade paint correction.",  href: "/auto",     img: "/img/auto.jpg" },
+  { tag: "02", label: "Big Rig",    tiers: "4 tiers", from: "$115", was: "$135", desc: "Tractors, trailers, sleepers — at the rest stop or yard.", href: "/big-rig",  tone: "ink"   as const, img: "/img/big-rig-card.jpg" },
+  { tag: "03", label: "Home",       tiers: "4 tiers", from: "$79",  was: "$95",  desc: "Driveways, siding, decks, solar — soft-wash where it matters.", href: "/home", tone: "royal" as const, img: "/img/home.jpg" },
+  { tag: "04", label: "Commercial", tiers: "Quoted",  from: "Custom",            desc: "Storefronts, fleets, post-construction.", href: "/business", tone: "sol"   as const, img: "/img/commercial.jpg" },
 ];
 
 const memberships = [
-  { name: "Sheen+ Basic", price: "$59/mo", desc: "2 Express OR 1 Full Detail per month.", href: "/app/membership", category: "Auto" },
-  { name: "Sheen+ Pro", price: "$129/mo", desc: "4 Full Detail-tier washes per month.", href: "/app/membership", category: "Auto", featured: true },
+  { name: "Sheen+ Basic", price: "$39/mo", was: "$49/mo", desc: "4 Express OR 2 Full Detail per month. 2× points.", href: "/app/membership", category: "Auto" },
+  { name: "Sheen+ Pro",   price: "$79/mo", was: "$99/mo", desc: "4 Full Detail + 1 Premium per month. 3× points.", href: "/app/membership", category: "Auto", featured: true },
 ];
 
 const steps = [
@@ -108,7 +108,12 @@ export default function Home() {
                 </div>
                 <p className="text-sm text-smoke mb-4 min-h-[36px] leading-relaxed">{c.desc}</p>
                 <div className="flex justify-between items-center pt-4 border-t border-mist">
-                  <span className="font-mono text-xs tabular">FROM {c.from}</span>
+                  <span className="font-mono text-xs tabular">
+                    FROM {c.from}
+                    {(c as any).was && (
+                      <span className="ml-1.5 text-smoke line-through">{(c as any).was}</span>
+                    )}
+                  </span>
                   <span className="text-sm font-bold uppercase group-hover:text-royal">Book →</span>
                 </div>
               </div>
@@ -165,12 +170,19 @@ export default function Home() {
               <div className="display text-[24px] leading-tight mt-3">
                 {m.name.toUpperCase()}
               </div>
-              <div
-                className={`display tabular text-3xl mt-2 ${
-                  m.featured ? "text-sol" : "text-royal"
-                }`}
-              >
-                {m.price}
+              <div className="flex items-baseline gap-2 mt-2">
+                <span
+                  className={`display tabular text-3xl ${
+                    m.featured ? "text-sol" : "text-royal"
+                  }`}
+                >
+                  {m.price}
+                </span>
+                {(m as any).was && (
+                  <span className={`font-mono text-xs tabular line-through ${m.featured ? "text-bone/50" : "text-smoke"}`}>
+                    {(m as any).was}
+                  </span>
+                )}
               </div>
               <p
                 className={`text-xs mt-3 leading-relaxed ${

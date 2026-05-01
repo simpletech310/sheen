@@ -37,27 +37,43 @@ function TierPickerInner() {
         </Link>
       </div>
       <Eyebrow>Step 1 / 4 · Pick your wash</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-6">Choose a tier</h1>
+      <h1 className="display text-3xl mt-3 mb-2">Choose a tier</h1>
+      <p className="text-xs text-smoke mb-5 leading-relaxed">
+        Launch promo · standard price shown beside.
+      </p>
       <div className="space-y-3">
-        {AUTO_TIERS.map((t) => (
-          <button
-            key={t.tier_name}
-            onClick={() => setSelected(t.tier_name)}
-            className={`w-full text-left p-5 transition ${
-              selected === t.tier_name ? "bg-ink text-bone" : "bg-mist/50 hover:bg-mist text-ink"
-            }`}
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="display text-xl">{t.tier_name}</div>
-                <div className={`text-xs mt-1 ${selected === t.tier_name ? "text-bone/70" : "text-smoke"}`}>
-                  {t.duration_minutes} min · {t.included.slice(0, 3).join(", ")}…
+        {AUTO_TIERS.map((t) => {
+          const on = selected === t.tier_name;
+          return (
+            <button
+              key={t.tier_name}
+              onClick={() => setSelected(t.tier_name)}
+              className={`w-full text-left p-5 transition ${
+                on ? "bg-ink text-bone" : "bg-mist/50 hover:bg-mist text-ink"
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex-1 min-w-0 pr-3">
+                  <div className="display text-xl">{t.tier_name}</div>
+                  <div className={`text-xs mt-1 ${on ? "text-bone/75" : "text-smoke"}`}>
+                    {t.description}
+                  </div>
+                  <div className={`font-mono text-[10px] uppercase tracking-wider mt-1.5 ${on ? "text-sol/80" : "text-smoke"}`}>
+                    {t.duration_minutes} min
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="display tabular text-2xl">{fmtUSD(t.base_price_cents)}</div>
+                  {t.standard_price_cents && t.standard_price_cents > t.base_price_cents && (
+                    <div className={`font-mono text-[10px] tabular line-through ${on ? "text-bone/50" : "text-smoke"}`}>
+                      {fmtUSD(t.standard_price_cents)}
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="display tabular text-2xl">{fmtUSD(t.base_price_cents)}</div>
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
       <button
         onClick={next}

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { AddressAutocomplete } from "@/components/customer/AddressAutocomplete";
 import { WasherHandleInput } from "@/components/customer/WasherHandleInput";
+import { SiteAccessForm, EMPTY_SITE_ACCESS, type SiteAccessValue } from "@/components/customer/SiteAccessForm";
+import { readDraft, writeDraft } from "@/lib/booking-draft";
 import type { GeocodeResult } from "@/lib/mapbox";
 
 const windows = [
@@ -48,6 +50,20 @@ function AddressFormInner() {
   const [notes, setNotes] = useState("");
   const [w, setW] = useState(windows[2].value);
   const [isRush, setIsRush] = useState(false);
+  // Re-hydrate site access from any prior step in this booking flow so the
+  // customer doesn't lose their water/power answers when bouncing back.
+  const [site, setSite] = useState<SiteAccessValue>(() => {
+    if (typeof window === "undefined") return EMPTY_SITE_ACCESS;
+    const draft = readDraft();
+    return {
+      hasWater: draft?.siteHasWater ?? null,
+      hasPower: draft?.siteHasPower ?? null,
+      waterNotes: draft?.waterNotes ?? "",
+      powerNotes: draft?.powerNotes ?? "",
+      gateCode: draft?.gateCode ?? "",
+      sitePhotoPaths: draft?.sitePhotoPaths ?? [],
+    };
+  });
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [washHandle, setWashHandle] = useState(
     (params.get("handle") ?? "").replace(/^@/, "").toUpperCase()
@@ -117,6 +133,22 @@ function AddressFormInner() {
       return;
     }
 
+    // Stash site access in the draft so the pay page can read it. Keeps the
+    // URL clean (photos especially would be huge).
+    const draft = readDraft();
+    writeDraft({
+      tier: draft?.tier ?? tier,
+      price: draft?.price ?? Number(price),
+      vehicleIds: draft?.vehicleIds ?? [],
+      conditionPhotos: draft?.conditionPhotos ?? {},
+      siteHasWater: site.hasWater,
+      siteHasPower: site.hasPower,
+      waterNotes: site.waterNotes,
+      powerNotes: site.powerNotes,
+      gateCode: site.gateCode,
+      sitePhotoPaths: site.sitePhotoPaths,
+    });
+
     const url = new URL("/app/book/pay", window.location.origin);
     url.searchParams.set("tier", tier);
     url.searchParams.set("price", price);
@@ -141,7 +173,10 @@ function AddressFormInner() {
     router.push(url.pathname + url.search);
   }
 
-  const canContinue = !!pickedPlaceId || !!picked;
+  // Require water + power answers — washers need to know on-site availability
+  // before they accept. Address has to resolve first.
+  const canContinue =
+    (!!pickedPlaceId || !!picked) && site.hasWater !== null && site.hasPower !== null;
 
   return (
     <div className="px-5 pt-10 pb-8">
@@ -165,6 +200,23 @@ function AddressFormInner() {
       </Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">Where &amp; when</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
+
+      {/* Quick frame: what your pro brings vs what we ask. Keeps the booking
+          flow honest without making them read a wall of text. */}
+      <div className="grid grid-cols-2 gap-2 mb-5 text-xs">
+        <div className="bg-bone border-l-2 border-royal p-3">
+          <div className="font-mono text-[9px] uppercase tracking-wider text-royal">Your pro brings</div>
+          <div className="text-ink/85 mt-1.5 leading-snug">
+            Self-contained rig · soaps & wax · two-bucket method · $1M insurance · $2,500 damage guarantee
+          </div>
+        </div>
+        <div className="bg-mist/40 border-l-2 border-smoke p-3">
+          <div className="font-mono text-[9px] uppercase tracking-wider text-smoke">What we ask from you</div>
+          <div className="text-ink/85 mt-1.5 leading-snug">
+            Address · whether there&rsquo;s water/power on-site · gate code if any · approve when done
+          </div>
+        </div>
+      </div>
 
       {!loadingPlaces && places.length > 0 && (
         <div className="mb-5">
@@ -252,12 +304,19 @@ function AddressFormInner() {
         </div>
       )}
 
+      <div className="mt-6">
+        <Eyebrow>Site access · helps your pro arrive prepared</Eyebrow>
+        <div className="mt-3">
+          <SiteAccessForm value={site} onChange={setSite} />
+        </div>
+      </div>
+
       <textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        placeholder="Driveway notes for this wash (water spigot, parking, gate code…)"
+        placeholder="Anything else? (parking spot, dog in yard, package on porch…)"
         rows={2}
-        className="w-full px-4 py-3 bg-bone border border-mist text-sm"
+        className="w-full mt-5 px-4 py-3 bg-bone border border-mist text-sm"
       />
 
       <div className="mt-6">

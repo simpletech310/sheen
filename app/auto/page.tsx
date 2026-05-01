@@ -24,10 +24,10 @@ const why = [
 ];
 
 const tiers = [
-  { tag: "01", name: "Express", price: "$35", time: "30 min", items: ["Hand wash", "Tire shine", "Windows", "Door jambs"] },
-  { tag: "02", name: "Full Detail", price: "$85", time: "75 min", items: ["Everything in Express", "Interior vacuum", "Dash + console wipe", "Floor mats"] },
-  { tag: "03", name: "Premium", price: "$185", time: "2.5 hr", items: ["Everything in Full", "Clay bar treatment", "Hand wax", "Leather conditioning"], featured: true },
-  { tag: "04", name: "Showroom", price: "$450", time: "5 hr", items: ["Everything in Premium", "Paint correction", "Ceramic top-up", "Engine bay detail"] },
+  { tag: "01", name: "Express",       price: "$24",  was: "$29",  time: "30 min", items: ["Foam pre-soak", "Hand wash", "Dressed wheels & tires", "Streak-free glass"] },
+  { tag: "02", name: "Full Detail",   price: "$49",  was: "$59",  time: "60 min", items: ["Everything in Express", "Interior vacuum", "Dash + console wipe", "Mats lifted & cleaned"] },
+  { tag: "03", name: "Premium",       price: "$89",  was: "$109", time: "90 min", items: ["Everything in Full", "Clay-bar decontamination", "Hand-applied wax", "Leather conditioning"], featured: true },
+  { tag: "04", name: "Showroom",      price: "$159", was: "$189", time: "3 hr",   items: ["Everything in Premium", "Paint correction", "Ceramic top-up", "Engine bay detail"] },
 ];
 
 const gallery: [string, string, string][] = [
@@ -45,7 +45,22 @@ const faq: [string, string][] = [
   ["Do tips go to the pro?", "100%, no platform cut. Default prompts at 18 / 22 / 25%, custom amounts allowed."],
 ];
 
-export const metadata = { title: "Auto detail — Sheen" };
+export const metadata = {
+  title: "Auto detail — Sheen",
+  description:
+    "On-demand car wash + detail across LA. Express to Showroom. Two-bucket method, ceramic-safe, $2,500 damage cover.",
+  openGraph: {
+    title: "Auto detail — Sheen",
+    description: "Express to Showroom. Two-bucket method, ceramic-safe, vetted local pros.",
+    images: [{ url: "/img/auto.jpg", width: 1200, height: 630, alt: "Sheen mobile auto detail" }],
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    title: "Auto detail — Sheen",
+    description: "Express to Showroom. Vetted local pros.",
+    images: ["/img/auto.jpg"],
+  },
+};
 
 export default function AutoPage() {
   return (
@@ -133,8 +148,16 @@ export default function AutoPage() {
                 ))}
               </div>
               <div>
-                <div className={`display tabular text-[52px] leading-none mb-4 ${tier.featured ? "text-sol" : "text-ink"}`}>
-                  {tier.price}
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className={`display tabular text-[52px] leading-none ${tier.featured ? "text-sol" : "text-ink"}`}>
+                    {tier.price}
+                  </span>
+                  <span className={`font-mono text-sm tabular line-through ${tier.featured ? "text-bone/50" : "text-smoke"}`}>
+                    {tier.was}
+                  </span>
+                </div>
+                <div className={`font-mono text-[10px] uppercase tracking-wider mb-4 ${tier.featured ? "text-sol/80" : "text-royal"}`}>
+                  Launch promo · 90 days
                 </div>
                 <Link
                   href={`/app/book/auto?tier=${encodeURIComponent(tier.name)}`}
@@ -162,21 +185,28 @@ export default function AutoPage() {
               <span className="text-sol">PAY ONCE.</span>
             </h2>
             <p className="text-sm md:text-base text-bone/80 mt-5 max-w-[520px] leading-relaxed">
-              Sheen+ Basic is $59/mo for 2 Express washes — pays itself back at
-              your second wash. Pro is $129/mo for 4 Full Detail-tier washes.
-              Priority queue, no surge.
+              Sheen+ Basic is $39/mo (promo · normally $49) for 4 Express washes —
+              pays for itself at your second wash. Pro is $79/mo (promo · normally $99)
+              for 4 Full Detail + 1 Premium. Sign up during launch and the rate
+              locks for life.
             </p>
           </div>
           <div className="space-y-2">
             <div className="bg-bone/10 p-4 border-l-2 border-sol">
               <div className="display text-xl">SHEEN+ Basic</div>
-              <div className="display tabular text-3xl text-sol mt-1">$59/mo</div>
-              <div className="text-xs text-bone/70 mt-1">2 Express washes</div>
+              <div className="flex items-baseline gap-2 mt-1">
+                <div className="display tabular text-3xl text-sol">$39/mo</div>
+                <div className="font-mono text-xs tabular text-bone/50 line-through">$49</div>
+              </div>
+              <div className="text-xs text-bone/70 mt-1">4 Express · 2× points</div>
             </div>
             <div className="bg-bone/10 p-4 border-l-2 border-sol">
               <div className="display text-xl">SHEEN+ Pro</div>
-              <div className="display tabular text-3xl text-sol mt-1">$129/mo</div>
-              <div className="text-xs text-bone/70 mt-1">4 Full Detail washes</div>
+              <div className="flex items-baseline gap-2 mt-1">
+                <div className="display tabular text-3xl text-sol">$79/mo</div>
+                <div className="font-mono text-xs tabular text-bone/50 line-through">$99</div>
+              </div>
+              <div className="text-xs text-bone/70 mt-1">4 Full + 1 Premium · 3× points</div>
             </div>
             <Link
               href="/app/membership"

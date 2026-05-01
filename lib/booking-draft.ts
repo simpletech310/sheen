@@ -10,6 +10,15 @@ export type BookingDraft = {
   price: number; // service cents (single-vehicle base)
   vehicleIds: string[];
   conditionPhotos: Record<string, string[]>; // vehicle_id → storage paths
+  // Site access — captured on the address step. Photo paths and free-text
+  // notes are too bulky for URL params, so we tuck them in the draft and
+  // the pay page hydrates them when it POSTs to /api/stripe/checkout.
+  siteHasWater?: boolean | null;
+  siteHasPower?: boolean | null;
+  waterNotes?: string;
+  powerNotes?: string;
+  gateCode?: string;
+  sitePhotoPaths?: string[];
 };
 
 export function readDraft(): BookingDraft | null {

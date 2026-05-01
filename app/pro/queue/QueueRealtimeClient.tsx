@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { createBrowserClient } from "@supabase/ssr";
 import { fmtUSD } from "@/lib/pricing";
 import { computeFees } from "@/lib/stripe/fees";
+import { checkWasherEligibility, type WasherCapabilities } from "@/lib/job-matching";
+
+type SortMode = "default" | "distance" | "pay" | "soonest";
+
+export type WasherCaps = WasherCapabilities;
 
 /**
  * Real-time queue list. Receives an initial snapshot from the server
@@ -35,8 +40,23 @@ export type QueueJob = {
   is_rush: boolean;
   rush_deadline: string | null;
   rush_bonus_cents: number;
-  services: { tier_name: string; category: string } | null;
-  addresses: { street: string; city: string; lat: number | null; lng: number | null } | null;
+  services: {
+    tier_name: string;
+    category: string;
+    requires_water?: boolean | null;
+    requires_power?: boolean | null;
+    requires_pressure_washer?: boolean | null;
+    requires_paint_correction?: boolean | null;
+    requires_interior_detail?: boolean | null;
+  } | null;
+  addresses: {
+    street: string;
+    city: string;
+    lat: number | null;
+    lng: number | null;
+    has_water?: boolean | null;
+    has_power?: boolean | null;
+  } | null;
 };
 
 function distanceMilesSimple(
@@ -61,7 +81,7 @@ export function QueueRealtimeClient({
   myLat,
   myLng,
   radius,
-  canWashBigRig,
+  washerCaps,
 }: {
   initialJobs: QueueJob[];
   initialDirectRequests: QueueJob[];
@@ -69,7 +89,7 @@ export function QueueRealtimeClient({
   myLat: number | null;
   myLng: number | null;
   radius: number;
-  canWashBigRig: boolean;
+  washerCaps: WasherCaps;
 }) {
   const [jobs, setJobs] = useState<QueueJob[]>(initialJobs);
   const [directRequests, setDirectRequests] = useState<QueueJob[]>(initialDirectRequests);
@@ -78,6 +98,62 @@ export function QueueRealtimeClient({
 
   // Flash animation: IDs of newly arrived jobs
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
+
+  // Pro-controlled discovery: sort mode + which service tiers to include.
+  // Empty `tierFilter` means "all tiers" (no chips toggled).
+  const [sort, setSort] = useState<SortMode>("default");
+  const [tierFilter, setTierFilter] = useState<Set<string>>(new Set());
+
+  // Build the tier chip list from whatever tiers exist in the current queue.
+  // Pulling from data (not a hardcoded list) means new tiers added later
+  // appear automatically.
+  const availableTiers = useMemo(() => {
+    const tiers = new Set<string>();
+    for (const j of jobs) {
+      const t = j.services?.tier_name;
+      if (t) tiers.add(t);
+    }
+    return Array.from(tiers).sort();
+  }, [jobs]);
+
+  function toggleTier(t: string) {
+    setTierFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+  }
+
+  // Filter + sort jobs for display. Direct requests bypass this — they're
+  // always shown at the top regardless of tier/sort.
+  const visibleJobs = useMemo(() => {
+    const filtered = tierFilter.size === 0
+      ? jobs
+      : jobs.filter((j) => j.services?.tier_name && tierFilter.has(j.services.tier_name));
+    const dist = (j: QueueJob) =>
+      myLat && myLng && j.addresses?.lat && j.addresses?.lng
+        ? distanceMilesSimple(
+            { lat: myLat, lng: myLng },
+            { lat: Number(j.addresses.lat), lng: Number(j.addresses.lng) }
+          )
+        : Number.POSITIVE_INFINITY;
+    const pay = (j: QueueJob) => {
+      const base = computeFees({ serviceCents: j.service_cents, routedTo: "solo_washer" }).washerOrPartnerNet;
+      return base + (j.is_rush ? (j.rush_bonus_cents ?? 0) : 0);
+    };
+    const sorted = [...filtered];
+    if (sort === "distance") sorted.sort((a, b) => dist(a) - dist(b));
+    else if (sort === "pay") sorted.sort((a, b) => pay(b) - pay(a));
+    else if (sort === "soonest")
+      sorted.sort(
+        (a, b) =>
+          new Date(a.scheduled_window_start).getTime() -
+          new Date(b.scheduled_window_start).getTime()
+      );
+    // "default" — leave the server's rush-first / soonest order intact.
+    return sorted;
+  }, [jobs, tierFilter, sort, myLat, myLng]);
 
   useEffect(() => {
     const supabase = createBrowserClient(
@@ -114,8 +190,11 @@ export function QueueRealtimeClient({
             return;
           }
 
-          // Big rig gate
-          if (row.services?.category === "big_rig" && !canWashBigRig) return;
+          // Capability gate — same logic the server uses, applied to live
+          // INSERT/UPDATE events so newly-arrived jobs that we can't take
+          // never flicker into view.
+          const elig = checkWasherEligibility(row.services, row.addresses, washerCaps);
+          if (!elig.ok) return;
 
           // Radius filter
           if (
@@ -172,7 +251,7 @@ export function QueueRealtimeClient({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, myLat, myLng, radius, canWashBigRig]);
+  }, [userId, myLat, myLng, radius, washerCaps]);
 
   const now = Date.now();
 
@@ -242,10 +321,70 @@ export function QueueRealtimeClient({
         </div>
       )}
 
+      {/* Sort + tier filter bar — only show when there's something to filter */}
+      {jobs.length > 0 && (
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[9px] uppercase tracking-wider text-bone/60 shrink-0">
+              Sort
+            </span>
+            <div className="flex gap-1 overflow-x-auto -mx-1 px-1">
+              {([
+                ["default", "Smart"],
+                ["distance", "Nearest"],
+                ["pay", "Highest pay"],
+                ["soonest", "Soonest"],
+              ] as [SortMode, string][]).map(([k, label]) => (
+                <button
+                  key={k}
+                  onClick={() => setSort(k)}
+                  className={`shrink-0 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider transition ${
+                    sort === k ? "bg-sol text-ink" : "bg-white/5 text-bone/70 hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {availableTiers.length > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-bone/60 shrink-0">
+                Tier
+              </span>
+              <div className="flex gap-1 overflow-x-auto -mx-1 px-1">
+                {availableTiers.map((t) => {
+                  const active = tierFilter.has(t);
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => toggleTier(t)}
+                      className={`shrink-0 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider transition ${
+                        active ? "bg-bone text-ink" : "bg-white/5 text-bone/70 hover:bg-white/10"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+                {tierFilter.size > 0 && (
+                  <button
+                    onClick={() => setTierFilter(new Set())}
+                    className="shrink-0 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-bone/50 hover:text-bone"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* General queue */}
-      {jobs.length > 0 ? (
+      {visibleJobs.length > 0 ? (
         <div className="space-y-3">
-          {jobs.map((j) => {
+          {visibleJobs.map((j) => {
             const baseNet = computeFees({
               serviceCents: j.service_cents,
               routedTo: "solo_washer",
@@ -356,11 +495,15 @@ export function QueueRealtimeClient({
           />
           <div className="absolute inset-0 bg-ink/65 flex flex-col items-center justify-center text-center px-6">
             <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-2">
-              Quiet right now
+              {jobs.length > 0 ? "Filtered out" : "Quiet right now"}
             </div>
-            <h2 className="display text-xl text-bone mb-1">No jobs in your radius</h2>
+            <h2 className="display text-xl text-bone mb-1">
+              {jobs.length > 0 ? "No jobs match your filters" : "No jobs in your radius"}
+            </h2>
             <p className="text-xs text-bone/75 max-w-xs">
-              We&rsquo;ll update this live — no need to refresh. New bookings pop in the moment they&rsquo;re placed.
+              {jobs.length > 0
+                ? "Clear a tier filter or switch sort to see what else is available."
+                : "We'll update this live — no need to refresh. New bookings pop in the moment they're placed."}
             </p>
           </div>
         </div>

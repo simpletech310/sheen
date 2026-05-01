@@ -16,7 +16,22 @@ type Vehicle = {
   photo_paths?: string[] | null;
   is_default?: boolean | null;
   vehicle_type?: string | null;
+  vehicle_class?: string | null;
 };
+
+const VEHICLE_CLASSES: { value: string; label: string }[] = [
+  { value: "sedan", label: "Sedan" },
+  { value: "suv", label: "SUV" },
+  { value: "truck", label: "Truck" },
+  { value: "coupe", label: "Coupe" },
+  { value: "sports", label: "Sports" },
+  { value: "van", label: "Van / minivan" },
+  { value: "wagon", label: "Wagon" },
+  { value: "hatchback", label: "Hatchback" },
+  { value: "ev", label: "EV" },
+  { value: "classic", label: "Classic" },
+  { value: "other", label: "Other" },
+];
 
 export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" | "edit" }) {
   const router = useRouter();
@@ -30,6 +45,7 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
       ? "big_rig"
       : "auto";
   const [vehicleType, setVehicleType] = useState<"auto" | "big_rig">(initialType as any);
+  const [vehicleClass, setVehicleClass] = useState<string>(initial?.vehicle_class ?? "");
   const [year, setYear] = useState(initial?.year?.toString() ?? "");
   const [make, setMake] = useState(initial?.make ?? "");
   const [model, setModel] = useState(initial?.model ?? "");
@@ -61,6 +77,7 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
           photo_paths: photoPaths,
           is_default: isDefault,
           vehicle_type: vehicleType,
+          vehicle_class: vehicleClass || null,
         }),
       });
       const d = await r.json();
@@ -138,6 +155,25 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
         required
         className="w-full px-4 py-3.5 bg-bone border border-mist text-sm focus:outline-none focus:border-royal"
       />
+      {vehicleType === "auto" && (
+        <div>
+          <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-2">
+            Body style
+          </label>
+          <select
+            value={vehicleClass}
+            onChange={(e) => setVehicleClass(e.target.value)}
+            className="w-full px-4 py-3.5 bg-bone border border-mist text-sm focus:outline-none focus:border-royal"
+          >
+            <option value="">Pick one (helps your pro come prepared)</option>
+            {VEHICLE_CLASSES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <input
           value={color}

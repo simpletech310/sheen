@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
+import { publicCustomerName } from "@/lib/display-name";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -12,11 +13,11 @@ export default async function WasherProfilePage({ params }: { params: { id: stri
     supa
       .from("washer_profiles")
       .select(
-        "user_id, status, jobs_completed, rating_avg, bio, has_own_water, has_pressure_washer, service_radius_miles, background_check_verified"
+        "user_id, status, jobs_completed, rating_avg, reviews_count, bio, has_own_water, has_pressure_washer, service_radius_miles, background_check_verified"
       )
       .eq("user_id", params.id)
       .maybeSingle(),
-    supa.from("users").select("full_name").eq("id", params.id).maybeSingle(),
+    supa.from("users").select("full_name, display_name, avatar_url").eq("id", params.id).maybeSingle(),
     supa
       .from("reviews")
       .select("rating_int, comment, created_at, reviewer_id")
@@ -27,25 +28,46 @@ export default async function WasherProfilePage({ params }: { params: { id: stri
 
   if (!profile || profile.status !== "active") notFound();
 
-  const fullName = userRow?.full_name ?? "Sheen Pro";
+  // Hydrate reviewer names so we can render "Tj W." style bylines.
+  const reviewerIds = Array.from(new Set((reviews ?? []).map((r: any) => r.reviewer_id).filter(Boolean)));
+  const { data: reviewers } = reviewerIds.length
+    ? await supa.from("users").select("id, full_name, display_name").in("id", reviewerIds)
+    : { data: [] as any[] };
+  const reviewerMap = new Map((reviewers ?? []).map((r: any) => [r.id, r]));
+
+  const fullName = userRow?.display_name || userRow?.full_name || "Sheen Pro";
   const initial = fullName[0].toUpperCase();
   const rating = profile.rating_avg ? Number(profile.rating_avg).toFixed(1) : "—";
   const jobs = profile.jobs_completed ?? 0;
+  const reviewsCount = profile.reviews_count ?? (reviews?.length ?? 0);
+  const avatarUrl = userRow?.avatar_url
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${userRow.avatar_url}`
+    : null;
 
   return (
     <div className="max-w-2xl mx-auto px-5 pt-10 pb-12">
       <Link href="/" className="text-sm text-smoke">← Sheen</Link>
 
       <div className="mt-6 flex items-center gap-5">
-        <div className="w-24 h-24 rounded-full bg-royal text-bone flex items-center justify-center display text-4xl shrink-0">
-          {initial}
-        </div>
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt={fullName}
+            className="w-24 h-24 rounded-full object-cover bg-mist shrink-0"
+          />
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-royal text-bone flex items-center justify-center display text-4xl shrink-0">
+            {initial}
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <Eyebrow>Sheen Pro</Eyebrow>
           <h1 className="display text-3xl mt-2">{fullName}</h1>
-          <div className="flex gap-3 text-sm text-smoke mt-2">
+          <div className="flex gap-3 text-sm text-smoke mt-2 flex-wrap">
             <span>
               <span className="text-sol">★</span> {rating}
+              {reviewsCount > 0 && <span className="text-smoke/70"> ({reviewsCount})</span>}
             </span>
             <span>·</span>
             <span>{jobs.toLocaleString()} jobs</span>
@@ -96,26 +118,36 @@ export default async function WasherProfilePage({ params }: { params: { id: stri
             No reviews yet — book a wash and be the first.
           </div>
         ) : (
-          reviews!.map((r: any, i: number) => (
-            <div key={i} className="bg-mist/40 p-4">
-              <div className="flex justify-between items-center">
-                <div className="text-sol text-sm tracking-widest">
-                  {"★".repeat(r.rating_int)}
-                  <span className="text-mist">{"★".repeat(5 - r.rating_int)}</span>
+          reviews!.map((r: any) => {
+            const reviewer = reviewerMap.get(r.reviewer_id);
+            const name = publicCustomerName({
+              display_name: reviewer?.display_name,
+              full_name: reviewer?.full_name,
+            });
+            return (
+              <div key={r.created_at + r.reviewer_id} className="bg-mist/40 p-4">
+                <div className="flex justify-between items-center">
+                  <div className="text-sol text-sm tracking-widest">
+                    {"★".repeat(r.rating_int)}
+                    <span className="text-mist">{"★".repeat(5 - r.rating_int)}</span>
+                  </div>
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-smoke">
+                    {new Date(r.created_at).toLocaleDateString([], {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </div>
                 </div>
-                <div className="font-mono text-[10px] uppercase tracking-wider text-smoke">
-                  {new Date(r.created_at).toLocaleDateString([], {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                <div className="font-mono text-[10px] uppercase tracking-wider text-ink/70 mt-2">
+                  {name}
                 </div>
+                {r.comment && (
+                  <p className="text-sm mt-1.5 leading-relaxed text-ink/85">{r.comment}</p>
+                )}
               </div>
-              {r.comment && (
-                <p className="text-sm mt-2 leading-relaxed text-ink/85">{r.comment}</p>
-              )}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

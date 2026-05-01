@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkAchievements } from "@/lib/loyalty";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -9,6 +10,10 @@ const Body = z.object({
   stars: z.number().int().min(1).max(5),
   tip_pct: z.number().min(0).max(100).default(0),
   comment: z.string().optional().default(""),
+  // Optional photo path in the `booking-photos` bucket. Drives the
+  // Sheen Star achievement (25 reviews with photos) and unlocks
+  // featured-testimonial selection.
+  photo_path: z.string().optional(),
 });
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
@@ -44,6 +49,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       comment: body.comment,
       reviewer_id: user.id,
       reviewee_id: proId,
+      has_photo: !!body.photo_path,
+      photo_path: body.photo_path ?? null,
     });
   }
 
@@ -62,8 +69,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     booking_id: booking.id,
     type: "rated",
     actor_id: user.id,
-    payload: { stars: body.stars, tip_cents: tipCents },
+    payload: { stars: body.stars, tip_cents: tipCents, has_photo: !!body.photo_path },
   });
+
+  // Re-check achievements — Sheen Star and others can flip on this event.
+  // Best-effort; failures don't block the rating response.
+  checkAchievements(user.id).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

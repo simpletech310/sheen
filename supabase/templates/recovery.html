@@ -1,0 +1,134 @@
+{{- /*
+  Sheen — Password recovery template.
+  Role-aware palette: customer royal+gold+bone (light), washer ink+gold+bone (dark).
+*/ -}}
+{{- $isWasher := eq .Data.role "washer" -}}
+{{- $headerBg := "#003594" -}}{{- if $isWasher -}}{{- $headerBg = "#0A0A0A" -}}{{- end -}}
+{{- $headerText := "#FAFAF7" -}}{{- if $isWasher -}}{{- $headerText = "#FFA300" -}}{{- end -}}
+{{- $headerEyebrow := "#FFA300" -}}{{- if $isWasher -}}{{- $headerEyebrow = "#FAFAF7" -}}{{- end -}}
+{{- $stripe := "#FFA300" -}}{{- if $isWasher -}}{{- $stripe = "#FAFAF7" -}}{{- end -}}
+{{- $bodyBg := "#FAFAF7" -}}{{- if $isWasher -}}{{- $bodyBg = "#0A0A0A" -}}{{- end -}}
+{{- $bodyText := "#0A0A0A" -}}{{- if $isWasher -}}{{- $bodyText = "#FAFAF7" -}}{{- end -}}
+{{- $bodySub := "#5A5A56" -}}{{- if $isWasher -}}{{- $bodySub = "#8E8E8B" -}}{{- end -}}
+{{- $ctaBg := "#003594" -}}{{- if $isWasher -}}{{- $ctaBg = "#FFA300" -}}{{- end -}}
+{{- $ctaText := "#FAFAF7" -}}{{- if $isWasher -}}{{- $ctaText = "#0A0A0A" -}}{{- end -}}
+{{- $linkColor := "#003594" -}}{{- if $isWasher -}}{{- $linkColor = "#FFA300" -}}{{- end -}}
+{{- $trustBg := "#E8E6E0" -}}{{- if $isWasher -}}{{- $trustBg = "#1A1A18" -}}{{- end -}}
+{{- $trustText := "#5A5A56" -}}{{- if $isWasher -}}{{- $trustText = "#8E8E8B" -}}{{- end -}}
+{{- $proBadgeBg := "#FFA300" -}}{{- if $isWasher -}}{{- $proBadgeBg = "#FAFAF7" -}}{{- end -}}
+{{- $proBadgeText := "#0A0A0A" -}}
+{{- $dividerStart := $headerBg -}}
+{{- $dividerEnd := "#FFA300" -}}
+{{- $pageBg := "#FAFAF7" -}}{{- if $isWasher -}}{{- $pageBg = "#0A0A0A" -}}{{- end -}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <title>Reset your Sheen{{ if $isWasher }} Pro{{ end }} password</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body style="margin:0;padding:0;background:{{ $pageBg }};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:{{ $bodyText }};-webkit-font-smoothing:antialiased;">
+  <div style="display:none;font-size:1px;color:{{ $pageBg }};line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+    Tap to set a new password. The link works once and expires in an hour.
+  </div>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:{{ $pageBg }};">
+    <tr>
+      <td align="center" style="padding:32px 16px 0 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;">
+          <tr>
+            <td style="background:{{ $headerBg }};padding:28px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td>
+                    <span style="font-family:'Anton','Impact','Helvetica Neue Condensed Bold','Arial Narrow Bold',Helvetica,Arial,sans-serif;font-size:34px;font-weight:400;color:{{ $headerText }};letter-spacing:1.5px;text-transform:uppercase;line-height:1;">SHEEN</span>
+                    {{ if $isWasher }}
+                    <span style="display:inline-block;margin-left:10px;padding:4px 8px;background:{{ $proBadgeBg }};color:{{ $proBadgeText }};font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;vertical-align:middle;">PRO</span>
+                    {{ end }}
+                  </td>
+                  <td align="right" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:{{ $headerEyebrow }};letter-spacing:2px;text-transform:uppercase;">
+                    Password reset
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr><td style="height:3px;background:{{ $stripe }};font-size:0;line-height:0;">&nbsp;</td></tr>
+
+          <tr>
+            <td style="background:{{ $bodyBg }};padding:40px 32px 32px 32px;">
+              <h1 style="margin:0 0 8px 0;font-family:'Anton','Impact','Helvetica Neue Condensed Bold','Arial Narrow Bold',Helvetica,Arial,sans-serif;font-size:44px;line-height:1.05;letter-spacing:1px;text-transform:uppercase;color:{{ $bodyText }};font-weight:400;">
+                Pick a new password.
+              </h1>
+              <div style="height:3px;width:48px;background:linear-gradient(to right,{{ $dividerStart }},{{ $dividerEnd }});margin:0 0 18px 0;font-size:0;line-height:0;">&nbsp;</div>
+
+              <p style="margin:0 0 20px 0;font-size:15px;line-height:1.55;color:{{ $bodyText }};">
+                Someone (hopefully you) asked to reset the Sheen{{ if $isWasher }} Pro{{ end }} password for {{ .Email }}. Tap below to set a new one &mdash; at least 8 characters.
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background:{{ $ctaBg }};">
+                    <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:16px 36px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:{{ $ctaText }};text-decoration:none;">
+                      Reset password &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:24px 0 6px 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;color:{{ $bodySub }};letter-spacing:1.5px;text-transform:uppercase;">
+                Or paste this link
+              </p>
+              <p style="margin:0 0 24px 0;font-size:13px;line-height:1.5;color:{{ $bodySub }};word-break:break-all;">
+                <a href="{{ .ConfirmationURL }}" style="color:{{ $linkColor }};text-decoration:underline;">{{ .ConfirmationURL }}</a>
+              </p>
+
+              <p style="margin:0;font-size:12px;line-height:1.55;color:{{ $bodySub }};">
+                The link works once and expires in 60 minutes. If you didn&rsquo;t request a reset, ignore this email &mdash; your password won&rsquo;t change.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:{{ $trustBg }};padding:18px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:{{ $trustText }};">
+                    Single-use link &middot; 60-min expiry &middot; password not yet changed
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#0A0A0A;padding:24px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#FAFAF7;">
+                    <span style="font-family:'Anton','Impact','Helvetica Neue Condensed Bold','Arial Narrow Bold',Helvetica,Arial,sans-serif;font-size:16px;letter-spacing:1px;text-transform:uppercase;color:#FAFAF7;">SHEEN</span>{{ if $isWasher }} <span style="display:inline-block;margin-left:4px;padding:2px 6px;background:#FFA300;color:#0A0A0A;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;vertical-align:middle;">PRO</span>{{ end }}
+                    <span style="color:#5A5A56;"> &middot; made for what shines.</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:8px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.55;color:#5A5A56;">
+                    Reset requested for {{ .Email }} from <a href="{{ .SiteURL }}" style="color:#FFA300;text-decoration:none;">sheen.la</a>.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+        <div style="height:32px;line-height:32px;font-size:0;">&nbsp;</div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

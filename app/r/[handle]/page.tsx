@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
+import { publicCustomerName } from "@/lib/display-name";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function ProReferralPage({
   const { data: wp } = await supa
     .from("washer_profiles")
     .select(
-      "user_id, status, jobs_completed, rating_avg, bio, has_own_water, has_pressure_washer, background_check_verified"
+      "user_id, status, jobs_completed, rating_avg, reviews_count, bio, has_own_water, has_pressure_washer, background_check_verified"
     )
     .eq("wash_handle", handle)
     .maybeSingle();
@@ -25,13 +26,33 @@ export default async function ProReferralPage({
 
   const { data: u } = await supa
     .from("users")
-    .select("full_name")
+    .select("full_name, display_name, avatar_url")
     .eq("id", wp.user_id)
     .maybeSingle();
 
-  const fullName = u?.full_name ?? "Sheen Pro";
+  // Pull last 6 reviews — joined to the reviewer for the masked
+  // "Tj W." comment byline. Service-role client because reviews has RLS
+  // that blocks anon reads of foreign reviewer rows.
+  const { data: recentReviews } = await supa
+    .from("reviews")
+    .select("rating_int, comment, created_at, reviewer_id, has_photo, photo_path")
+    .eq("reviewee_id", wp.user_id)
+    .not("comment", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(6);
+  const reviewerIds = Array.from(new Set((recentReviews ?? []).map((r) => r.reviewer_id)));
+  const { data: reviewers } = reviewerIds.length
+    ? await supa.from("users").select("id, full_name, display_name").in("id", reviewerIds)
+    : { data: [] as any[] };
+  const reviewerMap = new Map((reviewers ?? []).map((r: any) => [r.id, r]));
+
+  const fullName = u?.display_name || u?.full_name || "Sheen Pro";
   const initial = fullName[0]?.toUpperCase() ?? "P";
   const rating = wp.rating_avg ? Number(wp.rating_avg).toFixed(1) : "—";
+  const reviewsCount = wp.reviews_count ?? 0;
+  const avatarUrl = u?.avatar_url
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${u.avatar_url}`
+    : null;
 
   return (
     <div className="min-h-screen bg-bone">
@@ -46,9 +67,18 @@ export default async function ProReferralPage({
           </Link>
 
           <div className="mt-8 flex items-center gap-5">
-            <div className="w-20 h-20 rounded-full bg-royal text-bone flex items-center justify-center display text-3xl shrink-0">
-              {initial}
-            </div>
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt={fullName}
+                className="w-20 h-20 rounded-full object-cover bg-mist shrink-0"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-royal text-bone flex items-center justify-center display text-3xl shrink-0">
+                {initial}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <Eyebrow className="!text-sol" prefix={null}>
                 Sheen pro
@@ -57,6 +87,9 @@ export default async function ProReferralPage({
               <div className="flex gap-3 text-sm text-bone/80 mt-2 flex-wrap">
                 <span>
                   <span className="text-sol">★</span> {rating}
+                  {reviewsCount > 0 && (
+                    <span className="text-bone/55"> ({reviewsCount})</span>
+                  )}
                 </span>
                 <span>·</span>
                 <span>{wp.jobs_completed?.toLocaleString() ?? 0} jobs</span>
@@ -97,11 +130,50 @@ export default async function ProReferralPage({
             Book a wash with @{handle} →
           </Link>
           <div className="text-[11px] text-bone/60 mt-3 leading-relaxed">
-            Sign in or create an account at checkout. @{handle} gets a 5-minute
-            window to accept before the booking opens to the general queue.
+            Sign in or create an account at checkout. @{handle} gets a 10-minute
+            exclusive window to accept before the booking opens to the general queue.
           </div>
         </div>
       </section>
+
+      {(recentReviews ?? []).length > 0 && (
+        <section className="px-6 md:px-12 py-10 max-w-2xl mx-auto bg-bone">
+          <div className="flex items-baseline justify-between mb-4">
+            <Eyebrow>What customers say</Eyebrow>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-smoke tabular">
+              Recent · {(recentReviews ?? []).length}
+            </span>
+          </div>
+          <div className="space-y-3">
+            {(recentReviews ?? []).map((r: any) => {
+              const reviewer = reviewerMap.get(r.reviewer_id);
+              const name = publicCustomerName({
+                display_name: reviewer?.display_name,
+                full_name: reviewer?.full_name,
+              });
+              const stars = "★".repeat(r.rating_int) + "☆".repeat(5 - r.rating_int);
+              const when = new Date(r.created_at).toLocaleDateString([], {
+                month: "short",
+                year: "numeric",
+              });
+              return (
+                <div key={r.created_at + r.reviewer_id} className="border-l-2 border-royal bg-mist/30 p-4">
+                  <div className="flex items-baseline justify-between mb-1">
+                    <span className="text-sm font-bold text-ink">{name}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-smoke">
+                      {when}
+                    </span>
+                  </div>
+                  <div className="text-sol text-base tracking-widest mb-1.5" aria-label={`${r.rating_int} of 5 stars`}>
+                    {stars}
+                  </div>
+                  <p className="text-sm text-ink/85 leading-relaxed">{r.comment}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="px-6 md:px-12 py-10 max-w-2xl mx-auto">
         <div className="font-mono text-[10px] uppercase tracking-wider text-smoke">

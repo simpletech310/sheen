@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import Link from "next/link";
 import { distanceMiles } from "@/lib/mapbox";
-import { QueueRealtimeClient, type QueueJob } from "./QueueRealtimeClient";
+import { checkWasherEligibility } from "@/lib/job-matching";
+import { QueueRealtimeClient, type QueueJob, type WasherCaps } from "./QueueRealtimeClient";
 
 export const dynamic = "force-dynamic";
 
@@ -12,13 +13,24 @@ export default async function QueuePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Washer profile + availability
+  // Washer profile + availability — pull every capability flag so we can
+  // pre-filter the queue by what the pro actually has.
   const { data: profile } = await supabase
     .from("washer_profiles")
-    .select("status, service_radius_miles, base_lat, base_lng, can_wash_big_rig")
+    .select(
+      "status, service_radius_miles, base_lat, base_lng, can_wash_big_rig, has_own_water, has_own_power, has_pressure_washer, can_detail_interior, can_do_paint_correction"
+    )
     .eq("user_id", user?.id ?? "")
     .maybeSingle();
   const canWashBigRig = !!profile?.can_wash_big_rig;
+  const washerCaps: WasherCaps = {
+    has_own_water: !!profile?.has_own_water,
+    has_own_power: !!profile?.has_own_power,
+    has_pressure_washer: !!profile?.has_pressure_washer,
+    can_detail_interior: !!profile?.can_detail_interior,
+    can_do_paint_correction: !!profile?.can_do_paint_correction,
+    can_wash_big_rig: !!profile?.can_wash_big_rig,
+  };
 
   const { data: avail } = await supabase
     .from("availability")
@@ -28,7 +40,7 @@ export default async function QueuePage() {
   const { data: jobsRaw } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, scheduled_window_start, service_cents, vehicle_count, requested_washer_id, request_expires_at, request_declined_at, is_rush, rush_deadline, rush_bonus_cents, services(tier_name, category), addresses(street, city, lat, lng)"
+      "id, status, assigned_washer_id, scheduled_window_start, service_cents, vehicle_count, requested_washer_id, request_expires_at, request_declined_at, is_rush, rush_deadline, rush_bonus_cents, services(tier_name, category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(street, city, lat, lng, has_water, has_power)"
     )
     .eq("status", "pending")
     .is("assigned_washer_id", null)
@@ -52,7 +64,11 @@ export default async function QueuePage() {
 
   const jobs = (jobsRaw ?? []).filter((j: any) => {
     if (directRequestIds.has(j.id)) return false;
-    if (j.services?.category === "big_rig" && !canWashBigRig) return false;
+    // Capability gate: equipment + site-derived water/power. Hides jobs the
+    // washer can't physically complete instead of letting them claim and
+    // disappoint the customer.
+    const elig = checkWasherEligibility(j.services, j.addresses, washerCaps);
+    if (!elig.ok) return false;
     const isRush = !!j.is_rush;
     const start = new Date(j.scheduled_window_start);
     if (!isRush && avail && avail.length) {
@@ -123,7 +139,7 @@ export default async function QueuePage() {
         myLat={myLat}
         myLng={myLng}
         radius={radius}
-        canWashBigRig={canWashBigRig}
+        washerCaps={washerCaps}
       />
     </div>
   );

@@ -30,6 +30,9 @@ function PayInner() {
   const [loading, setLoading] = useState(true);
   const [pointsBalance, setPointsBalance] = useState(0);
   const [redeemPoints, setRedeemPoints] = useState(Number(params.get("redeem") ?? "0"));
+  // Achievement freebie matching this booking's category + tier, if any.
+  const [matchingCredit, setMatchingCredit] = useState<{ id: string; source: string } | null>(null);
+  const [useCredit, setUseCredit] = useState(params.get("credit") === "1");
 
   const street = params.get("street") ?? "";
   const unit = params.get("unit") ?? "";
@@ -65,6 +68,18 @@ function PayInner() {
       .then((d) => setPointsBalance(d.points ?? 0))
       .catch(() => {});
 
+    // Find an achievement freebie that fits this exact tier + category.
+    // Pay page is the only place we surface them.
+    fetch("/api/loyalty/credits")
+      .then((r) => r.json())
+      .then((d) => {
+        const match = (d.credits ?? []).find(
+          (c: any) => c.service_category === category && c.service_tier_name === tier
+        );
+        if (match) setMatchingCredit({ id: match.id, source: match.source_achievement_id });
+      })
+      .catch(() => {});
+
     (async () => {
       try {
         const res = await fetch("/api/stripe/checkout", {
@@ -78,6 +93,7 @@ function PayInner() {
             condition_photos: usesVehicles ? draft?.conditionPhotos : undefined,
             requested_wash_handle: requestedHandle || undefined,
             redeem_points: redeemPoints || undefined,
+            redeem_credit_id: useCredit && matchingCredit ? matchingCredit.id : undefined,
             address: {
               street,
               unit,
@@ -87,6 +103,12 @@ function PayInner() {
               lat: lat ? Number(lat) : undefined,
               lng: lng ? Number(lng) : undefined,
               notes,
+              has_water: draft?.siteHasWater ?? null,
+              has_power: draft?.siteHasPower ?? null,
+              water_notes: draft?.waterNotes || undefined,
+              power_notes: draft?.powerNotes || undefined,
+              gate_code: draft?.gateCode || undefined,
+              site_photo_paths: draft?.sitePhotoPaths ?? [],
             },
             window: isRush ? undefined : win,
             is_rush: isRush,
@@ -97,7 +119,7 @@ function PayInner() {
           throw new Error(e.error || `Status ${res.status}`);
         }
         const data = await res.json();
-        if (data.covered_by_membership || data.covered_by_loyalty) {
+        if (data.covered_by_membership || data.covered_by_loyalty || data.covered_by_credit) {
           clearDraft();
           router.replace(`/app/tracking/${data.booking_id}`);
           return;
@@ -149,6 +171,34 @@ function PayInner() {
           </div>
         )}
       </div>
+
+      {/* Achievement freebie matches this exact tier — offer to redeem it
+          here. One click, the booking comes back covered ($0 due). */}
+      {matchingCredit && !clientSecret && !loading && (
+        <div className="bg-good text-ink p-4 mb-5 border-l-2 border-ink">
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-wider opacity-80">
+                Achievement freebie
+              </div>
+              <div className="text-sm mt-1">
+                Use your free <strong>{tier}</strong> from <strong>{matchingCredit.source.replace(/_/g, " ")}</strong> — covers the wash entirely.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const url = new URL(window.location.href);
+                url.searchParams.set("credit", useCredit ? "0" : "1");
+                window.location.href = url.pathname + url.search;
+              }}
+              className="bg-ink text-bone px-3 py-2 text-xs font-bold uppercase tracking-wide hover:bg-royal"
+            >
+              {useCredit ? "Don't use" : "Apply &amp; refresh"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {pointsBalance > 0 && !clientSecret && !loading && (
         <div className="bg-royal text-bone p-4 mb-5">

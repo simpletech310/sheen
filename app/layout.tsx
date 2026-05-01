@@ -21,30 +21,39 @@ const body = Inter({
 });
 
 export const metadata: Metadata = {
+  // Resolves all relative OG/Twitter image URLs against the public site so
+  // Vercel/Next doesn't fall back to localhost when generating per-page meta.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://sheen.la"),
   title: {
     default: "Sheen — Make it look sharp.",
     template: "%s · Sheen",
   },
   description:
     "On-demand wash & detail. Vetted local pros. Book in 60 seconds, professionally cleaned, payment handled. Get it sheened.",
-  manifest: "/manifest.webmanifest",
+  // Default to the customer manifest. Child layouts (`/pro`) override this
+  // by exporting their own `metadata.manifest`. The page being viewed when
+  // the install button fires determines which manifest the browser reads,
+  // so dual-PWA install works without anything fancier.
+  manifest: "/manifest-customer.webmanifest",
   applicationName: "Sheen",
   authors: [{ name: "Sheen" }],
   appleWebApp: {
     capable: true,
     title: "Sheen",
     statusBarStyle: "black-translucent",
+    startupImage: ["/icons/customer-512.png"],
   },
   formatDetection: {
     telephone: false,
   },
   icons: {
     icon: [
-      { url: "/icons/icon-192.svg", type: "image/svg+xml" },
-      { url: "/icons/icon-512.svg", type: "image/svg+xml", sizes: "512x512" },
+      { url: "/icons/customer-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/customer-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/customer-192.svg", type: "image/svg+xml" },
     ],
-    apple: "/icons/icon-512.svg",
-    shortcut: "/icons/icon-192.svg",
+    apple: "/icons/customer-apple-touch.png",
+    shortcut: "/icons/customer-192.png",
   },
   openGraph: {
     title: "Sheen — Make it look sharp.",

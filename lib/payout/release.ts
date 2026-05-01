@@ -45,7 +45,7 @@ export async function releaseFundsForBooking(
   // Existing payout row created at /complete time.
   const { data: payout } = await supabase
     .from("payouts")
-    .select("id, stripe_transfer_id, amount_cents")
+    .select("id, stripe_transfer_id, amount_cents, status")
     .eq("booking_id", booking.id)
     .eq("kind", "wash")
     .maybeSingle();
@@ -58,6 +58,32 @@ export async function releaseFundsForBooking(
       .eq("id", booking.id);
     return { ok: true, reason: "transfer_existed", transferId: payout.stripe_transfer_id };
   }
+
+  // Lock the payout row so a concurrent caller (e.g. the 24h cron firing while
+  // the customer hits "Approve" by hand) can't double-transfer. We flip
+  // 'pending' → 'releasing'; if 0 rows match, somebody else already won.
+  // On any failure below we flip it back to 'pending' for safe retry.
+  if (payout) {
+    const { data: lock } = await supabase
+      .from("payouts")
+      .update({ status: "releasing" })
+      .eq("id", payout.id)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
+    if (!lock) {
+      return { ok: false, reason: "release_in_progress" };
+    }
+  }
+
+  const releaseLockOnError = async () => {
+    if (!payout) return;
+    await supabase
+      .from("payouts")
+      .update({ status: "pending" })
+      .eq("id", payout.id)
+      .eq("status", "releasing");
+  };
 
   const isWasher = !!booking.assigned_washer_id;
   const isPartner = !!booking.assigned_partner_id;
@@ -108,6 +134,7 @@ export async function releaseFundsForBooking(
   if (!stripeAccountId || !booking.stripe_payment_intent_id) {
     // No payout target — mark released and let ops follow up. The
     // payout row stays pending and visible on /admin.
+    await releaseLockOnError();
     await supabase
       .from("bookings")
       .update({ funds_released_at: new Date().toISOString(), status: "funded" })
@@ -127,6 +154,7 @@ export async function releaseFundsForBooking(
   try {
     const pi = await stripe.paymentIntents.retrieve(booking.stripe_payment_intent_id);
     if (pi.status !== "succeeded") {
+      await releaseLockOnError();
       return { ok: false, reason: "pi_not_succeeded" };
     }
 
@@ -144,14 +172,17 @@ export async function releaseFundsForBooking(
           },
         });
       } catch (refErr: any) {
-        // Refund failure shouldn't block the pro's payout — log it and
-        // keep going. Ops can manually refund from the dashboard.
+        // The refund + transfer are a single financial unit — if we can't
+        // refund the customer their rush surcharge, we must NOT transfer
+        // the (now-incorrect) payout to the pro. Bail and let ops retry.
         await supabase.from("booking_events").insert({
           booking_id: booking.id,
           type: "rush_refund_failed",
           actor_id: actorId,
           payload: { error: refErr.message ?? String(refErr) },
         });
+        await releaseLockOnError();
+        return { ok: false, reason: "refund_failed" };
       }
     }
 
@@ -182,6 +213,13 @@ export async function releaseFundsForBooking(
       .from("bookings")
       .update({ funds_released_at: new Date().toISOString(), status: "funded" })
       .eq("id", booking.id);
+    // Achievement freebie: any credit reserved against this booking is now
+    // burned — final state, no take-backs once the wash is funded.
+    await supabase
+      .from("customer_credits")
+      .update({ status: "redeemed", redeemed_at: new Date().toISOString(), redeemed_for_booking_id: booking.id })
+      .eq("reserved_for_booking_id", booking.id)
+      .eq("status", "reserved");
     await supabase.from("booking_events").insert({
       booking_id: booking.id,
       type: "funds_released",
@@ -218,6 +256,7 @@ export async function releaseFundsForBooking(
       actor_id: actorId,
       payload: { error: e.message ?? String(e) },
     });
+    await releaseLockOnError();
     return { ok: false, reason: "stripe_error" };
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendPushToUser } from "@/lib/push";
+import { checkStripeReadiness, readinessMessage } from "@/lib/stripe/readiness";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,11 +14,20 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   // Confirm the user is an active partner.
   const { data: pp } = await supabase
     .from("partner_profiles")
-    .select("status, business_name")
+    .select("status, business_name, stripe_account_id")
     .eq("user_id", user.id)
     .maybeSingle();
   if (!pp || pp.status !== "active") {
     return NextResponse.json({ error: "Partner not active" }, { status: 403 });
+  }
+
+  // Same Stripe-readiness gate as the washer claim path.
+  const readiness = await checkStripeReadiness(pp.stripe_account_id);
+  if (!readiness.ready) {
+    return NextResponse.json(
+      { error: readinessMessage(readiness.reason), code: readiness.reason, action_url: "/partner/onboarding" },
+      { status: 409 }
+    );
   }
 
   // Atomic-ish claim: only update if still unclaimed by anyone.

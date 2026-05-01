@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
+import { EnablePushButton } from "@/components/PWARegister";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -217,6 +218,28 @@ export default async function MePage() {
           </section>
         ))}
       </div>
+
+      {/* Notifications & home-screen install — surfaced here so users who
+          dismissed the welcome flow can still wire it up later. */}
+      <section className="mt-7">
+        <Eyebrow>App</Eyebrow>
+        <h2 className="display text-xl mt-2 mb-3">Notifications &amp; home screen</h2>
+        <div className="bg-bone border border-mist p-4">
+          <p className="text-xs text-smoke leading-relaxed mb-3">
+            Get pinged when your wash is matched, on the way, and done. Pin Sheen to your
+            home screen and it opens like a real app — no App Store, no install size.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <EnablePushButton />
+            <a
+              href="?welcome=1"
+              className="inline-block bg-ink text-bone px-4 py-2 text-xs font-bold uppercase tracking-wide hover:bg-royal transition"
+            >
+              Add to home screen
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* Sign-out — quiet, but on-brand */}
       <form action="/api/auth/sign-out" method="post" className="mt-10">

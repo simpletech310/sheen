@@ -44,13 +44,22 @@ export function WashesFilterClient({
   completedCount,
   upcomingCount,
   points,
+  page,
+  totalPages,
+  sort,
 }: {
   bookings: Booking[];
   completedCount: number;
   upcomingCount: number;
   points: number;
+  page: number;
+  totalPages: number;
+  sort: string;
 }) {
   const [tab, setTab] = useState<FilterTab>("active");
+
+  const sortHref = (s: string) => `?sort=${s}`;
+  const pageHref = (p: number) => `?sort=${sort}&page=${p}`;
 
   const filtered = bookings.filter((b) => {
     if (tab === "active") return ACTIVE_STATUSES.includes(b.status);
@@ -90,7 +99,7 @@ export function WashesFilterClient({
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 mb-5">
+      <div className="flex gap-1 mb-3">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -105,6 +114,30 @@ export function WashesFilterClient({
             <span className="ml-1.5 opacity-70">{t.count}</span>
           </button>
         ))}
+      </div>
+
+      {/* Sort dropdown — controls how the *paginated* list is ordered. The
+          tab filter above still narrows the visible rows on the current page. */}
+      <div className="flex items-center justify-between mb-4 text-xs">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-smoke">Sort</span>
+        <div className="flex gap-1 flex-wrap">
+          {[
+            ["date_desc", "Newest"],
+            ["date_asc", "Oldest"],
+            ["amount_desc", "Most spent"],
+            ["amount_asc", "Least spent"],
+          ].map(([k, label]) => (
+            <Link
+              key={k}
+              href={sortHref(k)}
+              className={`px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider ${
+                sort === k ? "bg-royal text-bone" : "bg-mist/40 text-smoke hover:bg-mist"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Bookings list */}
@@ -160,6 +193,35 @@ export function WashesFilterClient({
             >
               Book a wash →
             </Link>
+          )}
+        </div>
+      )}
+
+      {/* Page navigation — only shown when there's more than one page. */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6">
+          {page > 1 ? (
+            <Link
+              href={pageHref(page - 1)}
+              className="px-3 py-2 text-xs font-bold uppercase tracking-wide bg-mist/40 hover:bg-mist transition"
+            >
+              ← Newer
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="font-mono text-[10px] uppercase tracking-wider text-smoke tabular">
+            Page {page} of {totalPages}
+          </span>
+          {page < totalPages ? (
+            <Link
+              href={pageHref(page + 1)}
+              className="px-3 py-2 text-xs font-bold uppercase tracking-wide bg-mist/40 hover:bg-mist transition"
+            >
+              Older →
+            </Link>
+          ) : (
+            <span />
           )}
         </div>
       )}

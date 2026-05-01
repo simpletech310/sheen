@@ -25,14 +25,18 @@ function RateInner({ params }: { params: { id: string } }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPayModal, setShowPayModal] = useState(false);
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const tipCents = booking ? Math.round((booking.service_cents * tipPct) / 100) : 0;
 
   useEffect(() => {
     fetch(`/api/bookings/${id}`)
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : Promise.reject(new Error("Not found")))
       .then(d => {
-        setBooking(d);
+        // Endpoint now returns { booking, vehicles, checklist, photos };
+        // tolerate the older flat shape just in case it's cached.
+        setBooking(d?.booking ?? d);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -56,13 +60,39 @@ function RateInner({ params }: { params: { id: string } }) {
     }
   }, [id, tipCents]);
 
+  async function uploadPhoto(file: File) {
+    setUploadingPhoto(true);
+    try {
+      const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+      const sig = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bucket: "booking-photos", scope: `review_${id}`, ext }),
+      });
+      const sigData = await sig.json();
+      if (!sig.ok) throw new Error(sigData.error || "Upload setup failed");
+      const put = await fetch(sigData.signed_url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!put.ok) throw new Error("Upload failed");
+      setPhotoPath(sigData.path);
+      toast("Photo added — every photo review counts toward Sheen Star", "success");
+    } catch (e: any) {
+      toast(e.message || "Could not upload photo", "error");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
   async function submit() {
     setSubmitting(true);
     try {
       const r = await fetch(`/api/bookings/${id}/rate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stars, tip_pct: tipPct, comment }),
+        body: JSON.stringify({ stars, tip_pct: tipPct, comment, photo_path: photoPath ?? undefined }),
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
@@ -127,8 +157,42 @@ function RateInner({ params }: { params: { id: string } }) {
         onChange={(e) => setComment(e.target.value)}
         placeholder="Anything to say? (optional)"
         rows={3}
-        className="w-full px-4 py-3 bg-bone border border-mist rounded-none text-sm mb-6"
+        className="w-full px-4 py-3 bg-bone border border-mist rounded-none text-sm mb-3"
       />
+
+      {/* Photo with review unlocks the Sheen Star achievement at 25 photo
+          reviews. Optional — skip for the speedy path. */}
+      <div className="mb-6">
+        {photoPath ? (
+          <div className="flex items-center gap-3 bg-mist/40 px-3 py-2 text-xs">
+            <div className="w-8 h-8 bg-good/20 flex items-center justify-center text-good">✓</div>
+            <div className="flex-1 text-smoke">Photo on this review</div>
+            <button
+              type="button"
+              onClick={() => setPhotoPath(null)}
+              className="font-mono text-[10px] uppercase tracking-wider text-bad hover:text-ink"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <label className={`block w-full text-center py-3 text-xs font-bold uppercase tracking-wide cursor-pointer transition border border-dashed ${uploadingPhoto ? "bg-mist text-smoke border-mist" : "bg-bone text-ink border-smoke hover:bg-mist/40"}`}>
+            {uploadingPhoto ? "Uploading…" : "+ Add a photo (optional)"}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              disabled={uploadingPhoto}
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) uploadPhoto(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        )}
+      </div>
 
       {tipPct === 0 ? (
         <button

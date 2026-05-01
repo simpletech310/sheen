@@ -7,7 +7,12 @@ export const dynamic = "force-dynamic";
 
 const Body = z.object({
   full_name: z.string().min(1).max(120).optional(),
+  display_name: z.string().min(1).max(120).optional().nullable(),
   phone: z.string().max(40).optional().nullable(),
+  // Path inside the public `avatars` bucket — `<user_id>/<file>`. We store
+  // the bare path; the public URL is composed at read time so a bucket
+  // rename or CDN swap doesn't require a backfill.
+  avatar_url: z.string().max(400).optional().nullable(),
 });
 
 export async function PATCH(req: Request) {
@@ -18,7 +23,9 @@ export async function PATCH(req: Request) {
   const body = Body.parse(await req.json());
   const updates: Record<string, any> = {};
   if (body.full_name != null) updates.full_name = body.full_name;
+  if (body.display_name !== undefined) updates.display_name = body.display_name || null;
   if (body.phone !== undefined) updates.phone = body.phone || null;
+  if (body.avatar_url !== undefined) updates.avatar_url = body.avatar_url || null;
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }

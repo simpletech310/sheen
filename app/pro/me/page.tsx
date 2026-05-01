@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
+import { EnablePushButton } from "@/components/PWARegister";
 import { fmtUSD } from "@/lib/pricing";
 import { WashHandleCard } from "./WashHandleCard";
 import { BigRigCapabilityCard } from "./BigRigCapabilityCard";
@@ -235,6 +236,27 @@ export default async function ProMePage() {
           </section>
         ))}
       </div>
+
+      {/* App-shell controls — push notifications + home-screen install. */}
+      <section className="mt-7">
+        <Eyebrow className="!text-bone/60" prefix={null}>App</Eyebrow>
+        <h2 className="display text-xl mt-2 mb-3 text-bone">Notifications &amp; home screen</h2>
+        <div className="bg-white/5 border border-bone/10 p-4">
+          <p className="text-xs text-bone/65 leading-relaxed mb-3">
+            Hear new jobs the second they post. Pin Sheen Pro to your home screen — opens
+            like a native app, no App Store, no install size.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <EnablePushButton />
+            <a
+              href="?welcome=1"
+              className="inline-block bg-sol text-ink px-4 py-2 text-xs font-bold uppercase tracking-wide hover:bg-bone transition"
+            >
+              Add to home screen
+            </a>
+          </div>
+        </div>
+      </section>
 
       <Link
         href="/pro/settings"

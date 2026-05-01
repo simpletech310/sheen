@@ -13,18 +13,20 @@ export default async function MembershipPage() {
 
   const { data: plans } = await supabase
     .from("membership_plans")
-    .select("id, tier, display_name, monthly_price_cents, included_washes, max_service_tier, description, stripe_price_id, service_categories, allowed_tier_names")
+    .select("id, tier, display_name, monthly_price_cents, promo_price_cents, standard_price_cents, promo_until, included_washes, max_service_tier, description, stripe_price_id, stripe_price_id_promo, stripe_price_id_standard, service_categories, allowed_tier_names")
     .eq("active", true)
     .order("sort_order");
 
   const { data: current } = await supabase
     .from("memberships")
-    .select("id, plan_id, status, washes_used, current_period_end, cancel_at_period_end, membership_plans(tier, display_name, included_washes)")
+    .select("id, plan_id, status, washes_used, current_period_end, cancel_at_period_end, is_promo_locked, price_tier, membership_plans(tier, display_name, included_washes)")
     .eq("user_id", user.id)
     .in("status", ["active", "past_due", "paused"])
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  const now = Date.now();
 
   return (
     <div className="px-5 pt-10 pb-8">
@@ -60,8 +62,13 @@ export default async function MembershipPage() {
       )}
 
       <div className="space-y-3">
-        {(plans ?? []).map((p) => {
+        {(plans ?? []).map((p: any) => {
           const isCurrent = current?.plan_id === p.id;
+          const inPromoWindow = !!p.promo_until && new Date(p.promo_until).getTime() > now;
+          const showPromo = inPromoWindow && p.promo_price_cents && p.standard_price_cents && p.promo_price_cents < p.standard_price_cents;
+          // Subscription create endpoint can use the promo Price OR the standard Price
+          // OR fall back to the legacy stripe_price_id — disable only if NONE exist.
+          const canSubscribe = !!(p.stripe_price_id_promo || p.stripe_price_id_standard || p.stripe_price_id);
           return (
             <div
               key={p.id}
@@ -76,7 +83,7 @@ export default async function MembershipPage() {
                     {p.included_washes} washes / month
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-2">
-                    {((p as any).service_categories ?? ["auto"]).map((cat: string) => (
+                    {(p.service_categories ?? ["auto"]).map((cat: string) => (
                       <span
                         key={cat}
                         className="font-mono text-[9px] uppercase tracking-wider bg-royal text-bone px-1.5 py-0.5"
@@ -84,7 +91,7 @@ export default async function MembershipPage() {
                         {cat}
                       </span>
                     ))}
-                    {((p as any).allowed_tier_names ?? []).map((tn: string) => (
+                    {(p.allowed_tier_names ?? []).map((tn: string) => (
                       <span
                         key={tn}
                         className="font-mono text-[9px] uppercase tracking-wider bg-mist text-ink px-1.5 py-0.5"
@@ -96,8 +103,22 @@ export default async function MembershipPage() {
                   <p className="text-xs text-smoke mt-2">{p.description}</p>
                 </div>
                 <div className="text-right">
-                  <div className="display tabular text-2xl">{fmtUSD(p.monthly_price_cents)}</div>
+                  <div className="flex items-baseline justify-end gap-2">
+                    <div className="display tabular text-2xl">
+                      {fmtUSD(showPromo ? p.promo_price_cents : p.monthly_price_cents)}
+                    </div>
+                    {showPromo && (
+                      <div className="font-mono text-xs tabular text-smoke line-through">
+                        {fmtUSD(p.standard_price_cents)}
+                      </div>
+                    )}
+                  </div>
                   <div className="font-mono text-[10px] text-smoke">/MO</div>
+                  {showPromo && (
+                    <div className="font-mono text-[9px] uppercase tracking-wider text-royal mt-1">
+                      Promo · locks for life
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="mt-4">
@@ -105,13 +126,20 @@ export default async function MembershipPage() {
                   planId={p.id}
                   isCurrent={isCurrent}
                   hasActive={!!current}
-                  disabled={!p.stripe_price_id}
+                  disabled={!canSubscribe}
                 />
               </div>
             </div>
           );
         })}
       </div>
+
+      {current?.is_promo_locked && (
+        <div className="mt-4 bg-good/10 border-l-2 border-good p-3 text-xs">
+          <span className="font-mono uppercase tracking-wider text-good">Promo locked</span>{" "}
+          You signed up during launch — you keep this rate as long as your membership stays active.
+        </div>
+      )}
 
       <p className="text-[11px] text-smoke text-center mt-6">
         Membership washes count toward your monthly allowance. Booking above your tier max charges normal rates. 100%

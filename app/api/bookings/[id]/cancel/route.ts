@@ -139,6 +139,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
   }
 
+  // Free any achievement credit reserved against this booking — it goes back
+  // into the user's wallet so they can spend it on a future wash.
+  await supabase
+    .from("customer_credits")
+    .update({ status: "available", reserved_for_booking_id: null })
+    .eq("reserved_for_booking_id", params.id)
+    .eq("status", "reserved");
+
   await supabase
     .from("bookings")
     .update({

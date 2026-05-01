@@ -12,7 +12,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
   const { data, error } = await supabase
     .from("messages")
-    .select("id, sender_id, body, read_at, created_at")
+    .select("id, sender_id, body, image_path, read_at, created_at")
     .eq("booking_id", params.id)
     .order("created_at", { ascending: true })
     .limit(200);
@@ -37,9 +37,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const { body } = await req.json().catch(() => ({}));
+  const { body, image_path } = await req.json().catch(() => ({}));
   const text = (body ?? "").toString().trim();
-  if (!text) return NextResponse.json({ error: "Empty message" }, { status: 400 });
+  const imagePath = typeof image_path === "string" ? image_path.trim() : "";
+  // Either text OR an image is fine — both is also fine. Reject empty.
+  if (!text && !imagePath) {
+    return NextResponse.json({ error: "Empty message" }, { status: 400 });
+  }
   if (text.length > 2000) return NextResponse.json({ error: "Too long" }, { status: 400 });
 
   // Look up the booking parties (RLS will reject this if user isn't one of them).
@@ -52,8 +56,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   const { data: msg, error } = await supabase
     .from("messages")
-    .insert({ booking_id: params.id, sender_id: user.id, body: text })
-    .select("id, sender_id, body, read_at, created_at")
+    .insert({
+      booking_id: params.id,
+      sender_id: user.id,
+      body: text || null,
+      image_path: imagePath || null,
+    })
+    .select("id, sender_id, body, image_path, read_at, created_at")
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -66,10 +75,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (booking.assigned_partner_id && user.id !== booking.assigned_partner_id) {
     recipients.push(booking.assigned_partner_id);
   }
+  const previewText = text
+    ? (text.length > 80 ? `${text.slice(0, 77)}…` : text)
+    : "📷 Photo";
   for (const r of recipients) {
     sendPushToUser(r, {
       title: "New message · Sheen",
-      body: text.length > 80 ? `${text.slice(0, 77)}…` : text,
+      body: previewText,
       url: user.id === booking.customer_id
         ? `/pro/jobs/${params.id}/checkin`
         : `/app/tracking/${params.id}`,

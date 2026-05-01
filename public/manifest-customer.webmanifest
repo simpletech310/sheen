@@ -1,0 +1,35 @@
+{
+  "id": "/app?source=pwa",
+  "name": "Sheen",
+  "short_name": "Sheen",
+  "description": "On-demand wash & detail. Vetted local pros. No app store, no waiting.",
+  "start_url": "/app?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#FAFAF7",
+  "theme_color": "#003594",
+  "orientation": "portrait-primary",
+  "categories": ["lifestyle", "shopping"],
+  "icons": [
+    { "src": "/icons/customer-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/customer-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/customer-maskable.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" },
+    { "src": "/icons/customer-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/customer-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book a wash",
+      "short_name": "Book",
+      "url": "/app/book/auto?source=pwa",
+      "icons": [{ "src": "/icons/customer-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My washes",
+      "short_name": "Washes",
+      "url": "/app/washes?source=pwa",
+      "icons": [{ "src": "/icons/customer-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

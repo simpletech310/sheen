@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 const Body = z.object({
   full_name: z.string().min(1).max(120).optional(),
+  display_name: z.string().min(1).max(120).optional().nullable(),
   bio: z.string().max(280).optional().nullable(),
   service_radius_miles: z.number().int().min(1).max(50).optional(),
   base_lat: z.number().min(-90).max(90).optional().nullable(),
@@ -35,11 +36,14 @@ export async function PATCH(req: Request) {
     .maybeSingle();
   if (!wp) return NextResponse.json({ error: "Not a washer" }, { status: 403 });
 
-  // 1. Update the public.users row (just full_name).
-  if (body.full_name !== undefined) {
+  // 1. Update the public.users row (full_name + display_name).
+  const userUpdate: Record<string, any> = {};
+  if (body.full_name !== undefined) userUpdate.full_name = body.full_name;
+  if (body.display_name !== undefined) userUpdate.display_name = body.display_name;
+  if (Object.keys(userUpdate).length > 0) {
     const { error: uErr } = await supabase
       .from("users")
-      .update({ full_name: body.full_name })
+      .update(userUpdate)
       .eq("id", user.id);
     if (uErr) return NextResponse.json({ error: uErr.message }, { status: 400 });
   }

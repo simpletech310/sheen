@@ -3,14 +3,24 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
+import { AvatarUpload } from "@/components/customer/AvatarUpload";
 
 export function ProfileForm({
+  userId,
   initial,
 }: {
-  initial: { full_name: string; email: string; phone: string };
+  userId: string;
+  initial: {
+    full_name: string;
+    display_name: string;
+    email: string;
+    phone: string;
+    avatar_url: string | null;
+  };
 }) {
   const router = useRouter();
   const [fullName, setFullName] = useState(initial.full_name);
+  const [displayName, setDisplayName] = useState(initial.display_name);
   const [phone, setPhone] = useState(initial.phone);
   const [busy, setBusy] = useState(false);
 
@@ -21,7 +31,11 @@ export function ProfileForm({
       const r = await fetch("/api/users/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ full_name: fullName, phone }),
+        body: JSON.stringify({
+          full_name: fullName,
+          display_name: displayName || null,
+          phone,
+        }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Could not save");
@@ -36,10 +50,23 @@ export function ProfileForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <form onSubmit={submit} className="space-y-4">
+      {/* Avatar — uploads on click, persists immediately. The form submit
+          below only handles the text fields. */}
+      <div>
+        <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-2">
+          Profile photo
+        </label>
+        <AvatarUpload
+          userId={userId}
+          initialPath={initial.avatar_url}
+          initialName={displayName || fullName}
+        />
+      </div>
+
       <div>
         <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
-          Full name
+          Full name · for billing &amp; receipts
         </label>
         <input
           value={fullName}
@@ -49,6 +76,23 @@ export function ProfileForm({
           className="w-full px-4 py-3.5 bg-bone border border-mist text-sm focus:outline-none focus:border-royal"
         />
       </div>
+
+      <div>
+        <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
+          Display name · what your pro sees in chat &amp; reviews
+        </label>
+        <input
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          placeholder="Jane"
+          maxLength={60}
+          className="w-full px-4 py-3.5 bg-bone border border-mist text-sm focus:outline-none focus:border-royal"
+        />
+        <div className="text-[11px] text-smoke mt-1">
+          On public reviews we show first name + last initial (e.g. &ldquo;Jane D.&rdquo;).
+        </div>
+      </div>
+
       <div>
         <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
           Email · sign-in identity
@@ -62,6 +106,7 @@ export function ProfileForm({
           Email is your sign-in identity. Contact support to change it.
         </div>
       </div>
+
       <div>
         <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
           Phone · for SMS updates (optional)

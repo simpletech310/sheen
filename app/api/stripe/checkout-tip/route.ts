@@ -1,15 +1,23 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/server";
+import { checkStripeReadiness } from "@/lib/stripe/readiness";
 import { z } from "zod";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// $1 floor (Stripe's minimum is $0.50, but a sub-$1 tip is almost always a UI bug)
+// and $500 ceiling so a slipped decimal can't accidentally drain a card.
+const MIN_TIP_CENTS = 100;
+const MAX_TIP_CENTS = 50_000;
+
 const Body = z.object({
   booking_id: z.string().uuid(),
-  amount_cents: z.number().int().positive(),
+  amount_cents: z.number().int().min(MIN_TIP_CENTS).max(MAX_TIP_CENTS),
 });
+
+const TIPPABLE_STATUSES = new Set(["completed", "funded"]);
 
 export async function POST(req: Request) {
   const supabase = createClient();
@@ -33,6 +41,10 @@ export async function POST(req: Request) {
 
   if (!booking || booking.customer_id !== user.id) {
     return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+  }
+
+  if (!TIPPABLE_STATUSES.has(booking.status)) {
+    return NextResponse.json({ error: "Tips are only accepted after the wash is complete." }, { status: 400 });
   }
 
   // 2. Resolve pro Stripe account
@@ -60,6 +72,16 @@ export async function POST(req: Request) {
 
   if (!stripeAccountId) {
     return NextResponse.json({ error: "Pro has no connected Stripe account" }, { status: 400 });
+  }
+
+  // Don't ship a destination charge to a half-onboarded account — Stripe will
+  // accept the PI but the funds won't actually settle to the pro.
+  const readiness = await checkStripeReadiness(stripeAccountId);
+  if (!readiness.ready) {
+    return NextResponse.json(
+      { error: "Your pro can't receive tips right now. We've notified them." },
+      { status: 409 }
+    );
   }
 
   // 3. Create PaymentIntent as a Destination Charge

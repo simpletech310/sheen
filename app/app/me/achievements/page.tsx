@@ -11,7 +11,7 @@ export default async function AchievementsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: catalog }, { data: unlocked }] = await Promise.all([
+  const [{ data: catalog }, { data: unlocked }, { data: perks }, { data: credits }] = await Promise.all([
     supabase
       .from("achievements")
       .select("id, display_name, description, icon, bonus_points, sort_order")
@@ -20,11 +20,28 @@ export default async function AchievementsPage() {
       .from("user_achievements")
       .select("achievement_id, unlocked_at")
       .eq("user_id", user?.id ?? ""),
+    supabase
+      .from("customer_perks")
+      .select("discount_pct, weekend_priority, has_lifetime_express_upgrade, is_founder")
+      .eq("user_id", user?.id ?? "")
+      .maybeSingle(),
+    supabase
+      .from("customer_credits")
+      .select("id, service_tier_name, service_category, source_achievement_id, status")
+      .eq("user_id", user?.id ?? "")
+      .eq("status", "available"),
   ]);
 
   const have = new Map(
     (unlocked ?? []).map((u) => [u.achievement_id, u.unlocked_at])
   );
+  const hasAnyPerk =
+    !!perks &&
+    ((perks.discount_pct ?? 0) > 0 ||
+      perks.weekend_priority ||
+      perks.has_lifetime_express_upgrade ||
+      perks.is_founder);
+  const availableCredits = credits ?? [];
 
   const totalPts = (catalog ?? []).reduce(
     (a, c: any) => (have.has(c.id) ? a + (c.bonus_points ?? 0) : a),
@@ -62,6 +79,65 @@ export default async function AchievementsPage() {
           />
         </div>
       </div>
+
+      {/* Active perks + credits — only renders when there's something to show. */}
+      {(hasAnyPerk || availableCredits.length > 0) && (
+        <div className="bg-bone border border-mist p-5 mb-6">
+          <Eyebrow>Your perks</Eyebrow>
+          <div className="mt-3 space-y-2">
+            {(perks?.discount_pct ?? 0) > 0 && (
+              <div className="flex justify-between text-sm">
+                <span>Forever discount</span>
+                <span className="font-mono tabular text-good font-bold">
+                  −{perks?.discount_pct}% on every wash
+                </span>
+              </div>
+            )}
+            {perks?.has_lifetime_express_upgrade && (
+              <div className="flex justify-between text-sm">
+                <span>Express upgrade</span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-good">
+                  Free for life
+                </span>
+              </div>
+            )}
+            {perks?.is_founder && (
+              <div className="flex justify-between text-sm">
+                <span>Founder cohort</span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-sol">
+                  Charter member
+                </span>
+              </div>
+            )}
+            {perks?.weekend_priority && (
+              <div className="flex justify-between text-sm">
+                <span>Weekend slots</span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-good">
+                  Priority routing
+                </span>
+              </div>
+            )}
+            {availableCredits.map((c: any) => (
+              <div key={c.id} className="flex justify-between text-sm pt-2 border-t border-mist">
+                <span>
+                  Free <strong>{c.service_tier_name}</strong>
+                  <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-smoke">
+                    from {c.source_achievement_id?.replace(/_/g, " ") ?? "achievement"}
+                  </span>
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-good">
+                  Ready to redeem
+                </span>
+              </div>
+            ))}
+          </div>
+          {availableCredits.length > 0 && (
+            <p className="text-[11px] text-smoke mt-3 leading-relaxed">
+              Apply your free wash on the pay step when you book a matching tier.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Badge grid */}
       <div className="grid grid-cols-2 gap-3">

@@ -1,12 +1,24 @@
 // SHEEN service worker — minimal offline shell + Web Push handlers.
 //
-// Bumped cache to v2 — the old fetch handler could resolve with
-// undefined when both network and cache miss, which blew up
-// respondWith() and surfaced as "FetchEvent for /pro resulted in a
-// network error response". The bump forces clients to install this
-// version on next page load.
-const CACHE = "sheen-v2";
-const APP_SHELL = ["/", "/app", "/pro/queue", "/manifest.webmanifest"];
+// v3 — dual-PWA support. Two manifests (customer + washer) plus the
+// new icon set are precached so a freshly-installed PWA can render
+// its icon and splash without a network roundtrip. Cache name bump
+// invalidates v2 caches that were keyed against the old icons.
+const CACHE = "sheen-v3";
+const APP_SHELL = [
+  "/",
+  "/app",
+  "/pro/queue",
+  "/manifest.webmanifest",
+  "/manifest-customer.webmanifest",
+  "/manifest-washer.webmanifest",
+  "/icons/customer-192.png",
+  "/icons/customer-512.png",
+  "/icons/customer-apple-touch.png",
+  "/icons/washer-192.png",
+  "/icons/washer-512.png",
+  "/icons/washer-apple-touch.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)).catch(() => {}));
@@ -93,15 +105,30 @@ self.addEventListener("push", (event) => {
   if (!event.data) return;
   let payload;
   try { payload = event.data.json(); } catch { payload = { title: "Sheen", body: event.data.text() }; }
+  // Pick the icon that matches the surface the notification points at:
+  // /pro/* destinations get the washer icon, everything else the customer.
+  const url = payload.data?.url || "/";
+  const isPro = typeof url === "string" && url.startsWith("/pro");
+  const icon = isPro ? "/icons/washer-192.png" : "/icons/customer-192.png";
   event.waitUntil(
     self.registration.showNotification(payload.title || "Sheen", {
       body: payload.body || "",
-      icon: "/icons/icon-192.svg",
-      badge: "/icons/icon-192.svg",
+      icon,
+      badge: icon,
       data: payload.data || {},
       tag: payload.tag,
     })
   );
+});
+
+// Broadcast `appinstalled` to all open tabs so the install banner can
+// self-dismiss without needing a page reload. The window-side listener
+// checks `event.data?.type === 'sheen:installed'`.
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "sheen:installed") return;
+  self.clients.matchAll({ type: "window" }).then((clients) => {
+    for (const c of clients) c.postMessage({ type: "sheen:installed" });
+  });
 });
 
 self.addEventListener("notificationclick", (event) => {

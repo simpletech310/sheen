@@ -128,7 +128,7 @@ export function WasherHandleInput({
             </div>
           </div>
           <div className="text-[11px] text-smoke mt-2 leading-relaxed">
-            Booking will be sent to @{match.handle} for 5 minutes before opening
+            Booking will be sent to @{match.handle} for 10 minutes before opening
             to the queue.
           </div>
         </div>
@@ -136,7 +136,7 @@ export function WasherHandleInput({
 
       {status === "idle" && draft.length === 0 && (
         <div className="text-[11px] text-smoke mt-2 leading-relaxed">
-          Have a pro&rsquo;s @washer ID? Paste it here. They get 5 minutes to
+          Have a pro&rsquo;s @washer ID? Paste it here. They get 10 minutes to
           accept before the booking opens to the general queue.
         </div>
       )}

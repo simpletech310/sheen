@@ -3,10 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AddressAutocomplete } from "@/components/customer/AddressAutocomplete";
+import { AvatarUpload } from "@/components/customer/AvatarUpload";
+import { ServiceRadiusMap } from "@/components/pro/ServiceRadiusMap";
 import { toast } from "@/components/ui/Toast";
 
 type Initial = {
   full_name: string;
+  display_name: string;
+  avatar_url: string | null;
   bio: string;
   service_radius_miles: number;
   base_lat: number | null;
@@ -35,7 +39,7 @@ const equipmentOpts: {
   { key: "can_do_paint_correction", label: "I can do paint correction", hint: "Polishers, compounds, ceramic" },
 ];
 
-export function ProfileEditor({ initial }: { initial: Initial }) {
+export function ProfileEditor({ userId, initial }: { userId: string; initial: Initial }) {
   const router = useRouter();
   const [form, setForm] = useState(initial);
   const [base, setBase] = useState<{ lat: number; lng: number; label: string } | null>(
@@ -57,6 +61,7 @@ export function ProfileEditor({ initial }: { initial: Initial }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           full_name: form.full_name,
+          display_name: form.display_name || null,
           bio: form.bio.trim() || null,
           service_radius_miles: form.service_radius_miles,
           base_lat: base?.lat ?? form.base_lat,
@@ -87,6 +92,17 @@ export function ProfileEditor({ initial }: { initial: Initial }) {
       {/* About */}
       <section>
         <div className="font-mono text-[10px] uppercase tracking-wider text-bone/60 mb-2">
+          Avatar
+        </div>
+        <AvatarUpload
+          userId={userId}
+          initialPath={form.avatar_url}
+          initialName={form.display_name || form.full_name}
+          invert
+          onChange={(p) => set("avatar_url", p)}
+        />
+
+        <div className="font-mono text-[10px] uppercase tracking-wider text-bone/60 mt-5 mb-2">
           About
         </div>
         <input
@@ -94,6 +110,13 @@ export function ProfileEditor({ initial }: { initial: Initial }) {
           onChange={(e) => set("full_name", e.target.value)}
           placeholder="Full name"
           className="w-full px-4 py-3.5 bg-white/5 border border-bone/15 text-bone text-sm focus:outline-none focus:border-sol"
+        />
+        <input
+          value={form.display_name}
+          onChange={(e) => set("display_name", e.target.value)}
+          placeholder="Display name (what customers see — e.g. Tj W.)"
+          maxLength={60}
+          className="w-full mt-3 px-4 py-3.5 bg-white/5 border border-bone/15 text-bone text-sm focus:outline-none focus:border-sol"
         />
         <textarea
           value={form.bio}
@@ -139,6 +162,19 @@ export function ProfileEditor({ initial }: { initial: Initial }) {
             className="w-full mt-2 accent-sol"
           />
         </label>
+
+        {/* Live preview of the area the pro will be matched within. Only
+            renders once we know a base location — no map blank state. */}
+        {(base?.lat != null || form.base_lat != null) && (
+          <div className="mt-3">
+            <ServiceRadiusMap
+              lat={(base?.lat ?? form.base_lat) as number}
+              lng={(base?.lng ?? form.base_lng) as number}
+              radiusMiles={form.service_radius_miles}
+              height={200}
+            />
+          </div>
+        )}
       </section>
 
       {/* Equipment */}

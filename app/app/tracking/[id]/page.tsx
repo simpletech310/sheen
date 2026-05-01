@@ -7,6 +7,7 @@ import { TrackingClient } from "@/components/customer/TrackingClient";
 import { WasherProfileCard } from "@/components/customer/WasherProfileCard";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
+import { CustomerChecklist } from "@/components/customer/CustomerChecklist";
 import { signedUrls } from "@/lib/storage";
 import { ApprovalPanel } from "@/components/customer/ApprovalPanel";
 
@@ -18,7 +19,7 @@ export default async function TrackingPage({ params }: { params: { id: string } 
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, total_cents, customer_approved_at, funds_released_at, completed_at, work_photo_paths, addresses(lat, lng), services(tier_name)"
+      "id, status, assigned_washer_id, service_id, total_cents, customer_approved_at, funds_released_at, completed_at, work_photo_paths, checklist_progress, addresses(lat, lng), services(tier_name)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -33,10 +34,33 @@ export default async function TrackingPage({ params }: { params: { id: string } 
     )
     .eq("booking_id", params.id);
   const photoPaths = (bvRows ?? []).flatMap((r: any) => r.condition_photo_paths ?? []);
-  const photoUrls = await signedUrls("booking-photos", photoPaths);
 
   const workPhotoPaths = (booking as any).work_photo_paths ?? [];
-  const workPhotoUrls = await signedUrls("booking-photos", workPhotoPaths);
+
+  // Checklist + per-item proof photos so the customer can watch progress live.
+  const { data: checklistItems } = await supabase
+    .from("service_checklist_items")
+    .select("id, label, hint, requires_photo, sort_order")
+    .eq("service_id", (booking as any).service_id)
+    .order("sort_order");
+  const checklistProgress = ((booking as any).checklist_progress ?? {}) as Record<
+    string,
+    { done_at?: string; photo_path?: string | null }
+  >;
+  const checklistPhotoPaths = Object.values(checklistProgress)
+    .map((e) => e?.photo_path)
+    .filter((p): p is string => !!p);
+
+  // Single batched signing call for vehicle, work, and checklist photos.
+  const allSigned = await signedUrls("booking-photos", [
+    ...photoPaths,
+    ...workPhotoPaths,
+    ...checklistPhotoPaths,
+  ]);
+  const photoUrls = Object.fromEntries(photoPaths.map((p: string) => [p, allSigned[p]]).filter(([, u]) => !!u));
+  const workPhotoUrls = Object.fromEntries(
+    (workPhotoPaths as string[]).map((p) => [p, allSigned[p]]).filter(([, u]) => !!u)
+  );
 
   const addr = (booking as any).addresses;
   const customerLat = addr?.lat ? Number(addr.lat) : 34.0522;
@@ -101,6 +125,14 @@ export default async function TrackingPage({ params }: { params: { id: string } 
         <div className="mt-6">
           <BookingVehicleList rows={(bvRows ?? []) as any} signedPhotoUrls={photoUrls} />
         </div>
+      )}
+
+      {(checklistItems ?? []).length > 0 && (
+        <CustomerChecklist
+          items={(checklistItems ?? []) as any}
+          progress={checklistProgress}
+          signedPhotoUrls={allSigned}
+        />
       )}
 
       {user && booking.assigned_washer_id && (

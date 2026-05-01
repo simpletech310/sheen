@@ -20,6 +20,10 @@ const Body = z.object({
   condition_photos: z.record(z.string(), z.array(z.string())).optional(),
   requested_wash_handle: z.string().min(3).max(20).optional(),
   redeem_points: z.number().int().min(0).optional(),
+  // One-shot achievement freebie. We look it up server-side to verify it's
+  // available and matches the booking's category + tier before zeroing out
+  // the charge. Skipping if the credit doesn't fit.
+  redeem_credit_id: z.string().uuid().optional(),
   address: z
     .object({
       street: z.string(),
@@ -30,6 +34,15 @@ const Body = z.object({
       lat: z.number().optional(),
       lng: z.number().optional(),
       notes: z.string().optional(),
+      // Site access — has_water/has_power are required for the queue's
+      // "can this washer take it?" filter. Null means the customer skipped
+      // the question (older flow) and we treat it as "unknown — allow all".
+      has_water: z.boolean().nullable().optional(),
+      has_power: z.boolean().nullable().optional(),
+      water_notes: z.string().optional(),
+      power_notes: z.string().optional(),
+      gate_code: z.string().optional(),
+      site_photo_paths: z.array(z.string()).max(10).optional(),
     })
     .optional(),
   window: z.string().optional(),
@@ -122,6 +135,12 @@ export async function POST(req: Request) {
         lat: body.address.lat ?? null,
         lng: body.address.lng ?? null,
         notes: body.address.notes ?? null,
+        has_water: body.address.has_water ?? null,
+        has_power: body.address.has_power ?? null,
+        water_notes: body.address.water_notes ?? null,
+        power_notes: body.address.power_notes ?? null,
+        gate_code: body.address.gate_code ?? null,
+        site_photo_paths: body.address.site_photo_paths ?? [],
       })
       .select("id")
       .single();
@@ -179,9 +198,11 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "That pro isn't accepting jobs" }, { status: 400 });
       }
       requestedWasherId = requestedWasher.user_id;
-      // 5-minute window for the requested pro to respond before the
-      // booking falls into the general queue.
-      requestExpiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      // 10-minute exclusive window for the requested pro to accept. The RLS
+      // policy in 0008_direct_request_and_self_service.sql hides the booking
+      // from every other washer until the window expires or they decline,
+      // so this single timestamp drives both visibility and accept-eligibility.
+      requestExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     }
 
     // Loyalty redemption: 100 points = $1. Bounded to wallet balance and
@@ -203,20 +224,65 @@ export async function POST(req: Request) {
       pointsRedeemed = discountCents; // 100 pts → $1, so cents == pts redeemed
     }
 
+    // Achievement perks: founder/ride-or-die/comeback-kid grant a forever %
+    // off. We greatest-wins so multiple unlocks don't compound — applied to
+    // the service price only, never the trust fee or the rush surcharge.
+    let perkDiscountPct = 0;
+    {
+      const { data: perks } = await supabase
+        .from("customer_perks")
+        .select("discount_pct")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      perkDiscountPct = perks?.discount_pct ?? 0;
+    }
+    const perkDiscountCents = Math.round((fees.serviceCents * perkDiscountPct) / 100);
+    discountCents += perkDiscountCents;
+
+    // Achievement freebie: a one-shot credit covers the entire service
+    // charge for a matching tier+category. Validated against the catalog
+    // and reserved against this booking; redeemed on funds release, freed
+    // on cancellation.
+    let creditApplied: { id: string } | null = null;
+    if (body.redeem_credit_id) {
+      const { data: credit } = await supabase
+        .from("customer_credits")
+        .select("id, kind, service_category, service_tier_name, status")
+        .eq("id", body.redeem_credit_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (
+        credit &&
+        credit.status === "available" &&
+        credit.kind === "free_wash" &&
+        credit.service_category === body.category &&
+        credit.service_tier_name === body.tier_name
+      ) {
+        creditApplied = { id: credit.id };
+      } else {
+        return NextResponse.json(
+          { error: "That credit doesn't apply to this booking." },
+          { status: 400 }
+        );
+      }
+    }
+
     // Check membership allowance — if covered, the booking is created with
     // total_cents=0 and we skip Stripe checkout entirely. Membership covers
     // a single wash; multi-vehicle bookings still pay for the extras.
     const allowance = await getAllowance(user.id, body.tier_name, body.category);
     const isCoveredByMembership =
+      !creditApplied &&
       allowance.canCoverTier &&
       allowance.membershipId !== null &&
       vehicleCount === 1 &&
       pointsRedeemed === 0;
+    const isCoveredByCredit = !!creditApplied && vehicleCount === 1;
 
     // Rush surcharge sits on top of the regular charge — never
     // covered by membership and never reduced by points (those would
     // defeat the "pay extra to skip the queue" idea).
-    const baseCharge = isCoveredByMembership ? 0 : fees.customerCharge - discountCents;
+    const baseCharge = (isCoveredByMembership || isCoveredByCredit) ? 0 : fees.customerCharge - discountCents;
     const finalCustomerCharge = Math.max(0, baseCharge) + rushSurchargeCents;
 
     const { data: booking, error: bookingErr } = await supabase
@@ -261,12 +327,22 @@ export async function POST(req: Request) {
       });
     }
 
-    // Notify the requested pro that they have 5 minutes to accept.
+    // Reserve the achievement credit against the booking. It moves to
+    // 'redeemed' on funds release and back to 'available' on cancellation —
+    // both transitions live next to the rest of the booking state machine.
+    if (creditApplied) {
+      await supabase
+        .from("customer_credits")
+        .update({ status: "reserved", reserved_for_booking_id: bookingId })
+        .eq("id", creditApplied.id);
+    }
+
+    // Notify the requested pro that they have 10 minutes to accept.
     if (requestedWasherId) {
       const { sendPushToUser } = await import("@/lib/push");
       sendPushToUser(requestedWasherId, {
         title: "You were requested",
-        body: "A customer asked for you. 5 minutes to accept.",
+        body: "A customer asked for you. 10 minutes to accept.",
         url: `/pro/queue/${bookingId}`,
         tag: `request-${bookingId}`,
       }).catch(() => {});
@@ -310,6 +386,17 @@ export async function POST(req: Request) {
         client_secret: null,
         amount_cents: 0,
         covered_by_membership: true,
+      });
+    }
+
+    // Achievement freebie covers it — same short-circuit, no Stripe charge.
+    // The credit row stays 'reserved' until release marks it 'redeemed'.
+    if (isCoveredByCredit) {
+      return NextResponse.json({
+        booking_id: bookingId,
+        client_secret: null,
+        amount_cents: 0,
+        covered_by_credit: true,
       });
     }
   } else {

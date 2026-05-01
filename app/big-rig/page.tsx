@@ -6,21 +6,34 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 export const metadata = {
   title: "Big rig wash — Sheen",
   description:
-    "Mobile big-rig wash and detail at the rest stop, the yard, or the customer's lot. Foam, polish, paint correction. 24/7 in LA.",
+    "Mobile big-rig wash and detail at the rest stop, the yard, or the customer's lot. Foam, polish, paint correction. 24/7 in LA + Inland Empire.",
+  openGraph: {
+    title: "Big rig wash — Sheen",
+    description: "Mobile big-rig wash and detail. Foam, polish, paint correction.",
+    images: [{ url: "/img/big-rig-hero.jpg", width: 1200, height: 630, alt: "Sheen big-rig mobile wash" }],
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    title: "Big rig wash — Sheen",
+    description: "Mobile big-rig wash and detail.",
+    images: ["/img/big-rig-hero.jpg"],
+  },
 };
 
 const tiers = [
   {
     tag: "01",
     name: "Rig Rinse",
-    price: "$145",
+    price: "$115",
+    was: "$135",
     time: "1.5 hr",
     items: ["Foam wash", "Cab + trailer rinse", "Wheels & flaps", "Windows"],
   },
   {
     tag: "02",
     name: "Trailer Wash",
-    price: "$285",
+    price: "$215",
+    was: "$245",
     time: "3 hr",
     items: [
       "Everything in Rinse",
@@ -32,7 +45,8 @@ const tiers = [
   {
     tag: "03",
     name: "Full Rig Detail",
-    price: "$585",
+    price: "$399",
+    was: "$499",
     time: "5 hr",
     items: [
       "Everything in Trailer",
@@ -45,7 +59,8 @@ const tiers = [
   {
     tag: "04",
     name: "Showroom Rig",
-    price: "$950",
+    price: "$649",
+    was: "$799",
     time: "8 hr",
     items: [
       "Everything in Full Rig",
@@ -232,12 +247,22 @@ export default function BigRigPage() {
                 ))}
               </div>
               <div>
-                <div
-                  className={`display tabular text-[44px] leading-none mb-4 ${
-                    tier.featured ? "text-sol" : "text-ink"
-                  }`}
-                >
-                  {tier.price}
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span
+                    className={`display tabular text-[44px] leading-none ${
+                      tier.featured ? "text-sol" : "text-ink"
+                    }`}
+                  >
+                    {tier.price}
+                  </span>
+                  {(tier as any).was && (
+                    <span className={`font-mono text-sm tabular line-through ${tier.featured ? "text-bone/50" : "text-smoke"}`}>
+                      {(tier as any).was}
+                    </span>
+                  )}
+                </div>
+                <div className={`font-mono text-[10px] uppercase tracking-wider mb-4 ${tier.featured ? "text-sol/80" : "text-royal"}`}>
+                  Launch promo · 90 days
                 </div>
                 <Link
                   href={`/app/book?category=big_rig&tier=${encodeURIComponent(tier.name)}`}

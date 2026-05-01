@@ -12,7 +12,11 @@ export default async function ProMeEditPage() {
   } = await supabase.auth.getUser();
 
   const [{ data: me }, { data: wp }] = await Promise.all([
-    supabase.from("users").select("full_name").eq("id", user?.id ?? "").maybeSingle(),
+    supabase
+      .from("users")
+      .select("full_name, display_name, avatar_url")
+      .eq("id", user?.id ?? "")
+      .maybeSingle(),
     supabase
       .from("washer_profiles")
       .select(
@@ -33,8 +37,11 @@ export default async function ProMeEditPage() {
       <h1 className="display text-3xl mt-3 mb-2">YOUR PROFILE</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
       <ProfileEditor
+        userId={user?.id ?? ""}
         initial={{
           full_name: me?.full_name ?? "",
+          display_name: me?.display_name ?? "",
+          avatar_url: me?.avatar_url ?? null,
           bio: wp?.bio ?? "",
           service_radius_miles: wp?.service_radius_miles ?? 5,
           base_lat: wp?.base_lat ?? null,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/server";
+import { invalidateBalance } from "@/lib/stripe/balance-cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export async function POST() {
       { amount: usd.amount, currency: "usd", method: "instant" },
       { stripeAccount: wp.stripe_account_id }
     );
+    invalidateBalance(wp.stripe_account_id);
     return NextResponse.json({ ok: true, payout_id: payout.id, amount: payout.amount });
   } catch (e: any) {
     return NextResponse.json(

@@ -8,6 +8,7 @@ import { CancelButton } from "./CancelButton";
 import { RescheduleButton } from "./RescheduleButton";
 import { RepeatButton } from "./RepeatButton";
 import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
+import { CustomerChecklist } from "@/components/customer/CustomerChecklist";
 import { signedUrls } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, completed_at, scheduled_window_start, total_cents, service_cents, fees_cents, tip_cents, points_earned, vehicle_count, customer_id, service_id, address_id, recurring_template_id, services(tier_name, category), addresses(street, city, state, zip)"
+      "id, status, completed_at, scheduled_window_start, total_cents, service_cents, fees_cents, tip_cents, points_earned, vehicle_count, customer_id, service_id, address_id, recurring_template_id, checklist_progress, services(tier_name, category), addresses(street, city, state, zip)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -49,7 +50,26 @@ export default async function WashDetailPage({ params }: { params: { id: string 
     )
     .eq("booking_id", params.id);
   const allPhotoPaths = (bvRows ?? []).flatMap((r: any) => r.condition_photo_paths ?? []);
-  const photoUrls = await signedUrls("booking-photos", allPhotoPaths);
+
+  // Pull the service's checklist + the pro's progress so the customer can see
+  // exactly what was done. Photos referenced by the checklist live in the
+  // same `booking-photos` bucket, so we batch-sign with the vehicle photos.
+  const { data: checklistItems } = await supabase
+    .from("service_checklist_items")
+    .select("id, label, hint, requires_photo, sort_order")
+    .eq("service_id", (booking as any).service_id)
+    .order("sort_order");
+  const checklistProgress = ((booking as any).checklist_progress ?? {}) as Record<
+    string,
+    { done_at?: string; photo_path?: string | null }
+  >;
+  const checklistPhotoPaths = Object.values(checklistProgress)
+    .map((e) => e?.photo_path)
+    .filter((p): p is string => !!p);
+  const photoUrls = await signedUrls("booking-photos", [
+    ...allPhotoPaths,
+    ...checklistPhotoPaths,
+  ]);
 
   const completedHours =
     booking.completed_at != null
@@ -108,6 +128,14 @@ export default async function WashDetailPage({ params }: { params: { id: string 
         <div className="mt-3">
           <BookingVehicleList rows={(bvRows ?? []) as any} signedPhotoUrls={photoUrls} />
         </div>
+      )}
+
+      {(checklistItems ?? []).length > 0 && (
+        <CustomerChecklist
+          items={(checklistItems ?? []) as any}
+          progress={checklistProgress}
+          signedPhotoUrls={photoUrls}
+        />
       )}
 
       <div className="bg-mist/40 p-4 mt-3 text-sm">

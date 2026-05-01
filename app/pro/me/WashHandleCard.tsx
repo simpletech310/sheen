@@ -101,8 +101,10 @@ export function WashHandleCard({ handle }: { handle: string }) {
             <span>{handle}</span>
           </div>
           <div className="text-xs opacity-80 mt-2 leading-relaxed">
-            Share this with returning customers. They get a 5-minute window to
-            request you before the booking opens to the queue.
+            Hand this out — cards, social, sticker on the cooler. When someone
+            books with @{handle}, you get a 10-minute exclusive window to accept
+            before the queue ever sees it. Repeat customers drop your platform
+            take to 18%.
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             <button

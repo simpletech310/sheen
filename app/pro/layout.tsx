@@ -1,8 +1,45 @@
+import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { ProBottomNav } from "@/components/pro/ProBottomNav";
 import { PWARegister } from "@/components/PWARegister";
+import { WelcomeInstallSheet } from "@/components/pwa/WelcomeInstallSheet";
+import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { requireAuth } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+
+// Override the root layout's customer metadata so install prompts under
+// /pro use the washer manifest + icons. Next.js merges parent metadata with
+// child overrides — we only redefine the bits that should differ.
+export const metadata: Metadata = {
+  manifest: "/manifest-washer.webmanifest",
+  applicationName: "Sheen Pro",
+  title: {
+    default: "Sheen Pro — your queue, your pay",
+    template: "%s · Sheen Pro",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Sheen Pro",
+    statusBarStyle: "black-translucent",
+    startupImage: ["/icons/washer-512.png"],
+  },
+  icons: {
+    icon: [
+      { url: "/icons/washer-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/washer-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/washer-192.svg", type: "image/svg+xml" },
+    ],
+    apple: "/icons/washer-apple-touch.png",
+    shortcut: "/icons/washer-192.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0A0A0A",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default async function ProLayout({ children }: { children: React.ReactNode }) {
   // Must be signed in to land in /pro/*
@@ -28,7 +65,11 @@ export default async function ProLayout({ children }: { children: React.ReactNod
     <div data-theme="dark" className="min-h-screen flex flex-col bg-ink text-bone">
       <PWARegister enablePush />
       <main className="flex-1 max-w-md w-full mx-auto pb-4">{children}</main>
+      <InstallBanner variant="washer" />
       <ProBottomNav />
+      <Suspense fallback={null}>
+        <WelcomeInstallSheet variant="washer" />
+      </Suspense>
     </div>
   );
 }
