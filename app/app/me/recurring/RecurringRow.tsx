@@ -16,7 +16,6 @@ export function RecurringRow({
   nextRunAt,
   addressLine,
   paused,
-  active,
 }: {
   id: string;
   tier: string;
@@ -28,7 +27,6 @@ export function RecurringRow({
   nextRunAt: string;
   addressLine: string | null;
   paused: boolean;
-  active: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);

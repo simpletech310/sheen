@@ -3,7 +3,6 @@ import { MNav } from "@/components/marketing/MNav";
 import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { EarningsCalc } from "@/components/marketing/EarningsCalc";
-import { Placeholder } from "@/components/marketing/Placeholder";
 
 export const metadata = { title: "Become a washer — Sheen" };
 

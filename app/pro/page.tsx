@@ -2,7 +2,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
-import { computeFees } from "@/lib/stripe/fees";
 import { ProJobsFilterClient, ProJob } from "./ProJobsFilterClient";
 
 export const dynamic = "force-dynamic";

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { MNav } from "@/components/marketing/MNav";
 import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
-import { Placeholder } from "@/components/marketing/Placeholder";
 
 export const metadata = {
   title: "Big rig wash — Sheen",

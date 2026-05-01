@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { createClient } from "@/lib/supabase/server";
-import { fmtUSD } from "@/lib/pricing";
 import { RecurringRow } from "./RecurringRow";
 
 export const dynamic = "force-dynamic";

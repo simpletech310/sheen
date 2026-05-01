@@ -26,9 +26,9 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
   const { jobId } = params;
 
   // Core timing state — all sourced from DB on mount
-  const [startedAt, setStartedAt]           = useState<number | null>(null); // unix ms
-  const [pausedAt, setPausedAt]             = useState<number | null>(null); // unix ms or null
-  const [totalPausedMs, setTotalPausedMs]   = useState(0);
+  const [, setStartedAt]           = useState<number | null>(null); // unix ms
+  const [, setPausedAt]             = useState<number | null>(null); // unix ms or null
+  const [, setTotalPausedMs]   = useState(0);
   const [jobStatus, setJobStatus]           = useState<string>("in_progress");
 
   // Derived display state

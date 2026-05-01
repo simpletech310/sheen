@@ -40,7 +40,7 @@ export default async function WashesPage() {
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
 
       <WashesFilterClient
-        bookings={bookings as Booking[]}
+        bookings={(bookings as unknown) as Booking[]}
         completedCount={completedCount}
         upcomingCount={upcomingCount}
         points={points}
