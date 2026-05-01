@@ -24,6 +24,7 @@ function RateInner({ params }: { params: { id: string } }) {
   const [booking, setBooking] = useState<any>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPayModal, setShowPayModal] = useState(false);
 
   const tipCents = booking ? Math.round((booking.service_cents * tipPct) / 100) : 0;
 
@@ -121,21 +122,6 @@ function RateInner({ params }: { params: { id: string } }) {
         </button>
       </div>
 
-      {tipCents > 0 && (
-        <div className="mb-6 bg-mist/20 p-5 border border-mist rounded-none">
-          <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-3">Secure Tip Payment · {fmtUSD(tipCents)}</div>
-          {clientSecret ? (
-            <StripePaymentElement
-              clientSecret={clientSecret}
-              amountLabel={fmtUSD(tipCents)}
-              onSuccess={submit}
-            />
-          ) : (
-            <div className="py-4 text-center text-xs text-smoke">Setting up payment…</div>
-          )}
-        </div>
-      )}
-
       <textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
@@ -144,7 +130,7 @@ function RateInner({ params }: { params: { id: string } }) {
         className="w-full px-4 py-3 bg-bone border border-mist rounded-none text-sm mb-6"
       />
 
-      {tipPct === 0 && (
+      {tipPct === 0 ? (
         <button
           onClick={submit}
           disabled={submitting}
@@ -152,6 +138,57 @@ function RateInner({ params }: { params: { id: string } }) {
         >
           {submitting ? "Submitting…" : "Submit Rating →"}
         </button>
+      ) : (
+        <button
+          onClick={() => setShowPayModal(true)}
+          disabled={submitting}
+          className="w-full bg-cobalt text-bone rounded-none py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
+        >
+          Submit &amp; Pay {fmtUSD(tipCents)} →
+        </button>
+      )}
+
+      {/* Tip Payment Modal */}
+      {showPayModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-ink/60 backdrop-blur-sm">
+          <div className="bg-bone w-full max-w-md p-6 animate-in slide-in-from-bottom duration-300 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <Eyebrow>Secure Tip</Eyebrow>
+                <h2 className="display text-2xl">Pay your tip</h2>
+              </div>
+              <button 
+                onClick={() => setShowPayModal(false)}
+                className="text-smoke hover:text-ink transition p-2"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="mb-6 text-sm text-smoke">
+              Your 100% tip of <span className="text-ink font-bold">{fmtUSD(tipCents)}</span> goes directly to your pro.
+            </div>
+
+            {clientSecret ? (
+              <StripePaymentElement
+                clientSecret={clientSecret}
+                amountLabel={fmtUSD(tipCents)}
+                onSuccess={() => {
+                  setShowPayModal(false);
+                  submit();
+                }}
+              />
+            ) : (
+              <div className="py-12 text-center text-sm text-smoke">
+                Preparing secure payment…
+              </div>
+            )}
+            
+            <p className="text-[10px] text-smoke text-center mt-6 uppercase tracking-wider">
+              Securely processed by Stripe
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
