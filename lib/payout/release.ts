@@ -54,7 +54,7 @@ export async function releaseFundsForBooking(
   if (payout?.stripe_transfer_id) {
     await supabase
       .from("bookings")
-      .update({ funds_released_at: new Date().toISOString() })
+      .update({ funds_released_at: new Date().toISOString(), status: "funded" })
       .eq("id", booking.id);
     return { ok: true, reason: "transfer_existed", transferId: payout.stripe_transfer_id };
   }
@@ -110,7 +110,7 @@ export async function releaseFundsForBooking(
     // payout row stays pending and visible on /admin.
     await supabase
       .from("bookings")
-      .update({ funds_released_at: new Date().toISOString() })
+      .update({ funds_released_at: new Date().toISOString(), status: "funded" })
       .eq("id", booking.id);
     await supabase.from("booking_events").insert({
       booking_id: booking.id,
@@ -180,7 +180,7 @@ export async function releaseFundsForBooking(
       .eq("kind", "wash");
     await supabase
       .from("bookings")
-      .update({ funds_released_at: new Date().toISOString() })
+      .update({ funds_released_at: new Date().toISOString(), status: "funded" })
       .eq("id", booking.id);
     await supabase.from("booking_events").insert({
       booking_id: booking.id,

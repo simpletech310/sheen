@@ -25,12 +25,12 @@ export default async function WashesPage() {
     .eq("user_id", user?.id ?? "");
   const points = (ledger ?? []).reduce((acc, r: any) => acc + (r.points ?? 0), 0);
 
-  const completedCount = (bookings ?? []).filter((b: any) => b.status === "completed").length;
+  const completedCount = (bookings ?? []).filter((b: any) => b.status === "completed" || b.status === "funded").length;
   const upcomingCount = (bookings ?? []).filter((b: any) =>
-    !["completed", "cancelled", "disputed"].includes(b.status)
+    !["completed", "funded", "cancelled", "disputed"].includes(b.status)
   ).length;
   const total = (bookings ?? [])
-    .filter((b: any) => b.status === "completed")
+    .filter((b: any) => b.status === "completed" || b.status === "funded")
     .reduce((acc, b: any) => acc + (b.total_cents ?? 0), 0);
 
   return (

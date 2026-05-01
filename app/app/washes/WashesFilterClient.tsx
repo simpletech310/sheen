@@ -22,6 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
   arrived: "Arrived",
   in_progress: "Cleaning",
   completed: "Completed",
+  funded: "Completed",
   cancelled: "Cancelled",
   disputed: "Under review",
 };
@@ -53,7 +54,7 @@ export function WashesFilterClient({
 
   const filtered = bookings.filter((b) => {
     if (tab === "active") return ACTIVE_STATUSES.includes(b.status);
-    if (tab === "completed") return b.status === "completed";
+    if (tab === "completed") return b.status === "completed" || b.status === "funded";
     if (tab === "cancelled") return ["cancelled", "disputed"].includes(b.status);
     return true;
   });

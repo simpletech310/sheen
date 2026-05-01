@@ -27,14 +27,14 @@ export function ProJobsFilterClient({
 
   const filtered = jobs.filter((j) => {
     if (tab === "active") return ACTIVE_STATUSES.includes(j.status);
-    if (tab === "completed") return j.status === "completed";
+    if (tab === "completed") return j.status === "completed" || j.status === "funded";
     if (tab === "cancelled") return ["cancelled", "disputed"].includes(j.status);
     return true;
   });
 
   const counts = {
     active: jobs.filter((j) => ACTIVE_STATUSES.includes(j.status)).length,
-    completed: jobs.filter((j) => j.status === "completed").length,
+    completed: jobs.filter((j) => j.status === "completed" || j.status === "funded").length,
     cancelled: jobs.filter((j) => ["cancelled", "disputed"].includes(j.status)).length,
   };
 
@@ -111,7 +111,7 @@ export function ProJobsFilterClient({
                       )}
                     </div>
                     <div className="font-mono text-[10px] text-bone/75">
-                      {j.status === "completed" ? "EARNED" : "YOU GET"}
+                      {j.status === "completed" || j.status === "funded" ? "EARNED" : "YOU GET"}
                     </div>
                   </div>
                 </div>

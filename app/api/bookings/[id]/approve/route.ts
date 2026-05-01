@@ -40,7 +40,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (booking.customer_id !== user.id) {
     return NextResponse.json({ error: "Not your booking" }, { status: 403 });
   }
-  if (booking.status !== "completed") {
+  if (booking.status !== "completed" && booking.status !== "funded") {
     return NextResponse.json(
       { error: "Pro hasn't marked complete yet" },
       { status: 409 }

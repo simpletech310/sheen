@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
+import { FundButton } from "./FundButton";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function AdminBookingsPage({
       <h1 className="display text-[40px] md:text-[56px] leading-tight mt-3 mb-6">BOOKINGS</h1>
 
       <div className="flex flex-wrap gap-2 mb-5">
-        {["all", "pending", "matched", "in_progress", "completed", "cancelled", "disputed"].map((s) => (
+        {["all", "pending", "matched", "in_progress", "completed", "funded", "cancelled", "disputed"].map((s) => (
           <Link
             key={s}
             href={s === "all" ? "/admin/bookings" : `/admin/bookings?status=${s}`}
@@ -48,6 +49,7 @@ export default async function AdminBookingsPage({
               <th className="px-4 py-3 font-mono text-[10px] uppercase text-smoke">Window</th>
               <th className="px-4 py-3 font-mono text-[10px] uppercase text-smoke">Status</th>
               <th className="px-4 py-3 font-mono text-[10px] uppercase text-smoke">Total</th>
+              <th className="px-4 py-3 font-mono text-[10px] uppercase text-smoke">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -65,6 +67,9 @@ export default async function AdminBookingsPage({
                   <span className="px-2 py-0.5 bg-mist font-mono text-[10px] uppercase">{b.status}</span>
                 </td>
                 <td className="px-4 py-3 text-xs tabular display">{fmtUSD(b.total_cents)}</td>
+                <td className="px-4 py-3 text-xs">
+                  {b.status === "completed" && <FundButton id={b.id} />}
+                </td>
               </tr>
             ))}
           </tbody>
