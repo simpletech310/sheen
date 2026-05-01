@@ -5,7 +5,7 @@ import Link from "next/link";
 import { fmtUSD } from "@/lib/pricing";
 import { computeFees } from "@/lib/stripe/fees";
 
-type FilterTab = "active" | "completed" | "cancelled";
+type FilterTab = "active" | "completed" | "funded" | "cancelled";
 
 const ACTIVE_STATUSES = ["matched", "en_route", "arrived", "in_progress"];
 
@@ -27,20 +27,23 @@ export function ProJobsFilterClient({
 
   const filtered = jobs.filter((j) => {
     if (tab === "active") return ACTIVE_STATUSES.includes(j.status);
-    if (tab === "completed") return j.status === "completed" || j.status === "funded";
+    if (tab === "completed") return j.status === "completed";
+    if (tab === "funded") return j.status === "funded";
     if (tab === "cancelled") return ["cancelled", "disputed"].includes(j.status);
     return true;
   });
 
   const counts = {
     active: jobs.filter((j) => ACTIVE_STATUSES.includes(j.status)).length,
-    completed: jobs.filter((j) => j.status === "completed" || j.status === "funded").length,
+    completed: jobs.filter((j) => j.status === "completed").length,
+    funded: jobs.filter((j) => j.status === "funded").length,
     cancelled: jobs.filter((j) => ["cancelled", "disputed"].includes(j.status)).length,
   };
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: "active", label: "Active", count: counts.active },
     { key: "completed", label: "Completed", count: counts.completed },
+    { key: "funded", label: "Funded", count: counts.funded },
     { key: "cancelled", label: "Cancelled", count: counts.cancelled },
   ];
 

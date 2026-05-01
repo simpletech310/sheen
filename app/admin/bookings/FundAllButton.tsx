@@ -17,7 +17,9 @@ export function FundAllButton({ count }: { count: number }) {
         alert(data.error || "Failed to fund all washers");
       } else {
         const data = await res.json();
-        alert(`Bulk funding complete. Check the console or logs for details.`);
+        const succeeded = data.results?.filter((r: any) => r.ok).length ?? 0;
+        const failed = data.results?.filter((r: any) => !r.ok).length ?? 0;
+        alert(`Bulk funding complete.\nSucceeded: ${succeeded}\nFailed: ${failed}\n\nCheck console for details.`);
         console.log("Bulk funding results:", data.results);
         router.refresh();
       }
