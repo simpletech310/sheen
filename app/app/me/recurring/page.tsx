@@ -63,7 +63,6 @@ export default async function RecurringPage() {
                   : null
               }
               paused={!!t.paused}
-              active={!!t.active}
             />
           ))}
         </div>
