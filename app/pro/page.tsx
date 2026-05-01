@@ -237,7 +237,7 @@ export default async function ProDashboard() {
           Your Jobs
         </Eyebrow>
         <div className="mt-3 mb-6">
-          <ProJobsFilterClient jobs={(allJobs as ProJob[]) ?? []} />
+          <ProJobsFilterClient jobs={((allJobs as unknown) as ProJob[]) ?? []} />
         </div>
 
         {/* This week earnings */}
