@@ -51,20 +51,8 @@ export function WalletActions() {
   }
 
   return (
-    <div className="mt-5 bg-sol p-5 text-ink">
-      <div className="font-mono text-[10px] uppercase opacity-80">Available balance</div>
-      <div className="display tabular text-4xl mt-1">
-        {available == null ? "…" : fmtUSD(available)}
-      </div>
-      <div className="text-xs opacity-70 mt-1">
-        {pendingStripe
-          ? `${fmtUSD(pendingStripe)} pending settlement`
-          : connected
-          ? "Payouts connected"
-          : "Payouts not set up — finish onboarding."}
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-3">
+    <div className="mt-4">
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={instant}
           disabled={!connected || busy !== "none" || (available ?? 0) <= 0}
@@ -80,7 +68,7 @@ export function WalletActions() {
           {busy === "dashboard" ? "…" : "Tax & 1099 →"}
         </button>
       </div>
-      {msg && <div className="text-xs mt-3 bg-ink/10 px-2 py-1">{msg}</div>}
+      {msg && <div className="text-xs mt-3 bg-ink/10 px-2 py-1 font-mono uppercase tracking-tight">{msg}</div>}
     </div>
   );
 }

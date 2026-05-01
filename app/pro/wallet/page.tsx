@@ -2,11 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { WalletActions } from "./WalletActions";
+import { getStripe } from "@/lib/stripe/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function WalletPage() {
   const supabase = createClient();
+  const stripe = getStripe();
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: payouts } = await supabase
@@ -17,7 +19,28 @@ export default async function WalletPage() {
     .limit(50);
 
   const lifetime = (payouts ?? []).filter((p) => p.status === "paid").reduce((a, p) => a + (p.amount_cents ?? 0), 0);
-  const pending = (payouts ?? []).filter((p) => p.status === "pending").reduce((a, p) => a + (p.amount_cents ?? 0), 0);
+
+  // Fetch real-time Stripe balance
+  let stripeAvailable = 0;
+  let stripePending = 0;
+  let connected = false;
+
+  const { data: wp } = await supabase
+    .from("washer_profiles")
+    .select("stripe_account_id")
+    .eq("user_id", user?.id ?? "")
+    .maybeSingle();
+
+  if (wp?.stripe_account_id) {
+    try {
+      const balance = await stripe.balance.retrieve({ stripeAccount: wp.stripe_account_id });
+      stripeAvailable = balance.available.reduce((a, b) => a + b.amount, 0);
+      stripePending = balance.pending.reduce((a, b) => a + b.amount, 0);
+      connected = true;
+    } catch (e) {
+      console.error("Error fetching stripe balance", e);
+    }
+  }
 
   return (
     <div className="px-5 pt-10 pb-8">
@@ -25,18 +48,22 @@ export default async function WalletPage() {
         Wallet
       </Eyebrow>
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <div className="bg-white/5 p-4">
-          <div className="font-mono text-[10px] uppercase opacity-60">Pending</div>
-          <div className="display tabular text-3xl mt-1">{fmtUSD(pending)}</div>
+      <div className="mt-3 bg-sol p-6 text-ink rounded-none">
+        <div className="font-mono text-[10px] uppercase opacity-80">Available to Cash Out</div>
+        <div className="display tabular text-5xl mt-1">{fmtUSD(stripeAvailable)}</div>
+        <div className="text-xs opacity-70 mt-2">
+          {stripePending > 0 ? `${fmtUSD(stripePending)} pending settlement` : connected ? "All funds settled" : "Setup payouts to start earning"}
         </div>
-        <div className="bg-sol/15 p-4">
-          <div className="font-mono text-[10px] uppercase opacity-60">Lifetime paid</div>
-          <div className="display tabular text-3xl mt-1 text-sol">{fmtUSD(lifetime)}</div>
-        </div>
+        
+        <WalletActions />
       </div>
 
-      <WalletActions />
+      <div className="mt-4 grid grid-cols-1 gap-3">
+        <div className="bg-white/5 p-4 border-l-2 border-sol/30">
+          <div className="font-mono text-[10px] uppercase opacity-60">Lifetime earnings</div>
+          <div className="display tabular text-2xl mt-1 text-sol">{fmtUSD(lifetime)}</div>
+        </div>
+      </div>
 
       <div className="mt-7">
         <Eyebrow className="!text-bone/60" prefix={null}>

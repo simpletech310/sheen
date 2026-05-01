@@ -21,7 +21,7 @@ export default async function AdminBookingsPage({
   if (searchParams.status) q = q.eq("status", searchParams.status as any);
   const { data: bookings } = await q;
 
-  const canFund = (b: any) => !["funded", "cancelled", "disputed"].includes(b.status);
+  const canFund = (b: any) => !["cancelled", "disputed"].includes(b.status);
   const fundableCount = (bookings ?? []).filter(canFund).length;
 
   return (
@@ -83,7 +83,7 @@ export default async function AdminBookingsPage({
                 </td>
                 <td className="px-4 py-3 text-xs tabular display">{fmtUSD(b.total_cents)}</td>
                 <td className="px-4 py-3 text-xs">
-                  {!["funded", "cancelled", "disputed"].includes(b.status) && <FundButton id={b.id} />}
+                  {!["cancelled", "disputed"].includes(b.status) && <FundButton id={b.id} />}
                 </td>
               </tr>
             ))}
