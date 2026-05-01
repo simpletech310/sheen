@@ -327,7 +327,7 @@ export async function POST(req: Request) {
   const fees = computeFees({ serviceCents, routedTo: "solo_washer" });
 
   // Create or fetch a Stripe Customer for this user (so saved cards persist).
-  const { data: profile } = await supabase
+  await supabase
     .from("customer_profiles")
     .select("default_payment_method_id")
     .eq("user_id", user.id)

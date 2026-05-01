@@ -8,7 +8,7 @@ import { sendPushToUser } from "@/lib/push";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: { id: string } }) {
   const supabase = createClient();
   const stripe = getStripe();
   const { data: { user } } = await supabase.auth.getUser();
@@ -69,7 +69,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     if (Array.isArray(body.work_photo_paths)) {
       workPhotoPaths = body.work_photo_paths;
     }
-  } catch (e) {
+  } catch {
     // Body is optional if fetch didn't send one, but in this case we require it
   }
 

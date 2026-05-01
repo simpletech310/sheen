@@ -42,13 +42,11 @@ export function WashesFilterClient({
   bookings,
   completedCount,
   upcomingCount,
-  totalSpent,
   points,
 }: {
   bookings: Booking[];
   completedCount: number;
   upcomingCount: number;
-  totalSpent: number;
   points: number;
 }) {
   const [tab, setTab] = useState<FilterTab>("active");

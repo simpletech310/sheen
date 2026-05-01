@@ -1,28 +1,9 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { WashesFilterClient, Booking } from "./WashesFilterClient";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_COLOR: Record<string, string> = {
-  completed: "bg-good",
-  en_route: "bg-royal",
-  arrived: "bg-royal",
-  in_progress: "bg-sol",
-  pending: "bg-smoke",
-  matched: "bg-royal",
-  cancelled: "bg-bad",
-  disputed: "bg-bad",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Awaiting pro",
-  matched: "Pro matched",
-  en_route: "On the way",
-  arrived: "Arrived",
-  in_progress: "Cleaning",
   completed: "Completed",
   cancelled: "Cancelled",
   disputed: "Under review",
@@ -65,7 +46,6 @@ export default async function WashesPage() {
         bookings={bookings as Booking[]}
         completedCount={completedCount}
         upcomingCount={upcomingCount}
-        totalSpent={total}
         points={points}
       />
     </div>

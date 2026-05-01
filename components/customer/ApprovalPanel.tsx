@@ -20,7 +20,7 @@ export function ApprovalPanel({
   approvedAt,
   fundsReleasedAt,
   completedAt,
-  workPhotoPaths,
+  workPhotoUrls,
 }: {
   bookingId: string;
   approvedAt: string | null;

@@ -199,7 +199,6 @@ export async function POST(req: Request) {
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
         const userId = sub.metadata?.user_id;
-        const planId = sub.metadata?.plan_id;
         if (userId) {
           const fields = {
             stripe_subscription_id: sub.id,
