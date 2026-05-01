@@ -43,7 +43,7 @@ export default async function ProDashboard() {
   const { data: allJobs } = await supabase
     .from("bookings")
     .select(
-      "id, status, scheduled_window_start, total_cents, service_cents, services(tier_name, category), addresses(street, city)"
+      "id, status, scheduled_window_start, total_cents, service_cents, services(tier_name, category), address:addresses(street, city)"
     )
     .eq("assigned_washer_id", userId)
     .order("scheduled_window_start", { ascending: false })

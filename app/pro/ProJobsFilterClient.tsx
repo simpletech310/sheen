@@ -15,7 +15,7 @@ export type ProJob = {
   scheduled_window_start: string;
   service_cents: number;
   services: { tier_name: string; category: string } | null;
-  addresses: { street: string; city: string } | null;
+  address: { street: string; city: string } | null;
 };
 
 export function ProJobsFilterClient({
@@ -91,7 +91,7 @@ export function ProJobsFilterClient({
                       {j.services?.tier_name ?? "Service"}
                     </div>
                     <div className="text-xs text-bone/90 mt-1">
-                      {j.addresses?.street}, {j.addresses?.city}
+                      {j.address?.street}, {j.address?.city}
                     </div>
                     <div className="font-mono text-[10px] text-bone/75 uppercase mt-1.5 tabular">
                       {winStart.toLocaleDateString([], { month: "short", day: "numeric" })}

@@ -9,12 +9,12 @@ export default async function NavigatePage({ params }: { params: { jobId: string
   const supabase = createClient();
   const { data: job } = await supabase
     .from("bookings")
-    .select("id, addresses(street, city, state, zip, lat, lng), services(tier_name)")
+    .select("id, address:addresses(street, city, state, zip, lat, lng), services(tier_name)")
     .eq("id", params.jobId)
     .maybeSingle();
   if (!job) notFound();
 
-  const addr = (job as any).addresses;
+  const addr = (job as any).address;
   const fullAddress = addr ? encodeURIComponent(`${addr.street}, ${addr.city}, ${addr.state} ${addr.zip}`) : "";
 
   return (
