@@ -46,7 +46,7 @@ export default async function QueuePage() {
       j.requested_washer_id === user?.id &&
       j.request_expires_at &&
       new Date(j.request_expires_at).getTime() > now
-  ) as QueueJob[];
+  ) as unknown as QueueJob[];
 
   const directRequestIds = new Set(directRequests.map((j) => j.id));
 
@@ -80,7 +80,7 @@ export default async function QueuePage() {
       if (d > radius) return false;
     }
     return true;
-  }) as QueueJob[];
+  }) as unknown as QueueJob[];
 
   return (
     <div className="pb-8">
