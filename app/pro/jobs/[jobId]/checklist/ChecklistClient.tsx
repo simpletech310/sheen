@@ -326,7 +326,7 @@ export function ChecklistClient({
                             Replace
                             <input
                               type="file"
-                              accept="image/*"
+                              accept="image/*,video/*"
                               capture="environment"
                               className="hidden"
                               onChange={(e) => {
@@ -345,10 +345,12 @@ export function ChecklistClient({
                               : "bg-sol text-ink hover:bg-bone"
                           }`}
                         >
-                          {uploading === item.id ? "Uploading…" : "+ Add photo"}
+                          {uploading === item.id
+                            ? "Uploading…"
+                            : "+ Add photo or video"}
                           <input
                             type="file"
-                            accept="image/*"
+                            accept="image/*,video/*"
                             capture="environment"
                             disabled={uploading === item.id}
                             className="hidden"
@@ -397,10 +399,10 @@ export function ChecklistClient({
                   </div>
                 ) : (
                   <label className={`block w-full text-center py-2 text-[10px] font-bold uppercase tracking-wide cursor-pointer transition ${isUploading ? "bg-bone/10 text-bone/50" : "bg-sol text-ink hover:bg-bone"}`}>
-                    {isUploading ? "Uploading…" : "+ Add photo"}
+                    {isUploading ? "Uploading…" : "+ Photo or video"}
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,video/*"
                       capture="environment"
                       disabled={isUploading}
                       className="hidden"

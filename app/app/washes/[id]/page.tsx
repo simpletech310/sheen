@@ -9,6 +9,7 @@ import { RescheduleButton } from "./RescheduleButton";
 import { RepeatButton } from "./RepeatButton";
 import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
 import { CustomerChecklist } from "@/components/customer/CustomerChecklist";
+import { ApprovalPanel } from "@/components/customer/ApprovalPanel";
 import { signedUrls } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, completed_at, scheduled_window_start, total_cents, service_cents, fees_cents, tip_cents, points_earned, vehicle_count, customer_id, service_id, address_id, recurring_template_id, checklist_progress, services(tier_name, category), addresses(street, city, state, zip)"
+      "id, status, completed_at, customer_approved_at, funds_released_at, scheduled_window_start, total_cents, service_cents, fees_cents, tip_cents, points_earned, vehicle_count, customer_id, service_id, address_id, recurring_template_id, checklist_progress, work_photo_paths, services(tier_name, category), addresses(street, city, state, zip)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -71,10 +72,18 @@ export default async function WashDetailPage({ params }: { params: { id: string 
   const checklistPhotoPaths = Object.values(checklistProgress)
     .map((e) => e?.photo_path)
     .filter((p): p is string => !!p);
-  const photoUrls = await signedUrls("booking-photos", [
+  // Final 4 work photos the washer uploads at completion — the customer
+  // needs these to evaluate the wash before approving + releasing funds.
+  const workPhotoPaths: string[] = (booking as any).work_photo_paths ?? [];
+  const allSigned = await signedUrls("booking-photos", [
     ...allPhotoPaths,
     ...checklistPhotoPaths,
+    ...workPhotoPaths,
   ]);
+  const photoUrls = allSigned;
+  const workPhotoUrls = Object.fromEntries(
+    workPhotoPaths.map((p) => [p, allSigned[p]]).filter(([, u]) => !!u)
+  );
 
   const completedHours =
     booking.completed_at != null
@@ -208,7 +217,24 @@ export default async function WashDetailPage({ params }: { params: { id: string 
         </Link>
       )}
 
-      {booking.status === "completed" && !review && (
+      {/* Approval panel — shows the 4 finished-work photos and the
+          Approve / file-objection CTAs. Renders here whenever the wash
+          is completed and not yet approved (status='completed' before
+          the customer hits Approve). Once approved + funded the panel
+          flips to its "approved" state with the rate-&-tip link. */}
+      {booking.status === "completed" && (
+        <div className="mt-6">
+          <ApprovalPanel
+            bookingId={booking.id}
+            approvedAt={(booking as any).customer_approved_at ?? null}
+            fundsReleasedAt={(booking as any).funds_released_at ?? null}
+            completedAt={booking.completed_at}
+            workPhotoUrls={workPhotoUrls}
+          />
+        </div>
+      )}
+
+      {booking.status === "funded" && !review && (
         <Link
           href={`/app/rate/${booking.id}`}
           className="mt-3 block text-center bg-royal text-bone py-3.5 text-sm font-bold uppercase tracking-wide hover:bg-ink"

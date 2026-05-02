@@ -21,13 +21,13 @@ const STATUS_LABEL: Record<string, string> = {
   en_route: "On the way",
   arrived: "Arrived",
   in_progress: "Cleaning",
-  completed: "Completed",
-  funded: "Completed",
+  completed: "Awaiting your approval",
+  funded: "Approved · paid",
   cancelled: "Cancelled",
   disputed: "Under review",
 };
 
-type FilterTab = "active" | "completed" | "cancelled";
+type FilterTab = "active" | "completed" | "approved" | "cancelled";
 
 const ACTIVE_STATUSES = ["pending", "matched", "en_route", "arrived", "in_progress"];
 
@@ -42,6 +42,7 @@ export type Booking = {
 export function WashesFilterClient({
   bookings,
   completedCount,
+  approvedCount,
   upcomingCount,
   points,
   page,
@@ -49,7 +50,11 @@ export function WashesFilterClient({
   sort,
 }: {
   bookings: Booking[];
+  // Completed = washer marked done, customer hasn't approved yet (action
+  // required from the customer to release funds).
   completedCount: number;
+  // Approved = customer hit Approve → release.ts ran → status='funded'.
+  approvedCount: number;
   upcomingCount: number;
   points: number;
   page: number;
@@ -63,7 +68,11 @@ export function WashesFilterClient({
 
   const filtered = bookings.filter((b) => {
     if (tab === "active") return ACTIVE_STATUSES.includes(b.status);
-    if (tab === "completed") return b.status === "completed" || b.status === "funded";
+    // status='completed' means washer is done but customer hasn't yet
+    // approved — funds still in escrow, customer action required.
+    if (tab === "completed") return b.status === "completed";
+    // status='funded' means the customer approved and funds released.
+    if (tab === "approved") return b.status === "funded";
     if (tab === "cancelled") return ["cancelled", "disputed"].includes(b.status);
     return true;
   });
@@ -71,6 +80,7 @@ export function WashesFilterClient({
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: "active", label: "Active", count: upcomingCount },
     { key: "completed", label: "Completed", count: completedCount },
+    { key: "approved", label: "Approved", count: approvedCount },
     {
       key: "cancelled",
       label: "Cancelled",
@@ -99,12 +109,12 @@ export function WashesFilterClient({
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 mb-3">
+      <div className="flex gap-1 mb-3 overflow-x-auto -mx-1 px-1">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex-1 py-2.5 text-center text-xs font-bold uppercase tracking-wide transition ${
+            className={`shrink-0 px-3 py-2.5 text-center text-[11px] font-bold uppercase tracking-wide transition ${
               tab === t.key
                 ? "bg-royal text-bone"
                 : "bg-mist/40 text-smoke hover:bg-mist"
@@ -184,7 +194,13 @@ export function WashesFilterClient({
       ) : (
         <div className="bg-mist/40 p-6 text-center">
           <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
-            {tab === "active" ? "No active washes" : tab === "completed" ? "No completed washes yet" : "No cancelled washes"}
+            {tab === "active"
+              ? "No active washes"
+              : tab === "completed"
+              ? "Nothing waiting on your approval"
+              : tab === "approved"
+              ? "No approved washes yet"
+              : "No cancelled washes"}
           </div>
           {tab === "active" && (
             <Link

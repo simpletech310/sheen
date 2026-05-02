@@ -84,16 +84,31 @@ export function CustomerChecklist({
                   href={photoUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 block w-12 h-12 bg-mist overflow-hidden"
-                  aria-label="View proof photo"
+                  className="shrink-0 block w-12 h-12 bg-mist overflow-hidden relative"
+                  aria-label="View proof"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={photoUrl}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
+                  {/^\S+\.(mp4|mov|webm|m4v|avi)(\?|$)/i.test(entry?.photo_path ?? "") ? (
+                    <>
+                      <video
+                        src={photoUrl}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                      <span className="absolute bottom-0 right-0 bg-ink/70 text-bone font-mono text-[8px] uppercase tracking-wider px-1">
+                        ▶
+                      </span>
+                    </>
+                  ) : (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={photoUrl}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  )}
                 </a>
               )}
             </li>

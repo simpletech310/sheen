@@ -55,14 +55,17 @@ export default async function WashesPage({
 
   const points = (ledger ?? []).reduce((acc, r: any) => acc + (r.points ?? 0), 0);
   const lifetime = lifetimeRows ?? [];
-  const completedCount = lifetime.filter((b: any) => b.status === "completed" || b.status === "funded").length;
+  // status='completed' = waiting on customer approval (action required)
+  // status='funded'    = customer approved + pro paid
+  const completedCount = lifetime.filter((b: any) => b.status === "completed").length;
+  const approvedCount = lifetime.filter((b: any) => b.status === "funded").length;
   const upcomingCount = lifetime.filter((b: any) =>
     !["completed", "funded", "cancelled", "disputed"].includes(b.status)
   ).length;
   // Header total — every booking the customer ever made that wasn't
   // cancelled/disputed. Reflects the just-booked wash immediately instead
   // of waiting on completion.
-  const bookedCount = upcomingCount + completedCount;
+  const bookedCount = upcomingCount + completedCount + approvedCount;
   const total = lifetime
     .filter((b: any) => b.status === "completed" || b.status === "funded")
     .reduce((acc: number, b: any) => acc + (b.total_cents ?? 0), 0);
@@ -81,6 +84,7 @@ export default async function WashesPage({
       <WashesFilterClient
         bookings={(bookings as unknown) as Booking[]}
         completedCount={completedCount}
+        approvedCount={approvedCount}
         upcomingCount={upcomingCount}
         points={points}
         page={page}
