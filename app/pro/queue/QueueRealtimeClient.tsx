@@ -95,6 +95,7 @@ export function QueueRealtimeClient({
   myLat,
   myLng,
   radius,
+  serviceAreas,
   washerCaps,
 }: {
   initialJobs: QueueJob[];
@@ -103,6 +104,8 @@ export function QueueRealtimeClient({
   myLat: number | null;
   myLng: number | null;
   radius: number;
+  // Lower-cased city names. Empty = no override (use radius).
+  serviceAreas: string[];
   washerCaps: WasherCaps;
 }) {
   const [jobs, setJobs] = useState<QueueJob[]>(initialJobs);
@@ -204,6 +207,13 @@ export function QueueRealtimeClient({
 
       const elig = checkWasherEligibility(row.services, row.addresses, washerCaps);
       if (!elig.ok) return false;
+
+      // City override mirrors the SSR filter — when set, the booking's
+      // address city must match one of the listed cities (case-insens).
+      if (serviceAreas.length > 0) {
+        const jobCity = (row.addresses?.city ?? "").toLowerCase().trim();
+        if (!jobCity || !serviceAreas.includes(jobCity)) return false;
+      }
 
       if (
         myLat &&
@@ -307,7 +317,7 @@ export function QueueRealtimeClient({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, myLat, myLng, radius, washerCaps]);
+  }, [userId, myLat, myLng, radius, serviceAreas, washerCaps]);
 
   const now = Date.now();
 

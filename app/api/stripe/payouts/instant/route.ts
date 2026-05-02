@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/server";
 import { invalidateBalance } from "@/lib/stripe/balance-cache";
 
@@ -57,11 +57,26 @@ export async function POST() {
       { stripeAccount: wp.stripe_account_id }
     );
     invalidateBalance(wp.stripe_account_id);
+    // Audit trail — gives ops a record + makes it possible to surface
+    // "your last cash-out" on the wallet UI without re-asking Stripe.
+    await createServiceClient().from("audit_log").insert({
+      action: "instant_payout",
+      target_type: "stripe_payout",
+      target_id: payout.id,
+      payload: {
+        amount_cents: payout.amount,
+        method: payout.method,
+        arrival_date: payout.arrival_date,
+        stripe_account_id: wp.stripe_account_id,
+        user_id: user.id,
+      },
+    });
     return NextResponse.json({
       ok: true,
       payout_id: payout.id,
       amount: payout.amount,
       method: payout.method,
+      arrival_date: payout.arrival_date,
     });
   } catch (e: any) {
     // No instant-eligible card on this account — fall back to a standard
@@ -73,11 +88,24 @@ export async function POST() {
           { stripeAccount: wp.stripe_account_id }
         );
         invalidateBalance(wp.stripe_account_id);
+        await createServiceClient().from("audit_log").insert({
+          action: "standard_payout",
+          target_type: "stripe_payout",
+          target_id: std.id,
+          payload: {
+            amount_cents: std.amount,
+            method: std.method,
+            arrival_date: std.arrival_date,
+            stripe_account_id: wp.stripe_account_id,
+            user_id: user.id,
+          },
+        });
         return NextResponse.json({
           ok: true,
           payout_id: std.id,
           amount: std.amount,
           method: std.method,
+          arrival_date: std.arrival_date,
           hint:
             "Sent as a standard payout — arrives in 1–2 business days. Add a debit card to your Stripe payout settings to enable instant cash out next time.",
         });

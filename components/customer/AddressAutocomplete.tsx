@@ -55,10 +55,14 @@ export function AddressAutocomplete({
         onBlur={() => setTimeout(() => setOpen(false), 200)}
         placeholder={placeholder}
         autoComplete="off"
-        className="w-full px-4 py-3.5 bg-bone border border-mist text-sm focus:outline-none focus:border-royal"
+        // Force dark text on cream background so the input stays legible
+        // when this component is dropped into a `text-bone` parent (e.g.
+        // /pro/me/edit on the dark pro theme — was rendering white-on-
+        // cream and the typed query was invisible).
+        className="w-full px-4 py-3.5 bg-bone border border-mist text-sm text-ink placeholder:text-smoke focus:outline-none focus:border-royal"
       />
       {open && results.length > 0 && (
-        <ul className="absolute top-full left-0 right-0 mt-1 bg-bone border border-mist max-h-72 overflow-y-auto z-50 shadow-lg">
+        <ul className="absolute top-full left-0 right-0 mt-1 bg-bone border border-mist text-ink max-h-72 overflow-y-auto z-50 shadow-lg">
           {results.map((r) => (
             <li
               key={r.id}

@@ -15,6 +15,10 @@ type Initial = {
   service_radius_miles: number;
   base_lat: number | null;
   base_lng: number | null;
+  // Optional override list of cities. If non-empty the queue only
+  // surfaces jobs whose address city matches one of these
+  // (case-insensitive). Empty = fall back to radius-from-base.
+  service_areas: string[];
   has_own_water: boolean;
   has_own_power: boolean;
   has_pressure_washer: boolean;
@@ -48,14 +52,53 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
       : null
   );
   const [busy, setBusy] = useState(false);
+  // Draft text for the "Cities you'll take jobs in" chip input. Lives
+  // here (not in form state) because we only persist when the user
+  // commits a chip via Enter / comma / blur.
+  const [cityDraft, setCityDraft] = useState("");
 
   function set<K extends keyof Initial>(k: K, v: Initial[K]) {
     setForm((s) => ({ ...s, [k]: v }));
   }
 
+  function commitCity(raw: string) {
+    const city = raw.trim().replace(/^,+|,+$/g, "").trim();
+    if (!city) return;
+    // Normalise to title case so "los angeles" === "Los Angeles" === "LA"
+    // collisions don't slip through. Light touch — Mapbox returns the
+    // canonical form on the customer side, so we just compare lowercase
+    // server-side.
+    setForm((s) => {
+      if (s.service_areas.some((c) => c.toLowerCase() === city.toLowerCase())) {
+        return s;
+      }
+      return { ...s, service_areas: [...s.service_areas, city] };
+    });
+    setCityDraft("");
+  }
+
+  function removeCity(city: string) {
+    setForm((s) => ({
+      ...s,
+      service_areas: s.service_areas.filter((c) => c !== city),
+    }));
+  }
+
   async function save() {
     setBusy(true);
     try {
+      // Auto-commit any half-typed city before saving so a pro who
+      // typed "Riverside" and tapped Save (without hitting Enter)
+      // doesn't lose it.
+      const finalAreas = (() => {
+        const draft = cityDraft.trim();
+        if (!draft) return form.service_areas;
+        if (form.service_areas.some((c) => c.toLowerCase() === draft.toLowerCase())) {
+          return form.service_areas;
+        }
+        return [...form.service_areas, draft];
+      })();
+
       const r = await fetch("/api/pro/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -64,6 +107,7 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
           display_name: form.display_name || null,
           bio: form.bio.trim() || null,
           service_radius_miles: form.service_radius_miles,
+          service_areas: finalAreas,
           base_lat: base?.lat ?? form.base_lat,
           base_lng: base?.lng ?? form.base_lng,
           has_own_water: form.has_own_water,
@@ -175,6 +219,67 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
             />
           </div>
         )}
+
+        {/* City override — when set, the queue only shows jobs whose
+            address city matches one of these. Empty list falls back to
+            the radius-from-base behaviour above. Lets a pro toggle
+            "Riverside today, LA tomorrow" without touching their base. */}
+        <div className="mt-5">
+          <div className="flex justify-between items-baseline mb-2">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-bone/60">
+              Cities you'll take jobs in
+            </span>
+            <span className="font-mono text-[10px] text-bone/40">
+              optional · overrides radius
+            </span>
+          </div>
+          {form.service_areas.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {form.service_areas.map((city) => (
+                <span
+                  key={city}
+                  className="inline-flex items-center gap-1.5 bg-sol text-ink px-2.5 py-1 text-xs font-bold uppercase tracking-wide"
+                >
+                  {city}
+                  <button
+                    type="button"
+                    onClick={() => removeCity(city)}
+                    className="text-ink/70 hover:text-ink"
+                    aria-label={`Remove ${city}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <input
+            value={cityDraft}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v.endsWith(",")) {
+                commitCity(v.slice(0, -1));
+              } else {
+                setCityDraft(v);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitCity(cityDraft);
+              } else if (e.key === "Backspace" && !cityDraft && form.service_areas.length > 0) {
+                removeCity(form.service_areas[form.service_areas.length - 1]);
+              }
+            }}
+            onBlur={() => commitCity(cityDraft)}
+            placeholder="Riverside, Los Angeles, San Bernardino…"
+            className="w-full px-4 py-3.5 bg-bone border border-mist text-ink placeholder:text-smoke text-sm focus:outline-none focus:border-royal"
+          />
+          <p className="text-[11px] text-bone/50 mt-2 leading-relaxed">
+            Type a city, hit Enter or comma to add. Leave empty to use
+            your radius above. Match is case-insensitive.
+          </p>
+        </div>
       </section>
 
       {/* Equipment */}

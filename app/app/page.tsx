@@ -43,14 +43,17 @@ export default async function CustomerHome() {
     .limit(1);
   const next: any = nextBookings?.[0] ?? null;
 
-  // If we have a pro on it, fetch their identity in one shot.
+  // If we have a pro on it, fetch their identity in one shot. Display
+  // name + avatar come from the public users row; rating from the
+  // washer profile rollup.
   let proName: string | null = null;
+  let proAvatarUrl: string | null = null;
   let proRating: number | null = null;
   if (next?.assigned_washer_id) {
     const [{ data: u }, { data: wp }] = await Promise.all([
       supabase
         .from("users")
-        .select("full_name")
+        .select("full_name, display_name, avatar_url")
         .eq("id", next.assigned_washer_id)
         .maybeSingle(),
       supabase
@@ -59,7 +62,10 @@ export default async function CustomerHome() {
         .eq("user_id", next.assigned_washer_id)
         .maybeSingle(),
     ]);
-    proName = u?.full_name ?? null;
+    proName = (u as any)?.display_name ?? u?.full_name ?? null;
+    proAvatarUrl = (u as any)?.avatar_url
+      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/avatars/${(u as any).avatar_url}`
+      : null;
     proRating = wp?.rating_avg ? Number(wp.rating_avg) : null;
   }
 
@@ -128,6 +134,7 @@ export default async function CustomerHome() {
               }
               proName={proName}
               proInitial={proName ? proName[0]?.toUpperCase() ?? null : null}
+              proAvatarUrl={proAvatarUrl}
               proRating={proRating}
               vehicleCount={next.vehicle_count ?? 1}
               total={fmtUSD(next.total_cents)}

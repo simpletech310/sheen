@@ -85,13 +85,21 @@ export default async function TrackingPage({ params }: { params: { id: string } 
         .maybeSingle(),
       supabase
         .from("users")
-        .select("full_name")
+        .select("full_name, display_name, avatar_url")
         .eq("id", booking.assigned_washer_id)
         .maybeSingle(),
     ]);
     if (wp) {
-      washerName = wu?.full_name ?? null;
-      washerProfile = { ...wp, full_name: washerName };
+      // Prefer the public-facing display name if the pro set one. Falls
+      // back to full_name. Avatar comes from the public `avatars` bucket
+      // and is rendered by WasherProfileCard.
+      washerName = (wu as any)?.display_name ?? wu?.full_name ?? null;
+      washerProfile = {
+        ...wp,
+        full_name: wu?.full_name ?? null,
+        display_name: (wu as any)?.display_name ?? null,
+        avatar_url: (wu as any)?.avatar_url ?? null,
+      };
     }
   }
 

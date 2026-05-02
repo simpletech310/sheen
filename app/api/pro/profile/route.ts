@@ -10,6 +10,9 @@ const Body = z.object({
   display_name: z.string().min(1).max(120).optional().nullable(),
   bio: z.string().max(280).optional().nullable(),
   service_radius_miles: z.number().int().min(1).max(50).optional(),
+  // City-name override list. Keep it ASCII-safe + reasonable upper bound
+  // so a paste accident can't blow up the row.
+  service_areas: z.array(z.string().min(1).max(80)).max(20).optional(),
   base_lat: z.number().min(-90).max(90).optional().nullable(),
   base_lng: z.number().min(-180).max(180).optional().nullable(),
   has_own_water: z.boolean().optional(),
@@ -53,6 +56,7 @@ export async function PATCH(req: Request) {
   for (const k of [
     "bio",
     "service_radius_miles",
+    "service_areas",
     "base_lat",
     "base_lng",
     "has_own_water",

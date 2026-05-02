@@ -18,7 +18,7 @@ export default async function QueuePage() {
   const { data: profile } = await supabase
     .from("washer_profiles")
     .select(
-      "status, service_radius_miles, base_lat, base_lng, can_wash_big_rig, has_own_water, has_own_power, has_pressure_washer, can_detail_interior, can_do_paint_correction"
+      "status, service_radius_miles, service_areas, base_lat, base_lng, can_wash_big_rig, has_own_water, has_own_power, has_pressure_washer, can_detail_interior, can_do_paint_correction"
     )
     .eq("user_id", user?.id ?? "")
     .maybeSingle();
@@ -58,6 +58,11 @@ export default async function QueuePage() {
   const myLat = profile?.base_lat ? Number(profile.base_lat) : null;
   const myLng = profile?.base_lng ? Number(profile.base_lng) : null;
   const radius = profile?.service_radius_miles ?? 5;
+  // Lower-cased for case-insensitive contains() check below. Empty list
+  // means "no city override" — fall back to radius-from-base.
+  const serviceAreas = ((profile?.service_areas as string[] | null) ?? [])
+    .map((c) => c.toLowerCase().trim())
+    .filter(Boolean);
 
   const directRequests = (jobsRaw ?? []).filter(
     (j: any) =>
@@ -85,6 +90,14 @@ export default async function QueuePage() {
       const blockedToday = avail.some((a) => a.specific_date === dateStr && a.blocked);
       if (blockedToday) return false;
     }
+    // City override: if the pro listed cities they'll work in today,
+    // a job's address city must match one of them. Empty list falls
+    // back to the radius-from-base check below. Both gates can apply
+    // (city match AND in-radius) — the more restrictive wins.
+    if (serviceAreas.length > 0) {
+      const jobCity = (j.addresses?.city ?? "").toLowerCase().trim();
+      if (!jobCity || !serviceAreas.includes(jobCity)) return false;
+    }
     if (myLat && myLng && j.addresses?.lat && j.addresses?.lng) {
       const d = distanceMiles(
         { lat: myLat, lng: myLng },
@@ -101,7 +114,10 @@ export default async function QueuePage() {
       <div className="sticky top-0 z-20 bg-ink/95 backdrop-blur supports-[backdrop-filter]:bg-ink/80 px-5 pt-6 pb-4 -mt-px border-b border-bone/10">
         <div className="flex justify-between items-center mb-2">
           <Eyebrow className="!text-bone/75" prefix={null}>
-            Available · {radius} mi radius · live
+            Available ·{" "}
+            {serviceAreas.length > 0
+              ? `${serviceAreas.length === 1 ? serviceAreas[0] : `${serviceAreas.length} cities`} · live`
+              : `${radius} mi radius · live`}
           </Eyebrow>
           <Link
             href="/pro/availability"
@@ -136,6 +152,7 @@ export default async function QueuePage() {
         myLat={myLat}
         myLng={myLng}
         radius={radius}
+        serviceAreas={serviceAreas}
         washerCaps={washerCaps}
       />
     </div>

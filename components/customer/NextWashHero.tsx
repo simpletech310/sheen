@@ -12,6 +12,7 @@ type Props = {
   addressLine: string | null;
   proName: string | null;
   proInitial: string | null;
+  proAvatarUrl: string | null;
   proRating: number | null;
   vehicleCount: number;
   total: string; // formatted USD
@@ -108,9 +109,18 @@ export function NextWashHero(props: Props) {
 
         {props.proName && (
           <div className="mt-4 pt-4 border-t border-bone/15 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-royal text-bone flex items-center justify-center display text-base shrink-0">
-              {props.proInitial ?? "P"}
-            </div>
+            {props.proAvatarUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={props.proAvatarUrl}
+                alt={props.proName}
+                className="w-9 h-9 rounded-full object-cover bg-royal shrink-0"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-royal text-bone flex items-center justify-center display text-base shrink-0">
+                {props.proInitial ?? "P"}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold truncate">{props.proName}</div>
               {props.proRating != null && (

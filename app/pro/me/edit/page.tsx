@@ -20,7 +20,7 @@ export default async function ProMeEditPage() {
     supabase
       .from("washer_profiles")
       .select(
-        "bio, service_radius_miles, base_lat, base_lng, has_own_water, has_own_power, has_pressure_washer, can_detail_interior, can_do_paint_correction"
+        "bio, service_radius_miles, service_areas, base_lat, base_lng, has_own_water, has_own_power, has_pressure_washer, can_detail_interior, can_do_paint_correction"
       )
       .eq("user_id", user?.id ?? "")
       .maybeSingle(),
@@ -44,6 +44,7 @@ export default async function ProMeEditPage() {
           avatar_url: me?.avatar_url ?? null,
           bio: wp?.bio ?? "",
           service_radius_miles: wp?.service_radius_miles ?? 5,
+          service_areas: ((wp as any)?.service_areas as string[] | null) ?? [],
           base_lat: wp?.base_lat ?? null,
           base_lng: wp?.base_lng ?? null,
           has_own_water: !!wp?.has_own_water,

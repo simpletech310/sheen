@@ -9,7 +9,11 @@ type WasherProfile = {
   has_pressure_washer: boolean | null;
   background_check_verified?: boolean | null;
   full_name?: string | null;
+  display_name?: string | null;
+  avatar_url?: string | null;
 };
+
+const PUBLIC_AVATAR_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/avatars`;
 
 export function WasherProfileCard({
   profile,
@@ -18,19 +22,30 @@ export function WasherProfileCard({
   profile: WasherProfile;
   publicLink?: boolean;
 }) {
-  const initial = (profile.full_name ?? "P")[0].toUpperCase();
+  const displayedName = profile.display_name || profile.full_name || "Your pro";
+  const initial = displayedName[0].toUpperCase();
   const rating = profile.rating_avg ? Number(profile.rating_avg).toFixed(1) : "—";
   const jobs = profile.jobs_completed ?? 0;
+  const avatarUrl = profile.avatar_url ? `${PUBLIC_AVATAR_BASE}/${profile.avatar_url}` : null;
 
   const inner = (
     <>
       <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full bg-royal text-bone flex items-center justify-center display text-xl shrink-0">
-          {initial}
-        </div>
+        {avatarUrl ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={avatarUrl}
+            alt={displayedName}
+            className="w-14 h-14 rounded-full object-cover bg-mist shrink-0"
+          />
+        ) : (
+          <div className="w-14 h-14 rounded-full bg-royal text-bone flex items-center justify-center display text-xl shrink-0">
+            {initial}
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="display text-xl truncate">{profile.full_name ?? "Your pro"}</span>
+            <span className="display text-xl truncate">{displayedName}</span>
             {profile.background_check_verified && (
               <span
                 title="Background-checked"
