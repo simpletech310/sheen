@@ -53,16 +53,16 @@ const ladder = [
 
 const promote = [
   {
-    t: "Your @handle, your customers",
-    d: "Every pro gets a personal link (@YOURHANDLE). Share it, drop it in a review, hand out cards — when a customer books with it, they request you by name.",
+    t: "Run your own book of business",
+    d: "Sheen is the platform; the customers are yours. Every pro gets a personal @handle and shareable link. Customers book you by name — Sheen handles the payments, insurance, and disputes; you keep the relationship.",
   },
   {
-    t: "10-minute exclusive window",
-    d: "Direct requests are yours alone for 10 minutes. No queue race. Decline or accept on your terms.",
+    t: "10-minute exclusivity on every direct request",
+    d: "When a customer books with your @handle, that wash is sent ONLY to you for 10 minutes — no queue race, no other pro can see or claim it. Accept on your terms. If you pass, it falls to the open queue so the customer's still covered.",
   },
   {
     t: "Repeat customers, lower take",
-    d: "Once a customer is yours, the platform commission drops to 18% on every repeat job they book with you.",
+    d: "Once a customer is yours, the platform commission drops to 18% on every repeat job they book with you. Build a regular route and the math works in your favour.",
   },
   {
     t: "Tips, instantly, in full",

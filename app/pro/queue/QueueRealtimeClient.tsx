@@ -223,11 +223,26 @@ export function QueueRealtimeClient({
         serviceAreas.length > 0 && !!jobCity && serviceAreas.includes(jobCity);
       if (!inRadius && !inCity) return false;
 
-      const isDirectForMe =
-        row.requested_washer_id === userId &&
-        row.request_expires_at &&
-        new Date(row.request_expires_at).getTime() > Date.now() &&
-        !(row as any).request_declined_at;
+      const reqExpiry = row.request_expires_at
+        ? new Date(row.request_expires_at).getTime()
+        : null;
+      const isHeld = !!(reqExpiry && reqExpiry > Date.now() && !(row as any).request_declined_at);
+
+      const isDirectForMe = row.requested_washer_id === userId && isHeld;
+      // Exclusivity hold: if this booking is locked to a different
+      // washer for the next 10 min, it must NOT appear in this pro's
+      // queue. Once the request expires or is declined, it falls
+      // through to the general queue below.
+      const heldForSomeoneElse =
+        !!row.requested_washer_id && row.requested_washer_id !== userId && isHeld;
+      if (heldForSomeoneElse) {
+        // If we previously had it in either list (e.g. it was unheld
+        // and is now held to another pro after a re-request), remove.
+        setJobs((prev) => prev.filter((j) => j.id !== row.id));
+        setDirectRequests((prev) => prev.filter((j) => j.id !== row.id));
+        directIds.current.delete(row.id);
+        return false;
+      }
 
       if (isDirectForMe) {
         directIds.current.add(row.id);

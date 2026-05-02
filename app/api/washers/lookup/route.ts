@@ -32,14 +32,19 @@ export async function GET(req: Request) {
 
   const { data: u } = await supa
     .from("users")
-    .select("full_name")
+    .select("full_name, display_name, avatar_url")
     .eq("id", wp.user_id)
     .maybeSingle();
+
+  const avatarUrl = (u as any)?.avatar_url
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/avatars/${(u as any).avatar_url}`
+    : null;
 
   return NextResponse.json({
     found: true,
     handle: raw,
-    name: u?.full_name ?? "Sheen Pro",
+    name: (u as any)?.display_name || u?.full_name || "Sheen Pro",
+    avatar_url: avatarUrl,
     rating: wp.rating_avg ? Number(wp.rating_avg) : null,
     jobs: wp.jobs_completed ?? 0,
     verified: !!wp.background_check_verified,

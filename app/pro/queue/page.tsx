@@ -75,6 +75,22 @@ export default async function QueuePage() {
 
   const jobs = (jobsRaw ?? []).filter((j: any) => {
     if (directRequestIds.has(j.id)) return false;
+    // Exclusivity hold: a customer can request a specific pro by handle.
+    // For 10 minutes after booking, that booking is locked to the
+    // requested washer and must NOT appear in anyone else's queue. Once
+    // the window expires, request_expires_at is in the past and the job
+    // falls through to the open queue here. Decline also clears the
+    // expiry, so a declined-but-not-expired request also drops through.
+    const reqExpiry = j.request_expires_at
+      ? new Date(j.request_expires_at).getTime()
+      : null;
+    const heldForSomeoneElse =
+      j.requested_washer_id &&
+      j.requested_washer_id !== user?.id &&
+      reqExpiry &&
+      reqExpiry > now &&
+      !j.request_declined_at;
+    if (heldForSomeoneElse) return false;
     // Capability gate: equipment + site-derived water/power. Hides jobs the
     // washer can't physically complete instead of letting them claim and
     // disappoint the customer.

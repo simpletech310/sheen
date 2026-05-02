@@ -32,10 +32,13 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   // Capability gate: fetch the service + site flags and run the same matcher
   // the queue uses. Defends against direct claims that bypass the queue UI
   // (deep links, stale realtime cache, partner who toggled equipment off).
+  // Also pulls the direct-request fields so we can enforce the 10-min
+  // exclusivity hold server-side — UI hides held jobs from other pros,
+  // but a deep link or stale cache must not be able to bypass it.
   const { data: jobMeta } = await supabase
     .from("bookings")
     .select(
-      "services(category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(has_water, has_power)"
+      "requested_washer_id, request_expires_at, request_declined_at, services(category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(has_water, has_power)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -55,14 +58,65 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     );
   }
 
-  // Atomic-ish claim: only update if still unclaimed
+  // Direct-request hold: if this booking is currently locked to a
+  // different washer (within their 10-minute exclusivity window), the
+  // current pro can't claim. The requested pro takes it via
+  // /accept-request; everyone else waits for the window to expire (or
+  // the pro to decline) before it falls into the open queue. Self
+  // (requested_washer_id === user.id) is allowed to claim through
+  // either route — accept-request OR claim — for resilience.
+  const reqExpiryMs = (jobMeta as any)?.request_expires_at
+    ? new Date((jobMeta as any).request_expires_at).getTime()
+    : null;
+  const heldForOther =
+    !!(jobMeta as any)?.requested_washer_id &&
+    (jobMeta as any).requested_washer_id !== user.id &&
+    reqExpiryMs &&
+    reqExpiryMs > Date.now() &&
+    !(jobMeta as any).request_declined_at;
+  if (heldForOther) {
+    const minsLeft = Math.max(
+      1,
+      Math.ceil((reqExpiryMs! - Date.now()) / 60000)
+    );
+    return NextResponse.json(
+      {
+        error: `This booking was sent directly to another pro for ~${minsLeft} more min. It'll fall to the open queue if they don't accept.`,
+        code: "direct_request_locked",
+      },
+      { status: 409 }
+    );
+  }
+
+  // Atomic claim: only update if still unclaimed AND not currently
+  // locked to a different pro. The eq/is filters mean two pros hitting
+  // claim at the same instant can't both win — one update will match
+  // zero rows.
   const { data, error } = await supabase
     .from("bookings")
-    .update({ assigned_washer_id: user.id, status: "matched" })
+    .update({
+      assigned_washer_id: user.id,
+      status: "matched",
+      // Clear any expired/declined direct-request fields so the booking
+      // looks clean to downstream consumers.
+      requested_washer_id: null,
+      request_expires_at: null,
+    })
     .eq("id", params.id)
     .eq("status", "pending")
     .is("assigned_washer_id", null)
     .is("assigned_partner_id", null)
+    // Belt-and-suspenders: ensure the row didn't flip to an active hold
+    // for someone else between our pre-check and this UPDATE. If there
+    // IS a hold, it must either be expired or pointed at us.
+    .or(
+      [
+        "requested_washer_id.is.null",
+        `requested_washer_id.eq.${user.id}`,
+        `request_expires_at.lte.${new Date().toISOString()}`,
+        "request_declined_at.not.is.null",
+      ].join(",")
+    )
     .select("id, customer_id")
     .maybeSingle();
 

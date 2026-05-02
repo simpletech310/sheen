@@ -7,6 +7,7 @@ type LookupResult = {
   reason?: "format" | "not_active";
   handle?: string;
   name?: string;
+  avatar_url?: string | null;
   rating?: number | null;
   jobs?: number;
   verified?: boolean;
@@ -105,9 +106,18 @@ export function WasherHandleInput({
       {status === "match" && match && (
         <div className="mt-2 bg-good/15 border border-good p-3">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-royal text-bone flex items-center justify-center display text-base shrink-0">
-              {(match.name ?? "P")[0]?.toUpperCase()}
-            </div>
+            {match.avatar_url ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={match.avatar_url}
+                alt={match.name ?? "Sheen Pro"}
+                className="w-9 h-9 rounded-full object-cover bg-royal shrink-0"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-royal text-bone flex items-center justify-center display text-base shrink-0">
+                {(match.name ?? "P")[0]?.toUpperCase()}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold flex items-center gap-2">
                 {match.name}
@@ -127,17 +137,30 @@ export function WasherHandleInput({
               </div>
             </div>
           </div>
-          <div className="text-[11px] text-smoke mt-2 leading-relaxed">
-            Booking will be sent to @{match.handle} for 10 minutes before opening
-            to the queue.
+          <div className="mt-3 bg-bone border border-good/40 p-2.5">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-good mb-1">
+              How direct booking works
+            </div>
+            <ol className="text-[11px] text-ink/80 leading-relaxed space-y-0.5 list-decimal list-inside">
+              <li>
+                Sent <strong>only</strong> to @{match.handle} for 10 minutes —
+                no other pro can see or claim it.
+              </li>
+              <li>
+                If they accept, the wash is theirs. If they decline or time
+                out, it falls to the open queue so you still get matched.
+              </li>
+            </ol>
           </div>
         </div>
       )}
 
       {status === "idle" && draft.length === 0 && (
         <div className="text-[11px] text-smoke mt-2 leading-relaxed">
-          Have a pro&rsquo;s @washer ID? Paste it here. They get 10 minutes to
-          accept before the booking opens to the general queue.
+          Have a pro&rsquo;s @washer ID? Paste it here and the wash goes
+          <strong> only to them</strong> for 10 minutes — locked in, no queue
+          race. If they don&rsquo;t accept in time it opens to the general
+          queue, so you&rsquo;re always covered.
         </div>
       )}
     </div>
