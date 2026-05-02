@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { checkAchievements } from "@/lib/loyalty";
 import { z } from "zod";
 
@@ -55,14 +55,37 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 
   // Tip bookkeeping: record the tip in the 'bookings' table.
-  // The actual Stripe transfer is handled via the separate tip PaymentIntent flow.
-  if (tipCents > 0) {
+  // The actual Stripe transfer is handled via the separate tip PaymentIntent
+  // flow — by the time the client calls this endpoint, the customer has
+  // already confirmed payment in Stripe Elements (PI status is
+  // succeeded/processing). The webhook is supposed to insert a payouts row
+  // when the PI finally succeeds, but that has been unreliable in
+  // production (no `payment_intent.succeeded` events have ever landed in
+  // booking_events / payouts), so record the payout synchronously here too.
+  // Idempotent on (booking_id, kind) so even if the webhook later fires
+  // it's a clean upsert.
+  if (tipCents > 0 && proId) {
     await supabase.from("booking_events").insert({
       booking_id: booking.id,
       type: "tip_provided_ui",
       actor_id: user.id,
       payload: { amount_cents: tipCents },
     });
+
+    const admin = createServiceClient();
+    await admin
+      .from("payouts")
+      .upsert(
+        {
+          washer_id: booking.assigned_washer_id ?? null,
+          partner_id: booking.assigned_partner_id ?? null,
+          booking_id: booking.id,
+          amount_cents: tipCents,
+          status: "paid",
+          kind: "tip",
+        },
+        { onConflict: "booking_id,kind" }
+      );
   }
 
   await supabase.from("booking_events").insert({

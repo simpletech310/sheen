@@ -110,19 +110,31 @@ export function WalletLiveTotals({
     .filter((p) => p.status === "pending" || p.status === "releasing")
     .reduce((a, p) => a + (p.amount_cents ?? 0), 0);
 
+  // Sum of payouts we recorded as "paid" but where Stripe's settlement
+  // window hasn't closed yet. We don't track the per-payout settlement
+  // moment (Stripe handles that on its own 2-7 day schedule) so we treat
+  // any `paid` row as a possible-still-settling candidate, capped at the
+  // actual Stripe pending number. Anything ABOVE that cap is legacy money
+  // from before our payout records existed.
+  const recentPaidLocal = paid.reduce((a, p) => a + (p.amount_cents ?? 0), 0);
+  const legacyPending = Math.max(0, stripePending - recentPaidLocal);
+
   const subline = (() => {
     if (!connected) return "Setup payouts to start earning";
-    // Edge case: Stripe is holding pending money but our local payouts
-    // table doesn't know about any of it (lifetime + escrow both zero).
-    // This happens when an old transfer fired without a corresponding
-    // local payout row — rare after the upsert fix in release.ts, but
-    // the existing balance still wants a clear label.
-    if (lifetime === 0 && escrowPending === 0 && stripePending > 0) {
-      return `${fmtUSD(stripePending)} in Stripe payout queue`;
-    }
     const parts: string[] = [];
-    if (stripePending > 0) parts.push(`${fmtUSD(stripePending)} settling`);
     if (escrowPending > 0) parts.push(`${fmtUSD(escrowPending)} in escrow`);
+    if (stripePending > 0) {
+      // Two cases worth distinguishing for the pro: (a) Stripe is processing
+      // the wash/tips they can already see in the list — "settling", or
+      // (b) Stripe holds money that doesn't tie to any local payout row
+      // (legacy / pre-records / migrated transfers) — say so explicitly so
+      // the number doesn't look like a phantom bug.
+      if (legacyPending > stripePending * 0.2 && legacyPending > 1000) {
+        parts.push(`${fmtUSD(stripePending)} on Stripe (2–7 days)`);
+      } else {
+        parts.push(`${fmtUSD(stripePending)} settling`);
+      }
+    }
     if (parts.length === 0) return "All funds settled";
     return parts.join(" · ");
   })();
