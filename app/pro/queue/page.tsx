@@ -32,6 +32,12 @@ export default async function QueuePage() {
     can_wash_big_rig: !!profile?.can_wash_big_rig,
   };
 
+  // Availability is read for the "blocked-day" check below — but it is NO
+  // LONGER used to silently hide jobs that fall outside the washer's
+  // recurring weekly hours. A washer's "Mon-Fri 9-5" should mean "I prefer
+  // those hours", not "hide every Saturday job from me forever". The pro
+  // can decide for themselves whether to take a job outside their default
+  // window. Hard blocks (specific_date.blocked) are still respected.
   const { data: avail } = await supabase
     .from("availability")
     .select("day_of_week, start_time, end_time, specific_date, blocked")
@@ -69,24 +75,15 @@ export default async function QueuePage() {
     // disappoint the customer.
     const elig = checkWasherEligibility(j.services, j.addresses, washerCaps);
     if (!elig.ok) return false;
+    // Only honour explicit "this date is blocked" rows — recurring weekly
+    // hours are intentionally NOT used as a filter so we don't silently
+    // hide a perfectly fine Saturday job from a washer whose default
+    // hours are Mon-Fri. The washer can still skip jobs they don't want.
     const isRush = !!j.is_rush;
-    const start = new Date(j.scheduled_window_start);
     if (!isRush && avail && avail.length) {
-      const day = start.getDay();
-      const time = start.toTimeString().slice(0, 8);
-      const dateStr = start.toISOString().slice(0, 10);
+      const dateStr = new Date(j.scheduled_window_start).toISOString().slice(0, 10);
       const blockedToday = avail.some((a) => a.specific_date === dateStr && a.blocked);
       if (blockedToday) return false;
-      const recurring = avail.filter((a) => a.day_of_week === day && !a.blocked);
-      if (recurring.length === 0) return false;
-      const inWindow = recurring.some(
-        (a) =>
-          a.start_time &&
-          a.end_time &&
-          time >= a.start_time &&
-          time <= a.end_time
-      );
-      if (!inWindow) return false;
     }
     if (myLat && myLng && j.addresses?.lat && j.addresses?.lng) {
       const d = distanceMiles(

@@ -33,24 +33,26 @@ export function VehiclesPicker({
 }) {
   const router = useRouter();
   const vehicles = initialVehicles;
-  const [selected, setSelected] = useState<string[]>([]);
+  // Default-select the user's default vehicle (or the first one) synchronously
+  // on first render so the sticky total bar never flashes "$0" before an
+  // effect has a chance to run.
+  const [selected, setSelected] = useState<string[]>(() => {
+    if (vehicles.length === 0) return [];
+    const def = vehicles.find((v) => v.is_default) ?? vehicles[0];
+    return [def.id];
+  });
   const [photos, setPhotos] = useState<Record<string, string[]>>({});
 
-  // Restore draft (so back-navigation keeps the picks).
+  // Draft restore — runs after mount, may override the synchronous default
+  // when the user is navigating back into the flow with previous picks.
   useEffect(() => {
     const draft = readDraft();
-    if (draft && draft.tier === tier) {
-      const valid = new Set(vehicles.map((v) => v.id));
-      const keep = draft.vehicleIds.filter((id) => valid.has(id));
-      if (keep.length) {
-        setSelected(keep);
-        setPhotos(draft.conditionPhotos ?? {});
-        return;
-      }
-    }
-    if (vehicles.length > 0) {
-      const def = vehicles.find((v) => v.is_default) ?? vehicles[0];
-      setSelected([def.id]);
+    if (!draft || draft.tier !== tier) return;
+    const valid = new Set(vehicles.map((v) => v.id));
+    const keep = draft.vehicleIds.filter((id) => valid.has(id));
+    if (keep.length) {
+      setSelected(keep);
+      setPhotos(draft.conditionPhotos ?? {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -197,10 +199,16 @@ export function VehiclesPicker({
               {tier}
             </div>
             <div className="text-xs text-smoke">
-              {fmtUSD(price)} × {selected.length} vehicle{selected.length === 1 ? "" : "s"}
+              {selected.length === 0
+                ? `${fmtUSD(price)} per vehicle · pick at least one`
+                : `${fmtUSD(price)} × ${selected.length} vehicle${
+                    selected.length === 1 ? "" : "s"
+                  }`}
             </div>
           </div>
-          <div className="display tabular text-2xl">{fmtUSD(total)}</div>
+          <div className="display tabular text-2xl">
+            {fmtUSD(selected.length === 0 ? price : total)}
+          </div>
         </div>
         <button
           onClick={next}

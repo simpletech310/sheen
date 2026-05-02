@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { ensurePublicUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,11 @@ export async function POST(req: Request) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  // FK target safety net — older accounts and edge-cased signups can land
+  // without a public.users row, which would 500 the vehicle insert below
+  // with a foreign key violation.
+  await ensurePublicUser(user);
 
   const body = await req.json().catch(() => ({}));
   const { year, make, model, color, plate, notes, photo_paths, is_default, vehicle_type, vehicle_class } = body ?? {};

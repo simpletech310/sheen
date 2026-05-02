@@ -14,6 +14,7 @@ type BookingVehicle = {
     color: string | null;
     plate: string | null;
     notes: string | null;
+    photo_paths?: string[] | null;
   } | null;
 };
 
@@ -52,7 +53,11 @@ export function BookingVehicleList({
           const vehicleLabel = `${v?.year ? `${v.year} ` : ""}${v?.make ?? ""} ${
             v?.model ?? ""
           }`.trim();
-          const images: LightboxImage[] = r.condition_photo_paths
+          const garagePaths = r.vehicles?.photo_paths ?? [];
+          const conditionImages: LightboxImage[] = r.condition_photo_paths
+            .map((p) => ({ url: signedPhotoUrls[p], caption: vehicleLabel }))
+            .filter((img) => !!img.url);
+          const garageImages: LightboxImage[] = garagePaths
             .map((p) => ({ url: signedPhotoUrls[p], caption: vehicleLabel }))
             .filter((img) => !!img.url);
           return (
@@ -79,6 +84,42 @@ export function BookingVehicleList({
                 </div>
               )}
 
+              {garagePaths.length > 0 && (
+                <div className="mt-3">
+                  <div className={`font-mono text-[10px] uppercase tracking-wider ${subtle} mb-2`}>
+                    Garage photos · {garagePaths.length}
+                  </div>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {garagePaths.map((path, photoIdx) => {
+                      const url = signedPhotoUrls[path];
+                      return (
+                        <button
+                          key={`g-${path}`}
+                          type="button"
+                          onClick={() => {
+                            if (garageImages.length > 0)
+                              setViewer({ images: garageImages, index: photoIdx });
+                          }}
+                          aria-label={`Open garage photo ${photoIdx + 1} of ${garagePaths.length}`}
+                          className={`block aspect-square overflow-hidden border transition cursor-zoom-in ${photoBg}`}
+                        >
+                          {url ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div
+                              className={`w-full h-full flex items-center justify-center text-[10px] ${subtle}`}
+                            >
+                              …
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {r.condition_photo_paths.length > 0 && (
                 <div className="mt-3">
                   <div className={`font-mono text-[10px] uppercase tracking-wider ${subtle} mb-2`}>
@@ -92,7 +133,8 @@ export function BookingVehicleList({
                           key={path}
                           type="button"
                           onClick={() => {
-                            if (images.length > 0) setViewer({ images, index: photoIdx });
+                            if (conditionImages.length > 0)
+                              setViewer({ images: conditionImages, index: photoIdx });
                           }}
                           aria-label={`Open photo ${photoIdx + 1} of ${
                             r.condition_photo_paths.length

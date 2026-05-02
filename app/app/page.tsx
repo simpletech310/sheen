@@ -21,12 +21,15 @@ export default async function CustomerHome() {
     .split(" ")[0]
     ?.split("@")[0];
 
-  // Lifetime completed wash count for the hero strip
+  // Hero strip wash counter — counts every booking the customer has on the
+  // books that hasn't been cancelled or disputed. Includes upcoming/active
+  // bookings so the freshly-created booking immediately bumps the number,
+  // instead of staying at 0 until the wash is completed weeks later.
   const { count: washCount } = await supabase
     .from("bookings")
     .select("id", { head: true, count: "exact" })
     .eq("customer_id", user?.id ?? "")
-    .eq("status", "completed");
+    .not("status", "in", "(cancelled,disputed)");
 
   // Upcoming / in-flight booking — earliest scheduled active row.
   const { data: nextBookings } = await supabase

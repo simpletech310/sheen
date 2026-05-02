@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { ensurePublicUser } from "@/lib/auth";
 import { getStripe } from "@/lib/stripe/server";
 import { computeFees } from "@/lib/stripe/fees";
 import { getAllowance, consumeAllowance } from "@/lib/membership";
@@ -68,6 +69,11 @@ export async function POST(req: Request) {
   const stripe = getStripe();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  // Make sure the public.users row exists before any FK-dependent insert
+  // (bookings.customer_id, addresses.user_id, booking_vehicles, etc.).
+  await ensurePublicUser(user);
+
   const body = Body.parse(await req.json());
 
   let bookingId = body.booking_id;

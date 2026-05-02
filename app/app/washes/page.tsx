@@ -59,6 +59,10 @@ export default async function WashesPage({
   const upcomingCount = lifetime.filter((b: any) =>
     !["completed", "funded", "cancelled", "disputed"].includes(b.status)
   ).length;
+  // Header total — every booking the customer ever made that wasn't
+  // cancelled/disputed. Reflects the just-booked wash immediately instead
+  // of waiting on completion.
+  const bookedCount = upcomingCount + completedCount;
   const total = lifetime
     .filter((b: any) => b.status === "completed" || b.status === "funded")
     .reduce((acc: number, b: any) => acc + (b.total_cents ?? 0), 0);
@@ -67,7 +71,10 @@ export default async function WashesPage({
 
   return (
     <div className="px-5 pt-10 pb-8">
-      <Eyebrow>{completedCount} washes · {fmtUSD(total)} spent</Eyebrow>
+      <Eyebrow>
+        {bookedCount} {bookedCount === 1 ? "wash" : "washes"} ·{" "}
+        {fmtUSD(total)} spent
+      </Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">Your washes</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
 

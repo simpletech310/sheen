@@ -1,7 +1,28 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 export type UserRole = "customer" | "washer" | "partner_owner" | "admin";
+
+/**
+ * Guarantees a public.users row exists for the given auth user before code
+ * tries to insert anything that FKs into it (vehicles, bookings, addresses).
+ * The handle_new_user() trigger covers fresh signups, but pre-trigger
+ * accounts and any signups where the trigger fired into an error end up
+ * orphaned. Uses the service role because public.users has no INSERT policy
+ * for authenticated clients.
+ */
+export async function ensurePublicUser(user: { id: string; email?: string | null }) {
+  const admin = createServiceClient();
+  await admin
+    .from("users")
+    .upsert(
+      { id: user.id, email: user.email ?? null, role: "customer" },
+      { onConflict: "id", ignoreDuplicates: true }
+    );
+  await admin
+    .from("customer_profiles")
+    .upsert({ user_id: user.id }, { onConflict: "user_id", ignoreDuplicates: true });
+}
 
 /**
  * Server-side guard: requires the visitor to be authenticated.

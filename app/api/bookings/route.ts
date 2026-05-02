@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { ensurePublicUser } from "@/lib/auth";
 import { computeFees } from "@/lib/stripe/fees";
 import { z } from "zod";
 
@@ -32,6 +33,10 @@ export async function POST(req: Request) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  // FK target safety net — bookings.customer_id and addresses.user_id both
+  // FK into public.users(id), which can be missing for older accounts.
+  await ensurePublicUser(user);
 
   let parsed;
   try {

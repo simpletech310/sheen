@@ -55,18 +55,29 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
   const { data: bvRows } = await supabase
     .from("booking_vehicles")
     .select(
-      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes)"
+      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes, photo_paths)"
     )
     .eq("booking_id", params.jobId);
-  const photoPaths = (bvRows ?? []).flatMap((r: any) => r.condition_photo_paths ?? []);
+  const conditionPhotoPaths = (bvRows ?? []).flatMap(
+    (r: any) => r.condition_photo_paths ?? []
+  );
+  const garagePhotoPaths = (bvRows ?? []).flatMap(
+    (r: any) => r.vehicles?.photo_paths ?? []
+  );
 
   // Pull the service's checklist + the washer's own caps so we can render
   // a "what you'll do" preview and a personalised eligibility badge before
   // they commit. Site photos live in the same bucket so we batch-sign.
   const sitePhotoPaths: string[] = (job as any).addresses?.site_photo_paths ?? [];
-  const allPhotoUrls = await signedUrls("booking-photos", [...photoPaths, ...sitePhotoPaths]);
+  const allPhotoUrls = await signedUrls("booking-photos", [
+    ...conditionPhotoPaths,
+    ...garagePhotoPaths,
+    ...sitePhotoPaths,
+  ]);
   const photoUrls = Object.fromEntries(
-    photoPaths.map((p: string) => [p, allPhotoUrls[p]]).filter(([, u]) => !!u)
+    [...conditionPhotoPaths, ...garagePhotoPaths]
+      .map((p: string) => [p, allPhotoUrls[p]] as const)
+      .filter(([, u]) => !!u)
   );
   const sitePhotoUrls = sitePhotoPaths
     .map((p) => allPhotoUrls[p])

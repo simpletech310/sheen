@@ -43,13 +43,18 @@ export default async function WashDetailPage({ params }: { params: { id: string 
     .maybeSingle();
 
   // All vehicles attached to this booking + signed URLs for their photos.
+  // Includes both garage photos (vehicles.photo_paths) and the condition
+  // photos the customer captured at booking time.
   const { data: bvRows } = await supabase
     .from("booking_vehicles")
     .select(
-      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes)"
+      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes, photo_paths)"
     )
     .eq("booking_id", params.id);
-  const allPhotoPaths = (bvRows ?? []).flatMap((r: any) => r.condition_photo_paths ?? []);
+  const allPhotoPaths = (bvRows ?? []).flatMap((r: any) => [
+    ...(r.condition_photo_paths ?? []),
+    ...(r.vehicles?.photo_paths ?? []),
+  ]);
 
   // Pull the service's checklist + the pro's progress so the customer can see
   // exactly what was done. Photos referenced by the checklist live in the

@@ -83,8 +83,18 @@ export function VehicleForm({ initial, mode }: { initial?: Vehicle; mode: "new" 
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Failed");
       toast(mode === "new" ? "Vehicle added" : "Vehicle updated", "success");
+      // Hand the saved vehicle to GarageList so it shows on the very first
+      // paint of /app/garage instead of waiting on the server-side refetch.
+      // GarageList dedupes against the SSR'd list, so this is safe even
+      // when the round-trip beats us.
+      if (mode === "new" && d?.vehicle) {
+        try {
+          sessionStorage.setItem("sheen.pendingVehicle", JSON.stringify(d.vehicle));
+        } catch {
+          // Storage disabled — fall through; the SSR fetch still works.
+        }
+      }
       router.push("/app/garage");
-      router.refresh();
     } catch (e: any) {
       setErr(e.message);
       toast(e.message || "Could not save vehicle", "error");

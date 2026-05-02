@@ -26,14 +26,19 @@ export default async function TrackingPage({ params }: { params: { id: string } 
 
   if (!booking) notFound();
 
-  // Vehicles + condition photos for this booking.
+  // Vehicles + condition photos for this booking. Garage photos
+  // (vehicles.photo_paths) and condition photos both render via
+  // BookingVehicleList; they live in the same bucket so we batch-sign.
   const { data: bvRows } = await supabase
     .from("booking_vehicles")
     .select(
-      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes)"
+      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes, photo_paths)"
     )
     .eq("booking_id", params.id);
-  const photoPaths = (bvRows ?? []).flatMap((r: any) => r.condition_photo_paths ?? []);
+  const photoPaths = (bvRows ?? []).flatMap((r: any) => [
+    ...(r.condition_photo_paths ?? []),
+    ...(r.vehicles?.photo_paths ?? []),
+  ]);
 
   const workPhotoPaths = (booking as any).work_photo_paths ?? [];
 
