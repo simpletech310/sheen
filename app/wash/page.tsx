@@ -69,6 +69,7 @@ export default async function WashPage() {
     { t: t("promote2Title"), d: t("promote2Desc") },
     { t: t("promote3Title"), d: t("promote3Desc") },
     { t: t("promote4Title"), d: t("promote4Desc") },
+    { t: t("promote5Title"), d: t("promote5Desc") },
   ];
 
   const faq = [

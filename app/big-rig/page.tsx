@@ -48,6 +48,7 @@ export default async function BigRigPage() {
     { h: t("why2Title"), d: t("why2Desc") },
     { h: t("why3Title"), d: t("why3Desc") },
     { h: t("why4Title"), d: t("why4Desc") },
+    { h: t("why5Title"), d: t("why5Desc") },
   ];
 
   const faq: [string, string][] = [

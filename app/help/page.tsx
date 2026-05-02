@@ -17,7 +17,7 @@ export const metadata = {
 
 export default async function HelpPage() {
   const t = await getTranslations("help");
-  const itemKeys = ["booking", "payment", "damage", "direct", "tip", "receipt", "member"] as const;
+  const itemKeys = ["booking", "payment", "damage", "direct", "tip", "receipt", "member", "chat"] as const;
   return (
     <>
       <MNav />

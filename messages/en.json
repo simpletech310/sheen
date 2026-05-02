@@ -109,7 +109,7 @@
     "step2Title": "Drop a pin",
     "step2Desc": "Confirm address. Same-day, tomorrow, this week — pick the window. Rush in 60 minutes if you need it now.",
     "step3Title": "A pro shows up",
-    "step3Desc": "Vetted, insured, background-checked. Live arrival tracking. Real photo, not just a name.",
+    "step3Desc": "Vetted, insured, background-checked. Real photo, not just a name. Live arrival tracking, and chat works in any language.",
     "step4Title": "Approve, then pay",
     "step4Desc": "We hold the payment. The pro sends 4 finished-work photos. You approve, then they get paid. No surprises.",
     "trustHeld": "Held",
@@ -232,6 +232,8 @@
     "promote3Desc": "Once a customer is yours, the platform commission drops to 18% on every repeat job they book with you. Build a regular route and the math works in your favour.",
     "promote4Title": "Tips, instantly, in full",
     "promote4Desc": "100% of tips route directly to your Stripe balance — no skim, no hold. Cash out same-day or instant.",
+    "promote5Title": "Type in your language",
+    "promote5Desc": "Spanish, Korean, Vietnamese, whatever you write best in. The customer reads it in theirs and replies the same way. Stop losing bookings to a chat barrier.",
     "stepsHeadlineA": "APPLY → VERIFY",
     "stepsHeadlineB": "→ START.",
     "step1Title": "Apply",
@@ -318,6 +320,8 @@
     "why3Desc": "$1M GL on every pro. $2,500 damage guarantee on every wash. File from the app within 24 hours.",
     "why4Title": "DOT-friendly turnaround",
     "why4Desc": "Quick rinse before a CSA-anything inspection. Or full showroom-grade for a tradeshow / sale.",
+    "why5Title": "Speak any language",
+    "why5Desc": "Tell your pro exactly what the rig needs — type in Spanish, Vietnamese, Russian, whatever's natural. They read it in theirs and reply the same way.",
     "tiersHeadline": "FOUR TIERS.",
     "tiersEyebrow": "Pick your level",
     "mostBooked": "Most-booked",
@@ -507,7 +511,9 @@
       "receiptTitle": "Receipts",
       "receiptDesc": "Emailed at job completion. View any time from the Washes tab — every line shows service + trust fee + tip + total.",
       "memberTitle": "Membership (Sheen+)",
-      "memberDesc": "Monthly plan that bundles Express or Full Detail washes at a lower per-wash price plus 2× loyalty points. Cancel any time, no contracts."
+      "memberDesc": "Monthly plan that bundles Express or Full Detail washes at a lower per-wash price plus 2× loyalty points. Cancel any time, no contracts.",
+      "chatTitle": "Chat in any language",
+      "chatDesc": "Message your pro in whatever language you write best in. Their replies come back in yours. Tap a translated message to see the original."
     },
     "stillNeedHelpPrefix": "Still need help? Email",
     "stillNeedHelpSuffix": "."

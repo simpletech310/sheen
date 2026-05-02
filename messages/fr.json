@@ -40,7 +40,7 @@
     "autoPlans": "Plans auto",
     "bigRigPlans": "Plans big-rig",
     "combined": "Combiné",
-    "becomeWasher": "Wash for Sheen",
+    "becomeWasher": "Laver pour Sheen",
     "directBookings": "Comment fonctionnent les réservations directes",
     "earningsCalculator": "Calculateur de revenus",
     "proSignIn": "Connexion pro",
@@ -50,7 +50,7 @@
     "privacy": "Confidentialité",
     "contact": "Contact",
     "copyright": "© 2026 SHEEN INC. TOUS DROITS RÉSERVÉS.",
-    "address": "sheen.co · Los Angeles · made for what shines"
+    "address": "sheen.co · Los Angeles · fait pour ce qui brille"
   },
   "languagePicker": {
     "label": "Langue",
@@ -109,7 +109,7 @@
     "step2Title": "Mettez une épingle",
     "step2Desc": "Confirmez l'adresse. Jour même, demain, cette semaine — choisissez la plage. Rush en 60 minutes si vous en avez besoin maintenant.",
     "step3Title": "Un pro se présente",
-    "step3Desc": "Vérifié, assuré, enquête de sécurité. Suivi d'arrivée en direct. Vraie photo, pas juste un nom.",
+    "step3Desc": "Vérifiés, assurés, antécédents contrôlés. Vraie photo, pas juste un nom. Suivi en direct de l'arrivée, et le chat fonctionne dans toutes les langues.",
     "step4Title": "Approuvez, puis payez",
     "step4Desc": "On retient le paiement. Le pro envoie 4 photos du travail fini. Vous approuvez, puis il est payé. Pas de surprises.",
     "trustHeld": "Retenu",
@@ -122,7 +122,7 @@
     "trustInsuranceLabel": "Assurance RC · chaque lavage",
     "workHeadline": "LE TRAVAIL.",
     "workEyebrow": "Jobs récents · LA",
-    "recruitEyebrow": "Wash for Sheen",
+    "recruitEyebrow": "Laver pour Sheen",
     "recruitHeadlineA": "GÉREZ VOTRE PROPRE",
     "recruitHeadlineB": "PORTEFEUILLE CLIENT.",
     "recruitBody": "Sheen est la plateforme ; les clients sont à vous. Obtenez un @handle personnel, partagez-le, et les réservations directes vous arrivent en premier — verrouillées pour vous pendant 10 minutes, pas de course à la file. Paiements, assurance et litiges — on gère. Gardez jusqu'à 88% + 100% des pourboires. Retrait le jour même.",
@@ -137,7 +137,7 @@
     "recruitStat4": "Jour même",
     "recruitStat4Label": "Paiements standard vers votre banque",
     "finalHeadlineA": "FAITES-LE",
-    "finalHeadlineB": "SHEENED."
+    "finalHeadlineB": "SHEEENÉ."
   },
   "auto": {
     "eyebrow": "Service · Auto",
@@ -259,7 +259,9 @@
     "joinHeadline": "REJOIGNEZ LA FLOTTE.",
     "joinSubhead": "RC 1 M$ requis. Enquête de sécurité via Checkr. Intégration en ~2 minutes.",
     "applyNow": "Postuler maintenant →",
-    "proSignIn": "Connexion pro"
+    "proSignIn": "Connexion pro",
+    "promote5Title": "Écrivez dans votre langue",
+    "promote5Desc": "Espagnol, coréen, vietnamien, peu importe votre langue. Le client le lit dans la sienne et répond pareil. Arrêtez de perdre des réservations à cause d'une barrière linguistique."
   },
   "home": {
     "eyebrow": "Service · Maison",
@@ -284,16 +286,16 @@
     "tiersEyebrow": "Choisissez la vôtre",
     "mostBooked": "Plus réservé",
     "launchPromo": "Promo lancement · 90 jours",
-    "tier1Name": "Driveway & Walkway",
+    "tier1Name": "Allée & Trottoir",
     "tier1Desc": "Jusqu'à 800 pi² de béton ou pavés. Prétraitement taches huile, rinçage sécuritaire béton.",
     "tier1Time": "90 min",
-    "tier2Name": "Full Exterior",
+    "tier2Name": "Extérieur Complet",
     "tier2Desc": "Revêtement + allée + trottoirs. Lavage doux sur revêtement, pression sur surfaces dures — nettoyants biodégradables.",
     "tier2Time": "4 h",
-    "tier3Name": "Deck / Patio Add-on",
+    "tier3Name": "Terrasse / Patio en Plus",
     "tier3Desc": "Lavage doux pH sécuritaire bois. Meubles déplacés & replacés. Se combine avec tout niveau ci-dessus.",
     "tier3Time": "60 min",
-    "tier4Name": "Solar Panel Wash",
+    "tier4Name": "Lavage Panneaux Solaires",
     "tier4Desc": "Rinçage eau désionisée, finition toucher doux. Pas de chimiques près des panneaux — récupère de vrais watts.",
     "tier4Time": "60 min",
     "beforeAfterHeadline": "AVANT / APRÈS.",
@@ -399,7 +401,9 @@
     "closingHeadlineA": "RÉSERVEZ VOTRE",
     "closingHeadlineB": "RIG.",
     "closingSubhead": "Plages jour même à LA. Pros assurés. 100% des pourboires à votre chauffeur.",
-    "closingSeePlans": "Voir les plans"
+    "closingSeePlans": "Voir les plans",
+    "why5Title": "Parlez n'importe quelle langue",
+    "why5Desc": "Dites exactement à votre pro ce que le camion a besoin — écrivez en espagnol, vietnamien, russe, ce qui vous vient naturellement. Il le lit dans sa langue et répond pareil."
   },
   "business": {
     "eyebrow": "Service · Commercial",
@@ -507,7 +511,9 @@
       "receiptTitle": "Reçus",
       "receiptDesc": "Courriel à la fin du job. Consultez quand vous voulez depuis l'onglet Lavages — chaque ligne montre service + frais confiance + pourboire + total.",
       "memberTitle": "Adhésion (Sheen+)",
-      "memberDesc": "Plan mensuel qui regroupe les lavages Express ou Full Detail à un prix par lavage inférieur plus points de fidélité 2×. Annulez quand vous voulez, pas de contrats."
+      "memberDesc": "Plan mensuel qui regroupe les lavages Express ou Full Detail à un prix par lavage inférieur plus points de fidélité 2×. Annulez quand vous voulez, pas de contrats.",
+      "chatTitle": "Chattez dans n'importe quelle langue",
+      "chatDesc": "Envoyez un message à votre pro dans la langue que vous maîtrisez. Ses réponses arrivent dans la vôtre. Appuyez sur un message traduit pour voir l'original."
     },
     "stillNeedHelpPrefix": "Besoin d'aide encore ? Courriel",
     "stillNeedHelpSuffix": "."
@@ -517,7 +523,7 @@
     "applyToWash": "Postuler pour laver",
     "partnerSignUp": "Inscription partenaire",
     "headlineCustomerA": "FAITES-LE",
-    "headlineCustomerB": "SHEENED.",
+    "headlineCustomerB": "SHEEENÉ.",
     "headlineWasherA": "REJOIGNEZ LA",
     "headlineWasherB": "FLOTTE.",
     "headlinePartnerA": "DÉVELOPPEZ VOTRE",
@@ -1518,7 +1524,7 @@
     "insDesc": "$1M responsabilité civile générale. PDF ou image du certificat.",
     "insExpiresLabel": "Expire",
     "insTodo": "À faire",
-    "insActive": "Active",
+    "insActive": "Actif",
     "insExpired": "Expirée",
     "insExpiresSoon": "Expire dans {days}j",
     "insPickFileFirst": "Choisissez d'abord un fichier",
@@ -1600,7 +1606,7 @@
     "eyebrow": "Boîte de réception",
     "headline": "MESSAGES",
     "noThreadsYet": "Aucune conversation pour l'instant",
-    "noThreadsDesc": "Quand un client vous envoie un message pour un travail accepté, la conversation apparaît ici.",
+    "noThreadsDesc": "Quand un client vous envoie un message sur un job accepté, la conversation apparaît ici.",
     "customerFallback": "Client",
     "serviceFallback": "Service"
   }

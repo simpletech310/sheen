@@ -109,7 +109,7 @@
     "step2Title": "标记位置",
     "step2Desc": "确认地址。今天、明天、本周 — 选择时间段。如需立即,60分钟Rush。",
     "step3Title": "专业人员到达",
-    "step3Desc": "经过审核、保险、背景调查。实时到达跟踪。真实照片,不只是名字。",
+    "step3Desc": "经过审核、有保险、背景调查。真实照片，不只是名字。实时到达追踪，聊天支持任何语言。",
     "step4Title": "批准后付款",
     "step4Desc": "我们暂存付款。专业人员发送4张完成照片。您批准后再付款。无意外。",
     "trustHeld": "暂存",
@@ -259,7 +259,9 @@
     "joinHeadline": "加入车队。",
     "joinSubhead": "需要 $1M GL。通过 Checkr 进行背景调查。约2分钟入职。",
     "applyNow": "立即申请 →",
-    "proSignIn": "专业人员登录"
+    "proSignIn": "专业人员登录",
+    "promote5Title": "用你的语言输入",
+    "promote5Desc": "西班牙语、韩语、越南语，用你最习惯的语言。客户会看到他们的语言版本，回复也一样。别再因为语言障碍丢单了。"
   },
   "home": {
     "eyebrow": "服务 · 住宅",
@@ -399,7 +401,9 @@
     "closingHeadlineA": "预约你的",
     "closingHeadlineB": "大卡车。",
     "closingSubhead": "洛杉矶当日预约窗口。保险齐全的专业人员。100%小费归司机。",
-    "closingSeePlans": "查看方案"
+    "closingSeePlans": "查看方案",
+    "why5Title": "说任何语言",
+    "why5Desc": "用你最自然的语言告诉服务人员车辆需求——西班牙语、越南语、俄语都行。他们会看到自己的语言版本，回复也一样。"
   },
   "business": {
     "eyebrow": "服务 · 商业",
@@ -507,7 +511,9 @@
       "receiptTitle": "收据",
       "receiptDesc": "工作完成时邮件发送。任何时候从 Washes 标签查看 — 每行显示服务 + 信任费 + 小费 + 总计。",
       "memberTitle": "会员(Sheen+)",
-      "memberDesc": "月度计划,以更低的每次洗车价格捆绑 Express 或 Full Detail 洗车,加2倍忠诚度积分。随时取消,无合同。"
+      "memberDesc": "月度计划,以更低的每次洗车价格捆绑 Express 或 Full Detail 洗车,加2倍忠诚度积分。随时取消,无合同。",
+      "chatTitle": "用任何语言聊天",
+      "chatDesc": "用你最习惯的语言给服务人员发消息。他们的回复会自动翻译成你的语言。点击翻译消息可查看原文。"
     },
     "stillNeedHelpPrefix": "Still need help? Email",
     "stillNeedHelpSuffix": "."
