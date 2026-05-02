@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { ProBottomNav } from "@/components/pro/ProBottomNav";
 import { ProDashboardRealtime } from "@/components/pro/ProDashboardRealtime";
+import { DirectRequestListener } from "@/components/pro/DirectRequestListener";
 import { PWARegister } from "@/components/PWARegister";
 import { WelcomeInstallSheet } from "@/components/pwa/WelcomeInstallSheet";
 import { InstallBanner } from "@/components/pwa/InstallBanner";
@@ -69,6 +70,9 @@ export default async function ProLayout({ children }: { children: React.ReactNod
           wallet, earnings, /pro/me numbers ticking up the moment they
           change without the washer reaching for refresh. */}
       <ProDashboardRealtime userId={user?.id ?? null} />
+      {/* App-wide safety net for direct requests — toasts the moment one
+          lands, regardless of which /pro/* page the washer is on. */}
+      <DirectRequestListener userId={user?.id ?? null} />
       <main className="flex-1 max-w-md w-full mx-auto pb-4">{children}</main>
       <InstallBanner variant="washer" />
       <ProBottomNav />

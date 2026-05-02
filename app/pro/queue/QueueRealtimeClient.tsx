@@ -2,11 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 import { fmtUSD } from "@/lib/pricing";
 import { computeFees } from "@/lib/stripe/fees";
 import { checkWasherEligibility, type WasherCapabilities } from "@/lib/job-matching";
+
+// Single source of truth for the columns + joins the queue card needs.
+// Used both for the initial SSR query (queue/page.tsx) and for the
+// hydrating fetch we run when a realtime row arrives without joined data.
+const QUEUE_JOB_SELECT =
+  "id, status, assigned_washer_id, scheduled_window_start, service_cents, vehicle_count, requested_washer_id, request_expires_at, request_declined_at, is_rush, rush_deadline, rush_bonus_cents, services(tier_name, category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(street, city, state, zip, lat, lng, has_water, has_power)";
 
 type SortMode = "default" | "distance" | "pay" | "soonest";
 
@@ -15,12 +20,18 @@ export type WasherCaps = WasherCapabilities;
 /**
  * Real-time queue list. Receives an initial snapshot from the server
  * component (zero extra latency) then subscribes to Supabase Realtime
- * postgres_changes for the bookings table — no polling.
+ * postgres_changes for the bookings table — no polling, no full-page
+ * SSR re-renders.
  *
  * Events handled:
- *   INSERT  → new job, add to list if it passes basic filters
- *   UPDATE  → job claimed / cancelled / changed — remove from list
- *   DELETE  → remove from list
+ *   INSERT  → fetch the single row with services/addresses joined, run
+ *             the same eligibility + radius gate the server does, then
+ *             merge into local state (no router.refresh — that used to
+ *             cascade into a flicker storm whenever multiple bookings
+ *             changed in quick succession).
+ *   UPDATE  → if the new row is no longer pending/unclaimed, drop it
+ *             from both lists; otherwise upsert in place.
+ *   DELETE  → remove from list.
  *
  * Radius + availability filtering is server-side on initial load.
  * Realtime events get basic client-side filtering (status=pending,
@@ -94,22 +105,10 @@ export function QueueRealtimeClient({
   radius: number;
   washerCaps: WasherCaps;
 }) {
-  const router = useRouter();
   const [jobs, setJobs] = useState<QueueJob[]>(initialJobs);
   const [directRequests, setDirectRequests] = useState<QueueJob[]>(initialDirectRequests);
   // Track which IDs are direct requests so we don't show them in the general list
   const directIds = useRef(new Set(initialDirectRequests.map((j) => j.id)));
-  // Coalesced refresh — inserts and most updates fire a router.refresh()
-  // because the realtime payload doesn't include the joined services /
-  // addresses rows, and we'd render "undefined, undefined" otherwise.
-  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  function queueRefresh() {
-    if (refreshTimer.current) return;
-    refreshTimer.current = setTimeout(() => {
-      refreshTimer.current = null;
-      router.refresh();
-    }, 300);
-  }
 
   // Flash animation: IDs of newly arrived jobs
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
@@ -176,6 +175,98 @@ export function QueueRealtimeClient({
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
+    // Helper: flash a row's id for ~1.8s so the UI can highlight it.
+    function flash(id: string) {
+      setNewIds((n) => {
+        const a = Array.from(n);
+        a.push(id);
+        return new Set(a);
+      });
+      setTimeout(() => {
+        setNewIds((n) => {
+          const next = new Set(Array.from(n));
+          next.delete(id);
+          return next;
+        });
+      }, 1800);
+    }
+
+    // Decide whether a fully-hydrated row belongs in directRequests or jobs,
+    // and merge it. Returns false if the row should be ignored entirely
+    // (eligibility / radius gate failed, or it's already been claimed).
+    function ingest(row: QueueJob) {
+      if (row.status !== "pending" || row.assigned_washer_id) {
+        setJobs((prev) => prev.filter((j) => j.id !== row.id));
+        setDirectRequests((prev) => prev.filter((j) => j.id !== row.id));
+        directIds.current.delete(row.id);
+        return false;
+      }
+
+      const elig = checkWasherEligibility(row.services, row.addresses, washerCaps);
+      if (!elig.ok) return false;
+
+      if (
+        myLat &&
+        myLng &&
+        row.addresses?.lat &&
+        row.addresses?.lng
+      ) {
+        const d = distanceMilesSimple(
+          { lat: myLat, lng: myLng },
+          { lat: Number(row.addresses.lat), lng: Number(row.addresses.lng) }
+        );
+        if (d > radius) return false;
+      }
+
+      const isDirectForMe =
+        row.requested_washer_id === userId &&
+        row.request_expires_at &&
+        new Date(row.request_expires_at).getTime() > Date.now() &&
+        !(row as any).request_declined_at;
+
+      if (isDirectForMe) {
+        directIds.current.add(row.id);
+        setDirectRequests((prev) => {
+          if (prev.some((j) => j.id === row.id)) {
+            return prev.map((j) => (j.id === row.id ? row : j));
+          }
+          flash(row.id);
+          return [row, ...prev];
+        });
+        // Make sure it isn't sitting in the general queue too.
+        setJobs((prev) => prev.filter((j) => j.id !== row.id));
+        return true;
+      }
+
+      if (directIds.current.has(row.id)) {
+        // Was a direct request, now isn't — pull it out of directs.
+        directIds.current.delete(row.id);
+        setDirectRequests((prev) => prev.filter((j) => j.id !== row.id));
+      }
+
+      setJobs((prev) => {
+        if (prev.some((j) => j.id === row.id)) {
+          return prev.map((j) => (j.id === row.id ? row : j));
+        }
+        flash(row.id);
+        return [row, ...prev];
+      });
+      return true;
+    }
+
+    // Realtime payloads don't include joined `services` / `addresses` rows,
+    // so when an event arrives that we'd want to ingest we fetch the one
+    // row we care about with joins. RLS still applies — if the washer
+    // shouldn't see this booking, the fetch returns null and we drop it.
+    async function hydrateAndIngest(id: string) {
+      const { data } = await supabase
+        .from("bookings")
+        .select(QUEUE_JOB_SELECT)
+        .eq("id", id)
+        .maybeSingle();
+      if (data) ingest(data as unknown as QueueJob);
+    }
+
     const channel = supabase
       .channel("queue:bookings")
       .on(
@@ -196,76 +287,19 @@ export function QueueRealtimeClient({
 
           const row = payload.new as any;
 
-          // Only care about pending, unclaimed jobs
+          // Job was claimed / status moved past pending — drop it without
+          // touching the network.
           if (row.status !== "pending" || row.assigned_washer_id) {
-            // Job was claimed or status changed — remove from both lists
             setJobs((prev) => prev.filter((j) => j.id !== row.id));
             setDirectRequests((prev) => prev.filter((j) => j.id !== row.id));
             directIds.current.delete(row.id);
             return;
           }
 
-          // INSERT for a new pending job — realtime payload doesn't include
-          // joined services/addresses, so we re-fetch via router.refresh()
-          // instead of rendering an undefined card. This is what makes
-          // "client books → washer queue updates" actually work end-to-end.
-          if (payload.eventType === "INSERT") {
-            queueRefresh();
-            return;
-          }
-
-          // Capability gate for UPDATEs — same logic the server uses.
-          const elig = checkWasherEligibility(row.services, row.addresses, washerCaps);
-          if (!elig.ok) return;
-
-          // Radius filter
-          if (
-            myLat &&
-            myLng &&
-            row.addresses?.lat &&
-            row.addresses?.lng
-          ) {
-            const d = distanceMilesSimple(
-              { lat: myLat, lng: myLng },
-              { lat: Number(row.addresses.lat), lng: Number(row.addresses.lng) }
-            );
-            if (d > radius) return;
-          }
-
-          // Check direct request
-          const isDirectForMe =
-            row.requested_washer_id === userId &&
-            row.request_expires_at &&
-            new Date(row.request_expires_at).getTime() > Date.now() &&
-            !row.request_declined_at;
-
-          if (isDirectForMe) {
-            directIds.current.add(row.id);
-            setDirectRequests((prev) => {
-              if (prev.some((j) => j.id === row.id)) return prev;
-              // Flash
-              setNewIds((n) => { const a = Array.from(n); a.push(row.id); return new Set(a); });
-              setTimeout(() => setNewIds((n) => { const next = new Set(Array.from(n)); next.delete(row.id); return next; }), 1800);
-              return [row as QueueJob, ...prev];
-            });
-            // Remove from general list if it was there
-            setJobs((prev) => prev.filter((j) => j.id !== row.id));
-            return;
-          }
-
-          // General queue
-          if (!directIds.current.has(row.id)) {
-            setJobs((prev) => {
-              // UPDATE in place
-              if (prev.some((j) => j.id === row.id)) {
-                return prev.map((j) => (j.id === row.id ? (row as QueueJob) : j));
-              }
-              // New INSERT — flash and prepend
-              setNewIds((n) => { const a = Array.from(n); a.push(row.id); return new Set(a); });
-              setTimeout(() => setNewIds((n) => { const next = new Set(Array.from(n)); next.delete(row.id); return next; }), 1800);
-              return [row as QueueJob, ...prev];
-            });
-          }
+          // The realtime row is missing services/addresses joins — refetch
+          // just this one row and merge. This is the path that used to
+          // call router.refresh() and cause the whole-page flicker storm.
+          hydrateAndIngest(row.id);
         }
       )
       .subscribe();

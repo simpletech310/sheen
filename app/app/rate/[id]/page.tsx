@@ -14,6 +14,10 @@ const tips = [
   { pct: 25, label: "25%" },
 ];
 
+// Server-side allowlist (see /api/stripe/checkout-tip:20). Mirror it here
+// so we can show the user *before* they hit Pay why the button is locked.
+const TIPPABLE_STATUSES = new Set(["completed", "funded"]);
+
 function RateInner({ params }: { params: { id: string } }) {
   const { id } = params;
   const router = useRouter();
@@ -23,12 +27,14 @@ function RateInner({ params }: { params: { id: string } }) {
   const [submitting, setSubmitting] = useState(false);
   const [booking, setBooking] = useState<any>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [preparingTip, setPreparingTip] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showPayModal, setShowPayModal] = useState(false);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const tipCents = booking ? Math.round((booking.service_cents * tipPct) / 100) : 0;
+  const tipAllowed = !!booking && TIPPABLE_STATUSES.has(booking.status);
 
   useEffect(() => {
     fetch(`/api/bookings/${id}`)
@@ -42,23 +48,31 @@ function RateInner({ params }: { params: { id: string } }) {
       .catch(() => setLoading(false));
   }, [id]);
 
-  useEffect(() => {
-    if (tipCents > 0) {
-      setClientSecret(null);
-      fetch("/api/stripe/checkout-tip", {
+  // Create the tip PaymentIntent on demand — when the user opens the modal,
+  // not on every tip-percent change. Surfaces the API error via toast +
+  // closes the modal instead of stranding the user on the spinner.
+  async function preparePayment() {
+    if (tipCents <= 0) return;
+    setPreparingTip(true);
+    setClientSecret(null);
+    try {
+      const r = await fetch("/api/stripe/checkout-tip", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ booking_id: id, amount_cents: tipCents }),
-      })
-        .then(r => r.json())
-        .then(d => {
-          if (d.client_secret) setClientSecret(d.client_secret);
-        })
-        .catch(() => {});
-    } else {
-      setClientSecret(null);
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d?.client_secret) {
+        throw new Error(d?.error || "Couldn't prepare tip");
+      }
+      setClientSecret(d.client_secret);
+    } catch (e: any) {
+      toast(e.message || "Couldn't prepare tip", "error");
+      setShowPayModal(false);
+    } finally {
+      setPreparingTip(false);
     }
-  }, [id, tipCents]);
+  }
 
   async function uploadPhoto(file: File) {
     setUploadingPhoto(true);
@@ -202,14 +216,32 @@ function RateInner({ params }: { params: { id: string } }) {
         >
           {submitting ? "Submitting…" : "Submit Rating →"}
         </button>
-      ) : (
+      ) : tipAllowed ? (
         <button
-          onClick={() => setShowPayModal(true)}
-          disabled={submitting}
+          onClick={() => {
+            setShowPayModal(true);
+            preparePayment();
+          }}
+          disabled={submitting || preparingTip}
           className="w-full bg-cobalt text-bone rounded-none py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
         >
-          Submit &amp; Pay {fmtUSD(tipCents)} →
+          {preparingTip ? "Preparing…" : `Submit & Pay ${fmtUSD(tipCents)} →`}
         </button>
+      ) : (
+        <div>
+          <div className="bg-mist/40 border-l-2 border-sol p-3 text-xs text-smoke leading-relaxed">
+            Tip will unlock once your wash is approved and the funds release
+            to your pro. You can come back here from Washes &rarr; this booking
+            once that's done.
+          </div>
+          <button
+            onClick={submit}
+            disabled={submitting}
+            className="mt-3 w-full bg-mist text-ink rounded-none py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
+          >
+            {submitting ? "Submitting…" : "Submit rating without tip →"}
+          </button>
+        </div>
       )}
 
       {/* Tip Payment Modal */}
