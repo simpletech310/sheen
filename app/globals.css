@@ -81,3 +81,26 @@ html, body {
     background: linear-gradient(180deg, var(--royal) 0%, var(--royal) 65%, var(--sol) 65%, var(--sol) 100%);
   }
 }
+
+/* iOS Safari auto-zooms the page when a user taps into an input whose
+ * computed font-size is < 16px. Even with maximum-scale=1 set on the
+ * viewport, recent iOS versions sometimes still fire the zoom. The
+ * definitive fix is to make every focusable text field at least 16px
+ * on mobile — Tailwind's `text-sm` (14px) is the main offender across
+ * the app. We keep desktop styling untouched (≥ 769px), so on a laptop
+ * the inputs render at the size the design system specifies. The :not
+ * filter excludes hidden file inputs etc. that don't render visually.
+ */
+@media screen and (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+    /* Sub-pixel anti-aliasing fix: iOS occasionally renders 16px text
+     * slightly smaller than 16 device px on retina if line-height is
+     * tight. Pin a generous line-height so the field always passes
+     * iOS's zoom threshold check. */
+    line-height: 1.4 !important;
+  }
+}
+

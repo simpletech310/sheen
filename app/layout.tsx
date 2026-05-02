@@ -74,6 +74,13 @@ export const viewport = {
   themeColor: "#003594",
   width: "device-width",
   initialScale: 1,
+  // PWA-style behaviour: lock zoom so iOS Safari doesn't auto-pinch
+  // the viewport when a user taps into a sub-16px input. We pair this
+  // with a 16px minimum on inputs (see globals.css) so iOS never has
+  // a reason to fire the zoom in the first place — and since the app
+  // is fully responsive, the manual pinch isn't needed for legibility.
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

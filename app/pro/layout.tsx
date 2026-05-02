@@ -41,6 +41,10 @@ export const viewport: Viewport = {
   themeColor: "#0A0A0A",
   width: "device-width",
   initialScale: 1,
+  // Match the root viewport — lock zoom so iOS Safari doesn't pinch
+  // the screen when the pro taps into a small input on the dark theme.
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default async function ProLayout({ children }: { children: React.ReactNode }) {
