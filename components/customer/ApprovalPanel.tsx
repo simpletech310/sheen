@@ -98,17 +98,32 @@ export function ApprovalPanel({
 
       {Object.keys(workPhotoUrls).length > 0 && (
         <div className="mt-4">
+          <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-2">
+            Finished-work photos · {Object.keys(workPhotoUrls).length}
+          </div>
           <div className="grid grid-cols-2 gap-2">
-            {Object.entries(workPhotoUrls).map(([path, url]) => (
-              <div key={path} className="aspect-square bg-bone/50 border border-mist relative overflow-hidden">
+            {Object.entries(workPhotoUrls).map(([path, url], idx) => (
+              <a
+                key={path}
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="aspect-square bg-bone/50 border border-mist relative overflow-hidden block group"
+                aria-label={`Open finished-work photo ${idx + 1}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={url}
                   alt="Finished work"
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover transition group-hover:scale-105"
                 />
-              </div>
+              </a>
             ))}
           </div>
+          <p className="text-[11px] text-smoke leading-relaxed mt-2">
+            Tap any photo to view full-size. Compare with how it looked when
+            you booked — if anything's off, file a dispute below.
+          </p>
         </div>
       )}
 

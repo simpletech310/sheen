@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
-import { publicCustomerName } from "@/lib/display-name";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +19,7 @@ export default async function WasherProfilePage({ params }: { params: { id: stri
     supa.from("users").select("full_name, display_name, avatar_url").eq("id", params.id).maybeSingle(),
     supa
       .from("reviews")
-      .select("rating_int, comment, created_at, reviewer_id")
+      .select("rating_int, comment, created_at, reviewer_id, booking_id")
       .eq("reviewee_id", params.id)
       .order("created_at", { ascending: false })
       .limit(20),
@@ -28,12 +27,25 @@ export default async function WasherProfilePage({ params }: { params: { id: stri
 
   if (!profile || profile.status !== "active") notFound();
 
-  // Hydrate reviewer names so we can render "Tj W." style bylines.
-  const reviewerIds = Array.from(new Set((reviews ?? []).map((r: any) => r.reviewer_id).filter(Boolean)));
-  const { data: reviewers } = reviewerIds.length
-    ? await supa.from("users").select("id, full_name, display_name").in("id", reviewerIds)
+  // Byline each review with the vehicle washed (e.g. "2014 Dodge Dart")
+  // instead of the customer's name — public-facing privacy default.
+  const bookingIds = Array.from(
+    new Set((reviews ?? []).map((r: any) => r.booking_id).filter(Boolean))
+  );
+  const { data: bvRows } = bookingIds.length
+    ? await supa
+        .from("booking_vehicles")
+        .select("booking_id, vehicles(year, make, model)")
+        .in("booking_id", bookingIds)
     : { data: [] as any[] };
-  const reviewerMap = new Map((reviewers ?? []).map((r: any) => [r.id, r]));
+  const labelByBookingId = new Map<string, string>();
+  for (const row of (bvRows ?? []) as any[]) {
+    if (labelByBookingId.has(row.booking_id)) continue;
+    const v = row.vehicles;
+    if (!v) continue;
+    const lbl = [v.year, v.make, v.model].filter(Boolean).join(" ").trim();
+    if (lbl) labelByBookingId.set(row.booking_id, lbl);
+  }
 
   const fullName = userRow?.display_name || userRow?.full_name || "Sheen Pro";
   const initial = fullName[0].toUpperCase();
@@ -119,11 +131,7 @@ export default async function WasherProfilePage({ params }: { params: { id: stri
           </div>
         ) : (
           reviews!.map((r: any) => {
-            const reviewer = reviewerMap.get(r.reviewer_id);
-            const name = publicCustomerName({
-              display_name: reviewer?.display_name,
-              full_name: reviewer?.full_name,
-            });
+            const label = labelByBookingId.get(r.booking_id) ?? "Sheen customer";
             return (
               <div key={r.created_at + r.reviewer_id} className="bg-mist/40 p-4">
                 <div className="flex justify-between items-center">
@@ -140,7 +148,7 @@ export default async function WasherProfilePage({ params }: { params: { id: stri
                   </div>
                 </div>
                 <div className="font-mono text-[10px] uppercase tracking-wider text-ink/70 mt-2">
-                  {name}
+                  {label}
                 </div>
                 {r.comment && (
                   <p className="text-sm mt-1.5 leading-relaxed text-ink/85">{r.comment}</p>

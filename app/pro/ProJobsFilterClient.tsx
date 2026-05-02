@@ -90,9 +90,21 @@ export function ProJobsFilterClient({
                     <div className="text-sm font-bold uppercase">
                       {j.services?.tier_name ?? "Service"}
                     </div>
-                    <div className="text-xs text-bone/90 mt-1">
-                      {j.address?.street}, {j.address?.city}
-                    </div>
+                    {/* Once a wash funds, scrub the customer's home street
+                        from the pro's history. Keep the city for context
+                        (1099 + recall) but the precise address belongs to
+                        the customer once payment has cleared. Active and
+                        complete-pending-approval views still show the
+                        full address — pro may need to return. */}
+                    {j.status === "funded" ? (
+                      <div className="text-xs text-bone/55 mt-1 italic">
+                        {j.address?.city ?? "—"} · address removed
+                      </div>
+                    ) : (
+                      <div className="text-xs text-bone/90 mt-1">
+                        {j.address?.street}, {j.address?.city}
+                      </div>
+                    )}
                     <div className="font-mono text-[10px] text-bone/75 uppercase mt-1.5 tabular">
                       {winStart.toLocaleDateString([], { month: "short", day: "numeric" })}
                       {" · "}

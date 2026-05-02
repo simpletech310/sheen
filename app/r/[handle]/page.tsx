@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
-import { publicCustomerName } from "@/lib/display-name";
 
 export const dynamic = "force-dynamic";
 
@@ -30,21 +29,35 @@ export default async function ProReferralPage({
     .eq("id", wp.user_id)
     .maybeSingle();
 
-  // Pull last 6 reviews — joined to the reviewer for the masked
-  // "Tj W." comment byline. Service-role client because reviews has RLS
-  // that blocks anon reads of foreign reviewer rows.
+  // Pull last 6 reviews. We byline each review with the vehicle that was
+  // washed (e.g. "2014 Dodge Dart") instead of the customer's name —
+  // anonymous to the public, more useful as social proof ("they're
+  // working on real cars, not just sedans"). Service-role client
+  // because reviews has RLS that blocks anon reads.
   const { data: recentReviews } = await supa
     .from("reviews")
-    .select("rating_int, comment, created_at, reviewer_id, has_photo, photo_path")
+    .select("rating_int, comment, created_at, reviewer_id, booking_id, has_photo, photo_path")
     .eq("reviewee_id", wp.user_id)
     .not("comment", "is", null)
     .order("created_at", { ascending: false })
     .limit(6);
-  const reviewerIds = Array.from(new Set((recentReviews ?? []).map((r) => r.reviewer_id)));
-  const { data: reviewers } = reviewerIds.length
-    ? await supa.from("users").select("id, full_name, display_name").in("id", reviewerIds)
+  const bookingIds = Array.from(
+    new Set((recentReviews ?? []).map((r: any) => r.booking_id).filter(Boolean))
+  );
+  const { data: bvRows } = bookingIds.length
+    ? await supa
+        .from("booking_vehicles")
+        .select("booking_id, vehicles(year, make, model)")
+        .in("booking_id", bookingIds)
     : { data: [] as any[] };
-  const reviewerMap = new Map((reviewers ?? []).map((r: any) => [r.id, r]));
+  const labelByBookingId = new Map<string, string>();
+  for (const row of (bvRows ?? []) as any[]) {
+    if (labelByBookingId.has(row.booking_id)) continue; // first vehicle wins
+    const v = row.vehicles;
+    if (!v) continue;
+    const lbl = [v.year, v.make, v.model].filter(Boolean).join(" ").trim();
+    if (lbl) labelByBookingId.set(row.booking_id, lbl);
+  }
 
   const fullName = u?.display_name || u?.full_name || "Sheen Pro";
   const initial = fullName[0]?.toUpperCase() ?? "P";
@@ -146,11 +159,9 @@ export default async function ProReferralPage({
           </div>
           <div className="space-y-3">
             {(recentReviews ?? []).map((r: any) => {
-              const reviewer = reviewerMap.get(r.reviewer_id);
-              const name = publicCustomerName({
-                display_name: reviewer?.display_name,
-                full_name: reviewer?.full_name,
-              });
+              // Byline shows the vehicle washed ("2014 Dodge Dart"),
+              // not the customer's name — keeps the customer anonymous.
+              const label = labelByBookingId.get(r.booking_id) ?? "Sheen customer";
               const stars = "★".repeat(r.rating_int) + "☆".repeat(5 - r.rating_int);
               const when = new Date(r.created_at).toLocaleDateString([], {
                 month: "short",
@@ -159,7 +170,7 @@ export default async function ProReferralPage({
               return (
                 <div key={r.created_at + r.reviewer_id} className="border-l-2 border-royal bg-mist/30 p-4">
                   <div className="flex items-baseline justify-between mb-1">
-                    <span className="text-sm font-bold text-ink">{name}</span>
+                    <span className="text-sm font-bold text-ink">{label}</span>
                     <span className="font-mono text-[10px] uppercase tracking-wider text-smoke">
                       {when}
                     </span>

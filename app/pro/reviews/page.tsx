@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
-import { createClient } from "@/lib/supabase/server";
-import { publicCustomerName } from "@/lib/display-name";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -30,23 +29,28 @@ export default async function ReviewsPage() {
   for (const r of reviews ?? []) dist[(r as any).rating_int] = (dist[(r as any).rating_int] ?? 0) + 1;
   const max = Math.max(1, ...Object.values(dist));
 
-  // Look up reviewer names — display_name preferred, full_name fallback,
-  // then masked to "First L." via publicCustomerName for privacy.
-  const reviewerIds = Array.from(
-    new Set((reviews ?? []).map((r: any) => r.reviewer_id))
+  // Show the vehicle washed (e.g. "2014 Dodge Dart") instead of the
+  // customer's name — keeps them anonymous while still letting the pro
+  // recognise which job a review came from. Service-role client because
+  // `vehicles` RLS is select-own for the customer; we just want a label.
+  const bookingIds = Array.from(
+    new Set((reviews ?? []).map((r: any) => r.booking_id).filter(Boolean))
   );
-  const { data: reviewers } = reviewerIds.length
-    ? await supabase
-        .from("users")
-        .select("id, full_name, display_name")
-        .in("id", reviewerIds)
+  const admin = createServiceClient();
+  const { data: bvRows } = bookingIds.length
+    ? await admin
+        .from("booking_vehicles")
+        .select("booking_id, vehicles(year, make, model)")
+        .in("booking_id", bookingIds)
     : { data: [] as any[] };
-  const nameById = new Map<string, string>(
-    (reviewers ?? []).map((u: any) => [
-      u.id,
-      publicCustomerName({ display_name: u.display_name, full_name: u.full_name }),
-    ])
-  );
+  const labelByBookingId = new Map<string, string>();
+  for (const row of (bvRows ?? []) as any[]) {
+    if (labelByBookingId.has(row.booking_id)) continue; // first vehicle wins
+    const v = row.vehicles;
+    if (!v) continue;
+    const label = [v.year, v.make, v.model].filter(Boolean).join(" ").trim();
+    if (label) labelByBookingId.set(row.booking_id, label);
+  }
 
   return (
     <div className="px-5 pt-10 pb-8">
@@ -104,7 +108,10 @@ export default async function ReviewsPage() {
       ) : (
         <div className="space-y-2">
           {(reviews ?? []).map((r: any, i) => {
-            const name = nameById.get(r.reviewer_id) ?? "Sheen customer";
+            // Show the vehicle washed instead of the customer's name —
+            // privacy by default, plus it's more useful context for the
+            // pro ("ah, that was the Dodge Dart with the cracked dash").
+            const label = labelByBookingId.get(r.booking_id) ?? "Sheen customer";
             const hasComment = !!(r.comment && r.comment.trim());
             return (
               <div key={i} className="bg-white/5 p-4">
@@ -123,7 +130,7 @@ export default async function ReviewsPage() {
                     })}
                   </div>
                 </div>
-                <div className="text-xs text-bone/65 mt-1.5 font-bold">{name}</div>
+                <div className="text-xs text-bone/65 mt-1.5 font-bold">{label}</div>
                 {hasComment ? (
                   <p className="text-sm text-bone/85 mt-2 leading-relaxed">{r.comment}</p>
                 ) : (
