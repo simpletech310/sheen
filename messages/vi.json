@@ -1,0 +1,73 @@
+{
+  "common": {
+    "book": "Đặt rửa xe",
+    "bookCta": "Đặt trong 60 giây →",
+    "signIn": "Đăng nhập",
+    "signUp": "Đăng ký",
+    "language": "Ngôn ngữ",
+    "loading": "Đang tải…",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "approve": "Duyệt",
+    "submit": "Gửi",
+    "from": "Từ",
+    "back": "Quay lại"
+  },
+  "nav": {
+    "auto": "Ô tô",
+    "home": "Nhà ở",
+    "bigRig": "Xe tải lớn",
+    "business": "Thương mại",
+    "wash": "Trở thành Sheen Pro",
+    "safety": "Tin cậy & An toàn",
+    "help": "Trợ giúp"
+  },
+  "footer": {
+    "tagline": "Dịch vụ rửa và chi tiết xe theo yêu cầu tại LA. Thợ đã được kiểm chứng. Chỉ thanh toán sau khi bạn duyệt công việc. Ô tô, nhà ở, xe tải lớn — hãy để nó tỏa sáng.",
+    "services": "Dịch vụ",
+    "membership": "Thành viên",
+    "pros": "Thợ chuyên nghiệp",
+    "trust": "Tin cậy",
+    "autoDetail": "Chi tiết ô tô",
+    "bigRigWash": "Rửa xe tải lớn",
+    "homePowerWash": "Rửa áp lực tại nhà",
+    "commercial": "Thương mại",
+    "sheenPlans": "Gói Sheen+",
+    "autoPlans": "Gói ô tô",
+    "bigRigPlans": "Gói xe tải lớn",
+    "combined": "Kết hợp",
+    "becomeWasher": "Trở thành Sheen Pro",
+    "directBookings": "Cách đặt trực tiếp hoạt động",
+    "earningsCalculator": "Máy tính thu nhập",
+    "proSignIn": "Đăng nhập thợ",
+    "trustSafety": "Tin cậy & An toàn",
+    "helpFaq": "Trợ giúp & Câu hỏi thường gặp",
+    "terms": "Điều khoản",
+    "privacy": "Quyền riêng tư",
+    "contact": "Liên hệ",
+    "copyright": "© 2026 SHEEN INC. BẢO LƯU MỌI QUYỀN.",
+    "address": "sheen.co · Los Angeles · dành cho những gì tỏa sáng"
+  },
+  "languagePicker": {
+    "label": "Ngôn ngữ",
+    "saving": "Đang lưu…"
+  },
+  "chat": {
+    "translatedFrom": "Dịch từ tiếng {language}",
+    "showOriginal": "Xem bản gốc",
+    "showTranslation": "Xem bản dịch",
+    "translating": "Đang dịch…",
+    "send": "Gửi",
+    "placeholder": "Nhập tin nhắn…"
+  },
+  "languages": {
+    "en": "Anh",
+    "es": "Tây Ban Nha",
+    "ko": "Hàn",
+    "zh": "Trung",
+    "vi": "Việt",
+    "pt": "Bồ Đào Nha",
+    "fr": "Pháp",
+    "ru": "Nga"
+  }
+}

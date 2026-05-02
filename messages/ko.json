@@ -1,0 +1,73 @@
+{
+  "common": {
+    "book": "세차 예약하기",
+    "bookCta": "60초 만에 예약 →",
+    "signIn": "로그인",
+    "signUp": "회원가입",
+    "language": "언어",
+    "loading": "로딩 중…",
+    "save": "저장",
+    "cancel": "취소",
+    "approve": "승인",
+    "submit": "제출",
+    "from": "최저",
+    "back": "뒤로"
+  },
+  "nav": {
+    "auto": "자동차",
+    "home": "주택",
+    "bigRig": "대형 차량",
+    "business": "상업용",
+    "wash": "Sheen 파트너 되기",
+    "safety": "신뢰 및 안전",
+    "help": "도움말"
+  },
+  "footer": {
+    "tagline": "LA에서 즉시 세차 및 디테일링. 검증된 전문가. 작업을 승인한 후에만 결제. 자동차, 주택, 대형 차량 — Sheen으로 빛내세요.",
+    "services": "서비스",
+    "membership": "멤버십",
+    "pros": "전문가",
+    "trust": "신뢰",
+    "autoDetail": "자동차 디테일링",
+    "bigRigWash": "대형 차량 세차",
+    "homePowerWash": "주택 고압 세척",
+    "commercial": "상업용",
+    "sheenPlans": "Sheen+ 플랜",
+    "autoPlans": "자동차 플랜",
+    "bigRigPlans": "대형 차량 플랜",
+    "combined": "통합 플랜",
+    "becomeWasher": "Sheen 파트너 되기",
+    "directBookings": "다이렉트 예약 방법",
+    "earningsCalculator": "수익 계산기",
+    "proSignIn": "전문가 로그인",
+    "trustSafety": "신뢰 및 안전",
+    "helpFaq": "도움말 및 FAQ",
+    "terms": "이용약관",
+    "privacy": "개인정보처리방침",
+    "contact": "문의",
+    "copyright": "© 2026 SHEEN INC. 모든 권리 보유.",
+    "address": "sheen.co · 로스앤젤레스 · 빛나는 것을 위해"
+  },
+  "languagePicker": {
+    "label": "언어",
+    "saving": "저장 중…"
+  },
+  "chat": {
+    "translatedFrom": "{language}에서 번역됨",
+    "showOriginal": "원본 보기",
+    "showTranslation": "번역 보기",
+    "translating": "번역 중…",
+    "send": "전송",
+    "placeholder": "메시지를 입력하세요…"
+  },
+  "languages": {
+    "en": "영어",
+    "es": "스페인어",
+    "ko": "한국어",
+    "zh": "중국어",
+    "vi": "베트남어",
+    "pt": "포르투갈어",
+    "fr": "프랑스어",
+    "ru": "러시아어"
+  }
+}

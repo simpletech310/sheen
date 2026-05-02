@@ -1,0 +1,73 @@
+{
+  "common": {
+    "book": "Book a wash",
+    "bookCta": "Book in 60 seconds →",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "language": "Language",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "approve": "Approve",
+    "submit": "Submit",
+    "from": "From",
+    "back": "Back"
+  },
+  "nav": {
+    "auto": "Auto",
+    "home": "Home",
+    "bigRig": "Big rig",
+    "business": "Commercial",
+    "wash": "Wash for Sheen",
+    "safety": "Trust & safety",
+    "help": "Help"
+  },
+  "footer": {
+    "tagline": "On-demand wash & detail in LA. Vetted pros. Pay only after you approve the work. Auto, home, big rig — get it sheened.",
+    "services": "Services",
+    "membership": "Membership",
+    "pros": "Pros",
+    "trust": "Trust",
+    "autoDetail": "Auto detail",
+    "bigRigWash": "Big rig wash",
+    "homePowerWash": "Home power-wash",
+    "commercial": "Commercial",
+    "sheenPlans": "Sheen+ plans",
+    "autoPlans": "Auto plans",
+    "bigRigPlans": "Big-rig plans",
+    "combined": "Combined",
+    "becomeWasher": "Wash for Sheen",
+    "directBookings": "How direct bookings work",
+    "earningsCalculator": "Earnings calculator",
+    "proSignIn": "Pro sign-in",
+    "trustSafety": "Trust & safety",
+    "helpFaq": "Help & FAQ",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "contact": "Contact",
+    "copyright": "© 2026 SHEEN INC. ALL RIGHTS RESERVED.",
+    "address": "sheen.co · Los Angeles · made for what shines"
+  },
+  "languagePicker": {
+    "label": "Language",
+    "saving": "Saving…"
+  },
+  "chat": {
+    "translatedFrom": "Translated from {language}",
+    "showOriginal": "Show original",
+    "showTranslation": "Show translation",
+    "translating": "Translating…",
+    "send": "Send",
+    "placeholder": "Send a message…"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Spanish",
+    "ko": "Korean",
+    "zh": "Chinese",
+    "vi": "Vietnamese",
+    "pt": "Portuguese",
+    "fr": "French",
+    "ru": "Russian"
+  }
+}

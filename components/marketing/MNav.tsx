@@ -2,21 +2,28 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Wordmark } from "@/components/brand/Wordmark";
+import { LanguagePicker } from "@/components/i18n/LanguagePicker";
 
 // Marketing primary nav. Five service entries on desktop. Mobile gets
 // a slide-down panel triggered by the hamburger so the same surface is
 // reachable on phones (was previously hidden behind a single CTA).
-const links = [
-  { href: "/auto", label: "Auto" },
-  { href: "/big-rig", label: "Big Rig" },
-  { href: "/home", label: "Home" },
-  { href: "/business", label: "Business" },
-  { href: "/wash", label: "Become a washer" },
-];
-
 export function MNav() {
+  const t = useTranslations();
+  const tn = useTranslations("nav");
+  const tc = useTranslations("common");
+  const links = [
+    { href: "/auto", label: tn("auto") },
+    { href: "/big-rig", label: tn("bigRig") },
+    { href: "/home", label: tn("home") },
+    { href: "/business", label: tn("business") },
+    { href: "/wash", label: tn("wash") },
+  ];
   const [open, setOpen] = useState(false);
+  // Quiet the ESLint "no unused t" hint — t is reserved for the
+  // membership-link copy below if we extract it later.
+  void t;
 
   return (
     <header className="border-b border-mist bg-bone relative z-30">
@@ -45,23 +52,24 @@ export function MNav() {
         </div>
 
         <div className="flex items-center gap-3">
+          <LanguagePicker className="hidden md:inline-flex" />
           <Link
             href="/sign-in?role=washer"
             className="text-xs text-royal hover:text-ink hidden md:inline uppercase font-bold"
           >
-            Pro sign-in
+            {tn("wash")}
           </Link>
           <Link
             href="/sign-in"
             className="text-xs text-ink/85 hover:text-ink hidden sm:inline uppercase font-bold"
           >
-            Sign in
+            {tc("signIn")}
           </Link>
           <Link
             href="/app/book"
             className="bg-ink text-bone px-4 sm:px-5 py-3 text-xs sm:text-sm font-bold uppercase tracking-wide hover:bg-royal transition-colors"
           >
-            Book a wash
+            {tc("book")}
           </Link>
 
           {/* Mobile hamburger — visible <lg, toggles the slide-down panel. */}
@@ -130,22 +138,18 @@ export function MNav() {
                 onClick={() => setOpen(false)}
                 className="px-3 py-3 text-sm font-bold uppercase tracking-wide text-ink hover:bg-mist transition"
               >
-                Sign in
+                {tc("signIn")}
               </Link>
               <Link
                 href="/sign-in?role=washer"
                 onClick={() => setOpen(false)}
                 className="px-3 py-3 text-sm font-bold uppercase tracking-wide text-royal hover:bg-mist transition"
               >
-                Pro sign-in
+                {tn("wash")}
               </Link>
-              <Link
-                href="/wash"
-                onClick={() => setOpen(false)}
-                className="px-3 py-3 text-sm font-bold uppercase tracking-wide text-smoke hover:bg-mist transition"
-              >
-                Apply to wash
-              </Link>
+              <div className="px-3 pt-3 mt-2 border-t border-mist">
+                <LanguagePicker className="w-full" />
+              </div>
             </div>
           </div>
         </>

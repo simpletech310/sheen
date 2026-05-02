@@ -1,0 +1,73 @@
+{
+  "common": {
+    "book": "Réserver un lavage",
+    "bookCta": "Réservez en 60 secondes →",
+    "signIn": "Connexion",
+    "signUp": "S'inscrire",
+    "language": "Langue",
+    "loading": "Chargement…",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "approve": "Approuver",
+    "submit": "Envoyer",
+    "from": "À partir de",
+    "back": "Retour"
+  },
+  "nav": {
+    "auto": "Auto",
+    "home": "Maison",
+    "bigRig": "Poids lourd",
+    "business": "Commercial",
+    "wash": "Lavez avec Sheen",
+    "safety": "Confiance & Sécurité",
+    "help": "Aide"
+  },
+  "footer": {
+    "tagline": "Lavage et detailing à la demande à LA. Pros vérifiés. Payez uniquement après avoir approuvé le travail. Auto, maison, poids lourd — faites-le briller.",
+    "services": "Services",
+    "membership": "Abonnement",
+    "pros": "Pros",
+    "trust": "Confiance",
+    "autoDetail": "Detailing auto",
+    "bigRigWash": "Lavage poids lourd",
+    "homePowerWash": "Nettoyeur haute pression maison",
+    "commercial": "Commercial",
+    "sheenPlans": "Forfaits Sheen+",
+    "autoPlans": "Forfaits auto",
+    "bigRigPlans": "Forfaits poids lourd",
+    "combined": "Combiné",
+    "becomeWasher": "Lavez avec Sheen",
+    "directBookings": "Comment fonctionnent les réservations directes",
+    "earningsCalculator": "Calculateur de revenus",
+    "proSignIn": "Connexion pro",
+    "trustSafety": "Confiance & Sécurité",
+    "helpFaq": "Aide & FAQ",
+    "terms": "Conditions",
+    "privacy": "Confidentialité",
+    "contact": "Contact",
+    "copyright": "© 2026 SHEEN INC. TOUS DROITS RÉSERVÉS.",
+    "address": "sheen.co · Los Angeles · fait pour ce qui brille"
+  },
+  "languagePicker": {
+    "label": "Langue",
+    "saving": "Enregistrement…"
+  },
+  "chat": {
+    "translatedFrom": "Traduit de {language}",
+    "showOriginal": "Voir l'original",
+    "showTranslation": "Voir la traduction",
+    "translating": "Traduction…",
+    "send": "Envoyer",
+    "placeholder": "Envoyez un message…"
+  },
+  "languages": {
+    "en": "Anglais",
+    "es": "Espagnol",
+    "ko": "Coréen",
+    "zh": "Chinois",
+    "vi": "Vietnamien",
+    "pt": "Portugais",
+    "fr": "Français",
+    "ru": "Russe"
+  }
+}

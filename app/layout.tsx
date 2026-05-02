@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, Inter } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { ToastProvider, ToastBridge } from "@/components/ui/Toast";
 
@@ -99,16 +101,25 @@ export const viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // next-intl reads the per-request locale (cookie → Accept-Language
+  // → default 'en') via i18n/request.ts. We pass it down to the
+  // client provider so client components can call useTranslations()
+  // without each one re-resolving the locale.
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`}>
+    <html lang={locale} className={`${display.variable} ${body.variable}`}>
       <body className="bg-bone text-ink font-sans antialiased [font-feature-settings:'tnum'] min-h-screen">
-        <ToastProvider>
-          <ToastBridge />
-          {children}
-        </ToastProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ToastProvider>
+            <ToastBridge />
+            {children}
+          </ToastProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

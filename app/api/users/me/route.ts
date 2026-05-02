@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { LOCALES } from "@/i18n/locales";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -13,6 +14,10 @@ const Body = z.object({
   // the bare path; the public URL is composed at read time so a bucket
   // rename or CDN swap doesn't require a backfill.
   avatar_url: z.string().max(400).optional().nullable(),
+  // Preferred display language. Validated against the supported set so
+  // we don't end up with rows like 'pirate' that the chat translator
+  // can't actually render. The LanguagePicker writes here.
+  locale: z.enum(LOCALES as unknown as [string, ...string[]]).optional(),
 });
 
 export async function PATCH(req: Request) {
@@ -26,6 +31,7 @@ export async function PATCH(req: Request) {
   if (body.display_name !== undefined) updates.display_name = body.display_name || null;
   if (body.phone !== undefined) updates.phone = body.phone || null;
   if (body.avatar_url !== undefined) updates.avatar_url = body.avatar_url || null;
+  if (body.locale !== undefined) updates.locale = body.locale;
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }

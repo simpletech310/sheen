@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { createBrowserClient } from "@supabase/ssr";
 import { toast } from "@/components/ui/Toast";
+import { isLocale, type Locale } from "@/i18n/locales";
 
 type Message = {
   id: string;
@@ -11,6 +13,8 @@ type Message = {
   image_path: string | null;
   read_at: string | null;
   created_at: string;
+  original_language: string | null;
+  translations: Record<string, string> | null;
 };
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -55,6 +59,56 @@ export function ChatPanel({
     ? `${SUPA_URL}/storage/v1/object/public/avatars/${otherAvatarPath}`
     : null;
   const otherInitial = (otherName ?? "?")[0]?.toUpperCase() ?? "?";
+
+  // Viewer's preferred chat language. Falls back to 'en' if not yet
+  // set. Each incoming message is rendered in this language: if the
+  // message's original_language matches, show body as-is; otherwise
+  // look up translations[viewer] (cached on the row) or fetch live.
+  const viewerLocale = useLocale() as Locale;
+  const tChat = useTranslations("chat");
+  const tLanguages = useTranslations("languages");
+  const [showOriginal, setShowOriginal] = useState<Record<string, boolean>>({});
+  const [translating, setTranslating] = useState<Record<string, boolean>>({});
+
+  // On-demand translate fetch — populates messages.translations and
+  // mirrors back into local state so the next render shows the
+  // translated bubble. Cached server-side, so a second viewer at the
+  // same locale doesn't re-pay for it.
+  async function fetchTranslation(messageId: string) {
+    setTranslating((s) => ({ ...s, [messageId]: true }));
+    try {
+      const r = await fetch("/api/messages/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message_id: messageId, target_lang: viewerLocale }),
+      });
+      const d = await r.json();
+      if (d?.text) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  original_language: d.original_language ?? m.original_language,
+                  translations: {
+                    ...(m.translations ?? {}),
+                    [viewerLocale]: d.text,
+                  },
+                }
+              : m
+          )
+        );
+      }
+    } catch {
+      // Soft-fail; user can still read the original by toggling.
+    } finally {
+      setTranslating((s) => {
+        const next = { ...s };
+        delete next[messageId];
+        return next;
+      });
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -295,6 +349,39 @@ export function ChatPanel({
               messages.map((m) => {
                 const mine = m.sender_id === currentUserId;
                 const imgUrl = bookingPhotoUrl(m.image_path);
+
+                // Locale-aware body: if the message original language
+                // matches the viewer (or the sender is the viewer
+                // themselves — they don't need to read their own
+                // message translated), show body as-is. Otherwise
+                // pick from cached translations or fire a live fetch.
+                const sourceLang = (m.original_language ?? "en") as string;
+                const sourceLangShort = isLocale(sourceLang)
+                  ? sourceLang
+                  : "en";
+                const needsTranslation =
+                  !mine &&
+                  !!m.body &&
+                  sourceLangShort !== viewerLocale;
+                const cached = m.translations?.[viewerLocale];
+                const userToggledOriginal = showOriginal[m.id] === true;
+                const isFetching = translating[m.id] === true;
+
+                if (
+                  needsTranslation &&
+                  !cached &&
+                  !isFetching &&
+                  !userToggledOriginal
+                ) {
+                  // Fire-and-forget; render placeholder this pass.
+                  fetchTranslation(m.id);
+                }
+
+                const renderedBody =
+                  needsTranslation && cached && !userToggledOriginal
+                    ? cached
+                    : m.body;
+
                 return (
                   <div
                     key={m.id}
@@ -316,8 +403,31 @@ export function ChatPanel({
                           />
                         </a>
                       )}
-                      {m.body && (
-                        <div className="whitespace-pre-wrap break-words">{m.body}</div>
+                      {needsTranslation && !cached && isFetching && !userToggledOriginal ? (
+                        <div className="italic opacity-70">{tChat("translating")}</div>
+                      ) : renderedBody ? (
+                        <div className="whitespace-pre-wrap break-words">{renderedBody}</div>
+                      ) : null}
+                      {needsTranslation && cached && (
+                        <div className={`mt-1 text-[10px] ${mine ? t.bubbleMineMeta : t.bubbleTheirsMeta}`}>
+                          <span className="opacity-75">
+                            {tChat("translatedFrom", {
+                              language: tLanguages(sourceLangShort as Locale),
+                            })}
+                          </span>{" "}
+                          ·{" "}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowOriginal((s) => ({ ...s, [m.id]: !s[m.id] }))
+                            }
+                            className="underline"
+                          >
+                            {userToggledOriginal
+                              ? tChat("showTranslation")
+                              : tChat("showOriginal")}
+                          </button>
+                        </div>
                       )}
                       <div className={`text-[10px] mt-1 ${mine ? t.bubbleMineMeta : t.bubbleTheirsMeta}`}>
                         {new Date(m.created_at).toLocaleTimeString([], {
@@ -363,7 +473,7 @@ export function ChatPanel({
                   send();
                 }
               }}
-              placeholder="Type a message"
+              placeholder={tChat("placeholder")}
               maxLength={2000}
               className={`flex-1 px-3 py-2.5 border text-sm focus:outline-none ${t.input}`}
             />
@@ -373,7 +483,7 @@ export function ChatPanel({
               disabled={sending || !draft.trim()}
               className={`px-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50 ${t.sendBtn}`}
             >
-              {sending ? "…" : "Send"}
+              {sending ? "…" : tChat("send")}
             </button>
           </div>
         </>

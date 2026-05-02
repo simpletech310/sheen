@@ -1,0 +1,73 @@
+{
+  "common": {
+    "book": "Reservar un lavado",
+    "bookCta": "Reserva en 60 segundos →",
+    "signIn": "Iniciar sesión",
+    "signUp": "Crear cuenta",
+    "language": "Idioma",
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "approve": "Aprobar",
+    "submit": "Enviar",
+    "from": "Desde",
+    "back": "Atrás"
+  },
+  "nav": {
+    "auto": "Auto",
+    "home": "Hogar",
+    "bigRig": "Camión grande",
+    "business": "Comercial",
+    "wash": "Trabaja con Sheen",
+    "safety": "Confianza y seguridad",
+    "help": "Ayuda"
+  },
+  "footer": {
+    "tagline": "Lavado y detallado a domicilio en LA. Profesionales verificados. Pagas solo después de aprobar el trabajo. Auto, hogar, camión grande — déjalo brillar.",
+    "services": "Servicios",
+    "membership": "Membresía",
+    "pros": "Profesionales",
+    "trust": "Confianza",
+    "autoDetail": "Detallado de autos",
+    "bigRigWash": "Lavado de camiones",
+    "homePowerWash": "Lavado a presión del hogar",
+    "commercial": "Comercial",
+    "sheenPlans": "Planes Sheen+",
+    "autoPlans": "Planes para autos",
+    "bigRigPlans": "Planes para camiones",
+    "combined": "Combinado",
+    "becomeWasher": "Trabaja con Sheen",
+    "directBookings": "Cómo funcionan las reservas directas",
+    "earningsCalculator": "Calculadora de ingresos",
+    "proSignIn": "Inicio de sesión profesional",
+    "trustSafety": "Confianza y seguridad",
+    "helpFaq": "Ayuda y preguntas frecuentes",
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "contact": "Contacto",
+    "copyright": "© 2026 SHEEN INC. TODOS LOS DERECHOS RESERVADOS.",
+    "address": "sheen.co · Los Ángeles · hecho para lo que brilla"
+  },
+  "languagePicker": {
+    "label": "Idioma",
+    "saving": "Guardando…"
+  },
+  "chat": {
+    "translatedFrom": "Traducido del {language}",
+    "showOriginal": "Ver original",
+    "showTranslation": "Ver traducción",
+    "translating": "Traduciendo…",
+    "send": "Enviar",
+    "placeholder": "Escribe un mensaje…"
+  },
+  "languages": {
+    "en": "Inglés",
+    "es": "Español",
+    "ko": "Coreano",
+    "zh": "Chino",
+    "vi": "Vietnamita",
+    "pt": "Portugués",
+    "fr": "Francés",
+    "ru": "Ruso"
+  }
+}

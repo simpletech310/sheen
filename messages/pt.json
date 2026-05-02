@@ -1,0 +1,73 @@
+{
+  "common": {
+    "book": "Agendar lavagem",
+    "bookCta": "Agende em 60 segundos →",
+    "signIn": "Entrar",
+    "signUp": "Criar conta",
+    "language": "Idioma",
+    "loading": "Carregando…",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "approve": "Aprovar",
+    "submit": "Enviar",
+    "from": "A partir de",
+    "back": "Voltar"
+  },
+  "nav": {
+    "auto": "Auto",
+    "home": "Casa",
+    "bigRig": "Caminhão grande",
+    "business": "Comercial",
+    "wash": "Trabalhe com Sheen",
+    "safety": "Confiança e segurança",
+    "help": "Ajuda"
+  },
+  "footer": {
+    "tagline": "Lavagem e detalhamento sob demanda em LA. Profissionais verificados. Pague apenas após aprovar o trabalho. Auto, casa, caminhão — deixe brilhar.",
+    "services": "Serviços",
+    "membership": "Assinatura",
+    "pros": "Profissionais",
+    "trust": "Confiança",
+    "autoDetail": "Detalhamento automotivo",
+    "bigRigWash": "Lavagem de caminhão",
+    "homePowerWash": "Lavagem de pressão residencial",
+    "commercial": "Comercial",
+    "sheenPlans": "Planos Sheen+",
+    "autoPlans": "Planos para autos",
+    "bigRigPlans": "Planos para caminhões",
+    "combined": "Combinado",
+    "becomeWasher": "Trabalhe com Sheen",
+    "directBookings": "Como funcionam as reservas diretas",
+    "earningsCalculator": "Calculadora de ganhos",
+    "proSignIn": "Login profissional",
+    "trustSafety": "Confiança e segurança",
+    "helpFaq": "Ajuda e perguntas frequentes",
+    "terms": "Termos",
+    "privacy": "Privacidade",
+    "contact": "Contato",
+    "copyright": "© 2026 SHEEN INC. TODOS OS DIREITOS RESERVADOS.",
+    "address": "sheen.co · Los Angeles · feito para o que brilha"
+  },
+  "languagePicker": {
+    "label": "Idioma",
+    "saving": "Salvando…"
+  },
+  "chat": {
+    "translatedFrom": "Traduzido do {language}",
+    "showOriginal": "Ver original",
+    "showTranslation": "Ver tradução",
+    "translating": "Traduzindo…",
+    "send": "Enviar",
+    "placeholder": "Envie uma mensagem…"
+  },
+  "languages": {
+    "en": "Inglês",
+    "es": "Espanhol",
+    "ko": "Coreano",
+    "zh": "Chinês",
+    "vi": "Vietnamita",
+    "pt": "Português",
+    "fr": "Francês",
+    "ru": "Russo"
+  }
+}

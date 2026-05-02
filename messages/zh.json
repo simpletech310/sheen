@@ -1,0 +1,73 @@
+{
+  "common": {
+    "book": "预订洗车",
+    "bookCta": "60秒预订 →",
+    "signIn": "登录",
+    "signUp": "注册",
+    "language": "语言",
+    "loading": "加载中…",
+    "save": "保存",
+    "cancel": "取消",
+    "approve": "批准",
+    "submit": "提交",
+    "from": "起",
+    "back": "返回"
+  },
+  "nav": {
+    "auto": "汽车",
+    "home": "住宅",
+    "bigRig": "大型卡车",
+    "business": "商业",
+    "wash": "加入 Sheen",
+    "safety": "信任与安全",
+    "help": "帮助"
+  },
+  "footer": {
+    "tagline": "洛杉矶上门洗车与精洗服务。经过审核的专业人员。批准工作后再付款。汽车、住宅、大型卡车 — 让它闪耀起来。",
+    "services": "服务",
+    "membership": "会员",
+    "pros": "专业人员",
+    "trust": "信任",
+    "autoDetail": "汽车精洗",
+    "bigRigWash": "大型卡车洗车",
+    "homePowerWash": "住宅高压清洗",
+    "commercial": "商业",
+    "sheenPlans": "Sheen+ 套餐",
+    "autoPlans": "汽车套餐",
+    "bigRigPlans": "大型卡车套餐",
+    "combined": "组合套餐",
+    "becomeWasher": "加入 Sheen",
+    "directBookings": "直接预订工作原理",
+    "earningsCalculator": "收入计算器",
+    "proSignIn": "专业人员登录",
+    "trustSafety": "信任与安全",
+    "helpFaq": "帮助与常见问题",
+    "terms": "条款",
+    "privacy": "隐私",
+    "contact": "联系",
+    "copyright": "© 2026 SHEEN INC. 保留所有权利。",
+    "address": "sheen.co · 洛杉矶 · 为闪耀而生"
+  },
+  "languagePicker": {
+    "label": "语言",
+    "saving": "保存中…"
+  },
+  "chat": {
+    "translatedFrom": "由{language}翻译",
+    "showOriginal": "查看原文",
+    "showTranslation": "查看译文",
+    "translating": "翻译中…",
+    "send": "发送",
+    "placeholder": "发送消息…"
+  },
+  "languages": {
+    "en": "英语",
+    "es": "西班牙语",
+    "ko": "韩语",
+    "zh": "中文",
+    "vi": "越南语",
+    "pt": "葡萄牙语",
+    "fr": "法语",
+    "ru": "俄语"
+  }
+}
