@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { EnablePushButton } from "@/components/PWARegister";
+import { LanguagePicker } from "@/components/i18n/LanguagePicker";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -238,6 +239,24 @@ export default async function MePage() {
               Add to home screen
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* Language — writes the NEXT_LOCALE cookie + persists to users.locale
+          via PATCH /api/users/me, then hard-reloads so the entire SSR tree
+          renders in the new language. Same picker mounted on the marketing
+          surface; this lives here so signed-in customers can change it
+          without going back to /. */}
+      <section className="mt-7">
+        <Eyebrow>Preferences</Eyebrow>
+        <h2 className="display text-xl mt-2 mb-3">Language</h2>
+        <div className="bg-bone border border-mist p-4 flex items-center justify-between gap-4">
+          <p className="text-xs text-smoke leading-relaxed flex-1">
+            Pick the language you read in. Saved to your account so it
+            follows you across devices. Chat messages from your pro stay
+            translated either way.
+          </p>
+          <LanguagePicker variant="light" />
         </div>
       </section>
 

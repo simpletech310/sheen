@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { EnablePushButton } from "@/components/PWARegister";
+import { LanguagePicker } from "@/components/i18n/LanguagePicker";
 import { fmtUSD } from "@/lib/pricing";
 import { WashHandleCard } from "./WashHandleCard";
 import { BigRigCapabilityCard } from "./BigRigCapabilityCard";
@@ -271,6 +272,23 @@ export default async function ProMePage() {
               Add to home screen
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* Language — writes the NEXT_LOCALE cookie + persists to users.locale
+          via PATCH /api/users/me. Push notifications (matched, complete,
+          tip received) auto-translate to this locale via lib/push.ts; chat
+          messages from English-speaking customers also translate to your
+          language on the client side. */}
+      <section className="mt-7">
+        <Eyebrow className="!text-bone/60" prefix={null}>Preferences</Eyebrow>
+        <h2 className="display text-xl mt-2 mb-3 text-bone">Language</h2>
+        <div className="bg-white/5 border border-bone/10 p-4 flex items-center justify-between gap-4">
+          <p className="text-xs text-bone/65 leading-relaxed flex-1">
+            Pick the language you read in. Saved to your account so it follows
+            you across devices. Customer chat translates to here automatically.
+          </p>
+          <LanguagePicker variant="dark" />
         </div>
       </section>
 
