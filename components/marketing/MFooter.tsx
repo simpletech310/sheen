@@ -28,16 +28,19 @@ const cols: { h: string; items: Item[] }[] = [
   {
     h: "Pros",
     items: [
-      { label: "Become a washer", href: "/wash" },
+      { label: "Wash for Sheen", href: "/wash" },
+      { label: "How direct bookings work", href: "/wash#promote" },
+      { label: "Earnings calculator", href: "/wash#earnings" },
       { label: "Pro sign-in", href: "/sign-in?role=washer" },
-      { label: "Earnings calculator", href: "/wash#calculator" },
     ],
   },
   {
     h: "Trust",
     items: [
-      { label: "Safety standards", href: "/safety" },
-      { label: "Help center", href: "/help" },
+      { label: "Trust & safety", href: "/safety" },
+      { label: "Help & FAQ", href: "/help" },
+      { label: "Terms", href: "/legal/tos" },
+      { label: "Privacy", href: "/legal/privacy" },
       { label: "Contact", href: "mailto:hello@sheen.co" },
     ],
   },
@@ -52,9 +55,10 @@ export function MFooter() {
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-10">
           <div className="col-span-2">
             <Wordmark size={36} invert highlight />
-            <p className="text-sm opacity-60 mt-5 max-w-[260px] leading-relaxed">
-              On-demand wash &amp; detail. Vetted local pros. Auto, home,
-              big rig — get it sheened.
+            <p className="text-sm opacity-60 mt-5 max-w-[280px] leading-relaxed">
+              On-demand wash &amp; detail in LA. Vetted pros. Pay only
+              after you approve the work. Auto, home, big rig — get it
+              sheened.
             </p>
             <Link
               href="/app/book"

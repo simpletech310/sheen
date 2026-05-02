@@ -10,8 +10,8 @@ const why = [
     d: "Wash bucket + rinse bucket on every car. Microfiber per panel — never the same towel on the wheels and the paint.",
   },
   {
-    h: "Ceramic-safe products",
-    d: "pH-balanced soap, hand-applied wax, leather-safe conditioner. Nothing on your paint we wouldn't put on our own.",
+    h: "Approve before you pay",
+    d: "Your money sits in escrow until you tap Approve. Your pro sends 4 finished-work photos and you compare against your booking-time photos. If something's off, file an objection with a photo or video right from the app.",
   },
   {
     h: "We bring the rig",
@@ -19,7 +19,7 @@ const why = [
   },
   {
     h: "Damage covered",
-    d: "$2,500 guarantee on every wash. File from the app within 24 hours. Paid out from a platform reserve, not the pro's pocket.",
+    d: "$2,500 guarantee on every wash + $1M general liability on the platform. File from the app within 24 hours. Paid out from a platform reserve, not the pro's pocket.",
   },
 ];
 
@@ -38,26 +38,30 @@ const gallery: [string, string, string][] = [
 ];
 
 const faq: [string, string][] = [
-  ["Do you bring water and power?", "Yes. Every Sheen pro carries a self-contained rig — water tank, power, eco-friendly soaps. No hose hookup needed."],
+  ["Do you bring water and power?", "Yes. Every Sheen pro carries a self-contained rig — water tank, power, eco-friendly soaps. No hose hookup needed. If your driveway has water/power, the pro uses it; if not, they bring it."],
+  ["When do I pay?", "We hold your card on file but only charge when you Approve the wash. Your pro sends 4 finished-work photos so you can review before paying. If something's wrong, you can file an objection with a photo or video and the funds stay on hold while we review."],
   ["What if it rains?", "Reschedule free up to one hour before. We monitor radar and reach out first if it looks bad."],
   ["Are my products safe?", "Ceramic-safe wax, pH-balanced shampoo, microfiber per panel. We won't touch your paint with anything we wouldn't use on our own."],
+  ["Can I request a specific pro?", "Yes. Every washer has a personal @handle. Type it at booking and the wash is sent ONLY to them for 10 minutes — locked, no other pro can take it. If they pass, it falls to the open queue so you're still covered."],
   ["How does the damage guarantee work?", "Every wash is covered up to $2,500. File from the app within 24 hours of completion."],
   ["Do tips go to the pro?", "100%, no platform cut. Default prompts at 18 / 22 / 25%, custom amounts allowed."],
 ];
 
 export const metadata = {
-  title: "Auto detail — Sheen",
+  title: "Mobile car wash & auto detail in LA",
   description:
-    "On-demand car wash + detail across LA. Express to Showroom. Two-bucket method, ceramic-safe, $2,500 damage cover.",
+    "Express ($24) to Showroom ($159). A vetted Sheen pro shows up — two-bucket method, ceramic-safe, self-contained rig. Pay only after you approve the work, with 4 finished-work photos every time. $2,500 damage cover.",
+  alternates: { canonical: "/auto" },
   openGraph: {
-    title: "Auto detail — Sheen",
-    description: "Express to Showroom. Two-bucket method, ceramic-safe, vetted local pros.",
+    title: "Mobile car wash & auto detail in LA — Sheen",
+    description:
+      "Express to Showroom. Pay only after you approve the work. 4 finished-work photos every time. $2,500 damage cover.",
     images: [{ url: "/img/auto.jpg", width: 1200, height: 630, alt: "Sheen mobile auto detail" }],
   },
   twitter: {
     card: "summary_large_image" as const,
-    title: "Auto detail — Sheen",
-    description: "Express to Showroom. Vetted local pros.",
+    title: "Mobile car wash & auto detail in LA",
+    description: "Express to Showroom. Pay after you approve. Vetted local pros.",
     images: ["/img/auto.jpg"],
   },
 };

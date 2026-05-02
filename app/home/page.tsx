@@ -5,18 +5,20 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { Placeholder } from "@/components/marketing/Placeholder";
 
 export const metadata = {
-  title: "Home power-wash — Sheen",
+  title: "Home pressure & soft-wash — Sheen LA",
   description:
-    "Driveways, siding, decks, solar panels. Soft-wash certified pros, deck-safe pH, transparent pricing.",
+    "Driveways, siding, decks, solar panels. Soft-wash certified pros, deck-safe pH, eco-runoff. Pay only after you approve, with finished-work photos every time. Same-day windows.",
+  alternates: { canonical: "/home" },
   openGraph: {
-    title: "Home power-wash — Sheen",
-    description: "Driveways, siding, decks, solar panels. Soft-wash certified pros.",
+    title: "Home pressure & soft-wash — Sheen LA",
+    description:
+      "Soft-wash certified. Pay only after you approve. Photos every time.",
     images: [{ url: "/img/home.jpg", width: 1200, height: 630, alt: "Sheen home power-wash" }],
   },
   twitter: {
     card: "summary_large_image" as const,
-    title: "Home power-wash — Sheen",
-    description: "Driveways, siding, decks, solar panels.",
+    title: "Home pressure & soft-wash — Sheen LA",
+    description: "Soft-wash certified. Pay after you approve.",
     images: ["/img/home.jpg"],
   },
 };
@@ -103,8 +105,9 @@ export default function HomePage() {
             </h1>
             <p className="max-w-[420px] text-base md:text-lg leading-relaxed text-bone/80">
               Soft-wash certified pros for siding. Pressure-washed concrete.
-              Deck-safe pH. Solar panel cleanings that move output. Transparent
-              pricing, no deposit.
+              Deck-safe pH. Solar-panel cleanings that move output.
+              Transparent pricing, no deposit — and you only pay once you
+              approve the finished work.
             </p>
           </div>
           <div className="mt-10 flex flex-wrap gap-3">

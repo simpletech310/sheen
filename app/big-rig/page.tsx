@@ -4,18 +4,20 @@ import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 
 export const metadata = {
-  title: "Big rig wash — Sheen",
+  title: "Mobile big-rig & semi truck wash — LA + Inland Empire",
   description:
-    "Mobile big-rig wash and detail at the rest stop, the yard, or the customer's lot. Foam, polish, paint correction. 24/7 in LA + Inland Empire.",
+    "Mobile big-rig wash, polish, and paint correction — at the rest stop, the yard, or the customer's lot. Equipment-verified pros only. 24/7 in LA + Inland Empire. Pay only after you approve the finished work.",
+  alternates: { canonical: "/big-rig" },
   openGraph: {
-    title: "Big rig wash — Sheen",
-    description: "Mobile big-rig wash and detail. Foam, polish, paint correction.",
+    title: "Mobile big-rig & semi truck wash — LA + Inland Empire",
+    description:
+      "Foam, polish, paint correction — at the yard or rest stop. Pay only after you approve.",
     images: [{ url: "/img/big-rig-hero.jpg", width: 1200, height: 630, alt: "Sheen big-rig mobile wash" }],
   },
   twitter: {
     card: "summary_large_image" as const,
-    title: "Big rig wash — Sheen",
-    description: "Mobile big-rig wash and detail.",
+    title: "Mobile big-rig & semi truck wash — Sheen",
+    description: "Foam, polish, paint correction. Pay after you approve.",
     images: ["/img/big-rig-hero.jpg"],
   },
 };

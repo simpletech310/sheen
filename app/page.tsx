@@ -17,17 +17,17 @@ const memberships = [
 ];
 
 const steps = [
-  { n: "01", t: "Pick your service", d: "Express, full detail, premium, showroom. Or home power-wash. Or commercial." },
-  { n: "02", t: "Drop a pin", d: "Confirm address. Today, tomorrow, this week — pick the window." },
-  { n: "03", t: "A pro shows up", d: "Vetted, insured, background-checked. Live arrival tracking. Driver photo." },
-  { n: "04", t: "Pay & rate", d: "Apple Pay default. Tip 100% to the pro. Two-bucket method, every time." },
+  { n: "01", t: "Pick your service", d: "Express, full detail, premium, showroom. Or home power-wash. Or your fleet." },
+  { n: "02", t: "Drop a pin", d: "Confirm address. Same-day, tomorrow, this week — pick the window. Rush in 60 minutes if you need it now." },
+  { n: "03", t: "A pro shows up", d: "Vetted, insured, background-checked. Live arrival tracking. Real photo, not just a name." },
+  { n: "04", t: "Approve, then pay", d: "We hold the payment. The pro sends 4 finished-work photos. You approve, then they get paid. No surprises." },
 ];
 
 const trust = [
+  { k: "Held", v: "Payment until you approve" },
+  { k: "4 photos", v: "Of the finished work, every time" },
   { k: "$2,500", v: "Damage guarantee" },
   { k: "$1M", v: "GL insurance · every wash" },
-  { k: "100%", v: "Tips to the pro" },
-  { k: "Held", v: "Payment until you approve" },
 ];
 
 export default function Home() {
@@ -55,8 +55,9 @@ export default function Home() {
           </h1>
           <div className="mt-10 md:mt-12 flex flex-col md:flex-row md:justify-between md:items-end gap-6 md:gap-14">
             <p className="text-base md:text-lg leading-relaxed max-w-[460px] text-bone/85">
-              Book a vetted local pro in 60 seconds. Your car, your home, your storefront — professionally cleaned,
-              payment handled, no contractors arguing in your driveway.
+              Book a vetted local pro in 60 seconds. Your car, your home,
+              your storefront — professionally cleaned, payment held until
+              you approve, no awkward driveway negotiations.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
@@ -246,6 +247,58 @@ export default function Home() {
           <Placeholder label="Mustang · showroom" src="/img/work-mustang.jpg" height={260} />
           <Placeholder label="Panamera Turbo · premium" src="/img/work-panamera.jpg" height={260} />
           <Placeholder label="4Runner · full detail" src="/img/work-4runner.jpg" height={260} />
+        </div>
+      </section>
+
+      {/* Wash-for-Sheen recruit band — every customer is a potential
+          referrer, every potential washer lands here first. Keeps the
+          recruit pitch in the conversion funnel without nagging. */}
+      <section className="px-6 md:px-14 py-20 bg-bone border-t border-mist">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+          <div>
+            <Eyebrow className="!text-royal">Wash for Sheen</Eyebrow>
+            <h2 className="display text-[40px] md:text-[56px] leading-[0.95] mt-3">
+              RUN YOUR OWN
+              <br />
+              <span className="text-royal">BOOK OF BUSINESS.</span>
+            </h2>
+            <p className="text-sm md:text-base text-smoke mt-4 leading-relaxed max-w-md">
+              Sheen is the platform; the customers are yours. Get a
+              personal @handle, share it, and direct bookings come to you
+              first — locked to you for 10 minutes, no queue race.
+              Payments, insurance, and disputes — we handle. Keep up to
+              88% + 100% of tips. Cash out same-day.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/wash"
+                className="bg-ink text-bone px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-royal transition-colors"
+              >
+                Apply to wash →
+              </Link>
+              <Link
+                href="/wash#earnings"
+                className="border border-ink text-ink px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-ink hover:text-bone transition-colors"
+              >
+                See the math
+              </Link>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { k: "78–88%", v: "Of every wash, kept" },
+              { k: "100%", v: "Of every tip, instant" },
+              { k: "10 min", v: "Exclusive on direct requests" },
+              { k: "Same-day", v: "Standard payouts to your bank" },
+            ].map((s) => (
+              <div key={s.k} className="bg-ink text-bone p-5">
+                <div className="display tabular text-3xl text-sol">{s.k}</div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-bone/70 mt-2">
+                  {s.v}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

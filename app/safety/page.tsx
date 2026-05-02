@@ -4,9 +4,22 @@ import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 
 export const metadata = {
-  title: "Trust & Safety — Sheen",
+  title: "Trust & safety — Sheen",
   description:
-    "Vetted pros, $1M insurance, $2,500 damage guarantee, QR check-in, payment held until you approve.",
+    "Vetted pros, $1M general liability, $2,500 damage guarantee, payment held until you approve, 4 finished-work photos every time, QR check-in. The whole transaction is on rails.",
+  alternates: { canonical: "/safety" },
+  openGraph: {
+    title: "Trust & safety — Sheen",
+    description:
+      "Vetted pros, $1M GL, $2,500 damage cover, payment held until you approve. The whole transaction is on rails.",
+    images: [{ url: "/img/og-default.jpg", width: 1200, height: 630, alt: "Sheen — trust & safety" }],
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    title: "Trust & safety — Sheen",
+    description: "Vetted pros, $1M GL, $2,500 damage cover. Pay only after you approve.",
+    images: ["/img/og-default.jpg"],
+  },
 };
 
 const items: { h: string; d: string }[] = [
@@ -28,15 +41,27 @@ const items: { h: string; d: string }[] = [
   },
   {
     h: "Payment held until you approve",
-    d: "Your card is charged at booking, but funds are held until the pro finishes AND you approve the work. One tap to release. We hold the line for you.",
+    d: "Your card is charged at booking, but funds sit in escrow until the pro finishes AND you approve the work. One tap to release. We hold the line for you.",
+  },
+  {
+    h: "4 finished-work photos, every wash",
+    d: "Front, back, driver side, passenger side. Your pro can't mark a job complete without uploading all four. You compare them with the photos you took at booking before approving.",
+  },
+  {
+    h: "Object with a photo or video",
+    d: "If something's off, file an objection right from the approval card. Attach photos or a short video; funds stay on hold while we review. Resolved in 48 hours, paid out from a platform reserve.",
   },
   {
     h: "Live arrival tracking",
-    d: "See your pro's photo, vehicle, and live location on the way. We let you know the moment they pull up to your address.",
+    d: "See your pro's photo, name, vehicle, and live location on the way. We let you know the moment they pull up to your address.",
   },
   {
     h: "Tips stay private",
     d: "Pros don't see what you tipped until after you've rated them. No retaliation, no awkwardness. 100% goes to the pro.",
+  },
+  {
+    h: "Reviews stay anonymous",
+    d: "Public reviews byline the vehicle washed (e.g. \"2014 Dodge Dart\"), not the customer's name. Honest feedback without sharing your identity.",
   },
   {
     h: "Fair on both sides",

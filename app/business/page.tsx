@@ -4,9 +4,25 @@ import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 
 export const metadata = {
-  title: "Commercial — Sheen",
+  title: "Commercial wash, fleet & storefront cleaning — Sheen LA",
   description:
-    "Storefronts, lots, fleets, post-construction. Site visit, custom quote in 24h, net-30 invoicing for verified businesses.",
+    "Storefronts, multi-family, fleets, post-construction. Site visit, custom quote in 24h, net-30 invoicing for verified businesses. $1M GL on every wash, dedicated account routing.",
+  alternates: { canonical: "/business" },
+  openGraph: {
+    title: "Commercial wash & fleet cleaning — Sheen LA",
+    description:
+      "Storefronts, fleets, multi-family, post-construction. Site visit + custom quote in 24h. Net-30 for verified businesses.",
+    images: [
+      { url: "/img/commercial.jpg", width: 1200, height: 630, alt: "Sheen commercial wash" },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    title: "Commercial wash & fleet cleaning — Sheen",
+    description:
+      "Storefronts, fleets, multi-family, post-construction. Quote in 24h.",
+    images: ["/img/commercial.jpg"],
+  },
 };
 
 const verticals = [

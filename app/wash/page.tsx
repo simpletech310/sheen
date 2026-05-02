@@ -5,18 +5,20 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { EarningsCalc } from "@/components/marketing/EarningsCalc";
 
 export const metadata = {
-  title: "Become a washer — Sheen",
+  title: "Wash for Sheen — keep 78–88% + 100% of tips",
   description:
-    "Keep 78% on day one. 82% on every repeat. 100% of tips, instant. Same-day payouts. Climb the tier ladder — top pros keep 88%.",
+    "Run your own book of business. Direct-request bookings are locked to you for 10 minutes — no queue race. Keep 78% on day one, up to 88% as you climb. 100% of tips, instant. Same-day payouts in LA.",
+  alternates: { canonical: "/wash" },
   openGraph: {
-    title: "Become a washer — Sheen",
-    description: "Keep 78% on day one. 82% on every repeat. 100% of tips, instant.",
-    images: [{ url: "/img/washer.jpg", width: 1200, height: 630, alt: "Sheen — become a washer" }],
+    title: "Wash for Sheen — keep 78–88% + 100% of tips",
+    description:
+      "Direct customers are yours, locked for 10 minutes. Keep up to 88% + 100% of tips. Same-day payouts.",
+    images: [{ url: "/img/washer.jpg", width: 1200, height: 630, alt: "Sheen — wash for us" }],
   },
   twitter: {
     card: "summary_large_image" as const,
-    title: "Become a washer — Sheen",
-    description: "Keep 78% on day one. 100% tips, instant.",
+    title: "Wash for Sheen — keep 78–88% + 100% of tips",
+    description: "Direct customers locked to you 10 min. Up to 88% + 100% tips. Same-day pay.",
     images: ["/img/washer.jpg"],
   },
 };
@@ -73,23 +75,31 @@ const promote = [
 const faq = [
   {
     q: "When do I get paid?",
-    a: "Job pay lands in your Stripe balance the moment the customer approves the wash (or 24h auto-approve). Standard payout is same-day. Instant payout for 1.5% — Elite+ pros get instant fees waived.",
+    a: "Job pay lands in your Stripe balance the moment the customer approves the wash (or 24h auto-approve). Cash out instantly to your debit card any time you have a balance — Sheen draws on Stripe's instant_available balance, so a freshly funded wash is withdrawable in minutes, not 1–2 business days.",
   },
   {
     q: "What does Sheen take?",
-    a: "22% on a customer's first job with you. 18% on every repeat. Tips are 100% yours, period. As you climb the tier ladder, your platform take drops further.",
+    a: "22% on a customer's first job with you. 18% on every repeat. Tips are 100% yours, period. As you climb the tier ladder, your platform take drops further — Legend pros keep 88%.",
+  },
+  {
+    q: "How does the @handle work?",
+    a: "Pick a handle (@YOURNAME) once. Share your link, hand out a card, drop it in your bio. When a customer books with it, the booking is sent ONLY to you for 10 minutes — locked, no queue race. If you accept it's yours; if you pass it falls to the open queue so the customer is still covered.",
   },
   {
     q: "Do I need a truck?",
-    a: "Reliable transport that can carry your gear. Many of our pros use a sedan + foldable kit.",
+    a: "Reliable transport that can carry your gear. Plenty of our pros use a sedan + foldable kit.",
   },
   {
     q: "What if the site has no water or power?",
-    a: "Customers tell us up front during booking — no water, no power, gate code, the works. If you don't BYO water, those jobs simply don't show in your queue. No surprises on arrival.",
+    a: "Customers answer those questions up front when booking — water, power, gate code, the works. If you don't BYO water/power, those specific jobs just don't show in your queue. No surprises on arrival.",
   },
   {
     q: "What if a customer is a no-show?",
     a: "Flag the job from the navigation page. The customer is auto-charged a no-show fee. You get paid for showing up.",
+  },
+  {
+    q: "What about damage?",
+    a: "Sheen carries $1M general liability on every wash and a $2,500 damage guarantee that covers small mishaps without you reaching for your own policy. We mediate every claim.",
   },
 ];
 
@@ -115,8 +125,10 @@ export default function WashPage() {
                 <span className="text-sol">GET PAID.</span>
               </h1>
               <p className="mt-7 max-w-[460px] text-base md:text-lg leading-relaxed text-bone/75">
-                Keep 78% on day one. 82% on every repeat customer. 100% of tips, instant. Same-day payout standard.
-                Climb the tier ladder — top pros keep 88%.
+                Run your own book of business on Sheen&rsquo;s platform.
+                Direct customers are <strong>locked to you for 10 minutes</strong> —
+                no queue race. Keep 78% day one, up to 88% as you climb.
+                100% of tips, instant. Cash out same-day.
               </p>
               <div className="mt-8 flex gap-3">
                 <Link
@@ -132,7 +144,7 @@ export default function WashPage() {
         </div>
       </section>
 
-      <section className="px-6 md:px-14 py-16 bg-mist/40">
+      <section id="earnings" className="px-6 md:px-14 py-16 bg-mist/40">
         <h2 className="display text-[40px] md:text-[56px] leading-tight mb-8">THE SPLIT.</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {split.map((c) => (
@@ -205,7 +217,7 @@ export default function WashPage() {
       </section>
 
       {/* Promote yourself — the bookings-direct-to-you story. */}
-      <section className="px-6 md:px-14 py-20 bg-mist/40">
+      <section id="promote" className="px-6 md:px-14 py-20 bg-mist/40">
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-10">
           <h2 className="display text-[40px] md:text-[56px] leading-tight max-w-[640px]">
             BRING YOUR

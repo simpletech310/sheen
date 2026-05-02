@@ -29,7 +29,20 @@ export const metadata: Metadata = {
     template: "%s · Sheen",
   },
   description:
-    "On-demand wash & detail. Vetted local pros. Book in 60 seconds, professionally cleaned, payment handled. Get it sheened.",
+    "On-demand car wash & detail in LA. A vetted local pro shows up — your car, your home, your fleet — cleaned to standard, with 4 finished-work photos and your money held until you approve. Book in 60 seconds.",
+  keywords: [
+    "mobile car wash Los Angeles",
+    "on-demand auto detailing LA",
+    "house wash service",
+    "pressure washing near me",
+    "fleet washing LA",
+    "Sheen wash app",
+    "car detailer near me",
+    "concierge car wash",
+  ],
+  alternates: {
+    canonical: "/",
+  },
   // Default to the customer manifest. Child layouts (`/pro`) override this
   // by exporting their own `metadata.manifest`. The page being viewed when
   // the install button fires determines which manifest the browser reads,
@@ -57,15 +70,18 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Sheen — Make it look sharp.",
-    description: "On-demand wash & detail. Vetted local pros.",
+    description:
+      "On-demand wash & detail in LA. Vetted pros. Pay only after you approve the work — 4 finished-work photos, every time.",
     type: "website",
     siteName: "Sheen",
+    locale: "en_US",
     images: ["/img/og-default.jpg"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Sheen — Make it look sharp.",
-    description: "On-demand wash & detail. Vetted local pros.",
+    description:
+      "On-demand wash & detail in LA. Vetted pros. Pay only after you approve the work.",
     images: ["/img/og-default.jpg"],
   },
 };
