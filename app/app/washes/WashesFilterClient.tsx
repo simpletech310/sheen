@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { fmtUSD } from "@/lib/pricing";
+import { useTranslations } from "next-intl";
 
 const STATUS_COLOR: Record<string, string> = {
   completed: "bg-good",
@@ -13,18 +14,6 @@ const STATUS_COLOR: Record<string, string> = {
   matched: "bg-royal",
   cancelled: "bg-bad",
   disputed: "bg-bad",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Awaiting pro",
-  matched: "Pro matched",
-  en_route: "On the way",
-  arrived: "Arrived",
-  in_progress: "Cleaning",
-  completed: "Awaiting your approval",
-  funded: "Approved · paid",
-  cancelled: "Cancelled",
-  disputed: "Under review",
 };
 
 type FilterTab = "active" | "completed" | "approved" | "cancelled";
@@ -61,10 +50,23 @@ export function WashesFilterClient({
   totalPages: number;
   sort: string;
 }) {
+  const t = useTranslations("appWashes");
   const [tab, setTab] = useState<FilterTab>("active");
 
   const sortHref = (s: string) => `?sort=${s}`;
   const pageHref = (p: number) => `?sort=${sort}&page=${p}`;
+
+  const STATUS_LABEL: Record<string, string> = {
+    pending: t("statusPending"),
+    matched: t("statusMatched"),
+    en_route: t("statusEnRoute"),
+    arrived: t("statusArrived"),
+    in_progress: t("statusInProgress"),
+    completed: t("statusCompleted"),
+    funded: t("statusFunded"),
+    cancelled: t("statusCancelled"),
+    disputed: t("statusDisputed"),
+  };
 
   const filtered = bookings.filter((b) => {
     if (tab === "active") return ACTIVE_STATUSES.includes(b.status);
@@ -78,12 +80,12 @@ export function WashesFilterClient({
   });
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
-    { key: "active", label: "Active", count: upcomingCount },
-    { key: "completed", label: "Completed", count: completedCount },
-    { key: "approved", label: "Approved", count: approvedCount },
+    { key: "active", label: t("tabActive"), count: upcomingCount },
+    { key: "completed", label: t("tabCompleted"), count: completedCount },
+    { key: "approved", label: t("tabApproved"), count: approvedCount },
     {
       key: "cancelled",
-      label: "Cancelled",
+      label: t("tabCancelled"),
       count: bookings.filter((b) => ["cancelled", "disputed"].includes(b.status)).length,
     },
   ];
@@ -93,17 +95,17 @@ export function WashesFilterClient({
       {/* Quick stats strip */}
       <div className="grid grid-cols-3 gap-2 mb-5">
         <div className="bg-mist/40 p-3">
-          <div className="font-mono text-[9px] uppercase tracking-wider text-smoke">Upcoming</div>
+          <div className="font-mono text-[9px] uppercase tracking-wider text-smoke">{t("statUpcoming")}</div>
           <div className="display tabular text-2xl mt-1">{upcomingCount}</div>
         </div>
         <div className="bg-mist/40 p-3">
-          <div className="font-mono text-[9px] uppercase tracking-wider text-smoke">Completed</div>
+          <div className="font-mono text-[9px] uppercase tracking-wider text-smoke">{t("statCompleted")}</div>
           <div className="display tabular text-2xl mt-1">{completedCount}</div>
         </div>
         <Link href="/app/wallet" className="bg-royal text-bone p-3 hover:bg-ink transition">
-          <div className="font-mono text-[9px] uppercase tracking-wider text-sol">Loyalty</div>
+          <div className="font-mono text-[9px] uppercase tracking-wider text-sol">{t("statLoyalty")}</div>
           <div className="display tabular text-2xl mt-1">
-            {points.toLocaleString()}<span className="text-xs ml-1 opacity-80">pts</span>
+            {points.toLocaleString()}<span className="text-xs ml-1 opacity-80">{t("pts")}</span>
           </div>
         </Link>
       </div>
@@ -129,14 +131,14 @@ export function WashesFilterClient({
       {/* Sort dropdown — controls how the *paginated* list is ordered. The
           tab filter above still narrows the visible rows on the current page. */}
       <div className="flex items-center justify-between mb-4 text-xs">
-        <span className="font-mono text-[10px] uppercase tracking-wider text-smoke">Sort</span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-smoke">{t("sortLabel")}</span>
         <div className="flex gap-1 flex-wrap">
-          {[
-            ["date_desc", "Newest"],
-            ["date_asc", "Oldest"],
-            ["amount_desc", "Most spent"],
-            ["amount_asc", "Least spent"],
-          ].map(([k, label]) => (
+          {([
+            ["date_desc", t("sortNewest")],
+            ["date_asc", t("sortOldest")],
+            ["amount_desc", t("sortMostSpent")],
+            ["amount_asc", t("sortLeastSpent")],
+          ] as [string, string][]).map(([k, label]) => (
             <Link
               key={k}
               href={sortHref(k)}
@@ -166,7 +168,7 @@ export function WashesFilterClient({
                 <span className={`absolute left-0 top-0 bottom-0 w-1 ${stripe}`} />
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="text-sm font-semibold">{b.services?.tier_name ?? "Wash"}</div>
+                    <div className="text-sm font-semibold">{b.services?.tier_name ?? t("defaultWashName")}</div>
                     <div className="text-xs text-smoke mt-1">
                       {new Date(b.scheduled_window_start).toLocaleDateString([], {
                         weekday: "short",
@@ -195,19 +197,19 @@ export function WashesFilterClient({
         <div className="bg-mist/40 p-6 text-center">
           <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
             {tab === "active"
-              ? "No active washes"
+              ? t("emptyActive")
               : tab === "completed"
-              ? "Nothing waiting on your approval"
+              ? t("emptyCompleted")
               : tab === "approved"
-              ? "No approved washes yet"
-              : "No cancelled washes"}
+              ? t("emptyApproved")
+              : t("emptyCancelled")}
           </div>
           {tab === "active" && (
             <Link
               href="/app/book"
               className="inline-block mt-3 bg-sol text-ink px-5 py-2.5 text-xs font-bold uppercase tracking-wide hover:bg-bone transition"
             >
-              Book a wash →
+              {t("bookCta")}
             </Link>
           )}
         </div>
@@ -221,20 +223,20 @@ export function WashesFilterClient({
               href={pageHref(page - 1)}
               className="px-3 py-2 text-xs font-bold uppercase tracking-wide bg-mist/40 hover:bg-mist transition"
             >
-              ← Newer
+              {t("pageNewer")}
             </Link>
           ) : (
             <span />
           )}
           <span className="font-mono text-[10px] uppercase tracking-wider text-smoke tabular">
-            Page {page} of {totalPages}
+            {t("pageOf", { page, total: totalPages })}
           </span>
           {page < totalPages ? (
             <Link
               href={pageHref(page + 1)}
               className="px-3 py-2 text-xs font-bold uppercase tracking-wide bg-mist/40 hover:bg-mist transition"
             >
-              Older →
+              {t("pageOlder")}
             </Link>
           ) : (
             <span />

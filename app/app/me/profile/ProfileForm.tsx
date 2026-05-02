@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
 import { AvatarUpload } from "@/components/customer/AvatarUpload";
+import { useTranslations } from "next-intl";
 
 export function ProfileForm({
   userId,
@@ -18,6 +19,7 @@ export function ProfileForm({
     avatar_url: string | null;
   };
 }) {
+  const t = useTranslations("appProfile");
   const router = useRouter();
   const [fullName, setFullName] = useState(initial.full_name);
   const [displayName, setDisplayName] = useState(initial.display_name);
@@ -38,12 +40,12 @@ export function ProfileForm({
         }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Could not save");
-      toast("Profile updated", "success");
+      if (!r.ok) throw new Error(d.error || t("errorSave"));
+      toast(t("toastUpdated"), "success");
       router.push("/app/me");
       router.refresh();
     } catch (e: any) {
-      toast(e.message || "Could not save", "error");
+      toast(e.message || t("errorSave"), "error");
     } finally {
       setBusy(false);
     }
@@ -55,7 +57,7 @@ export function ProfileForm({
           below only handles the text fields. */}
       <div>
         <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-2">
-          Profile photo
+          {t("labelPhoto")}
         </label>
         <AvatarUpload
           userId={userId}
@@ -66,12 +68,12 @@ export function ProfileForm({
 
       <div>
         <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
-          Full name · for billing &amp; receipts
+          {t("labelFullName")}
         </label>
         <input
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          placeholder="Jane Doe"
+          placeholder={t("placeholderFullName")}
           required
           className="w-full px-4 py-3.5 bg-bone border border-mist text-sm focus:outline-none focus:border-royal"
         />
@@ -79,23 +81,23 @@ export function ProfileForm({
 
       <div>
         <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
-          Display name · what your pro sees in chat &amp; reviews
+          {t("labelDisplayName")}
         </label>
         <input
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="Jane"
+          placeholder={t("placeholderDisplayName")}
           maxLength={60}
           className="w-full px-4 py-3.5 bg-bone border border-mist text-sm focus:outline-none focus:border-royal"
         />
         <div className="text-[11px] text-smoke mt-1">
-          On public reviews we show first name + last initial (e.g. &ldquo;Jane D.&rdquo;).
+          {t("displayNameHint")}
         </div>
       </div>
 
       <div>
         <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
-          Email · sign-in identity
+          {t("labelEmail")}
         </label>
         <input
           value={initial.email}
@@ -103,18 +105,18 @@ export function ProfileForm({
           className="w-full px-4 py-3.5 bg-mist/50 border border-mist text-sm text-smoke"
         />
         <div className="text-[11px] text-smoke mt-1">
-          Email is your sign-in identity. Contact support to change it.
+          {t("emailHint")}
         </div>
       </div>
 
       <div>
         <label className="block font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
-          Phone · for SMS updates (optional)
+          {t("labelPhone")}
         </label>
         <input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          placeholder="(555) 123-4567"
+          placeholder={t("placeholderPhone")}
           inputMode="tel"
           className="w-full px-4 py-3.5 bg-bone border border-mist text-sm focus:outline-none focus:border-royal"
         />
@@ -126,7 +128,7 @@ export function ProfileForm({
           disabled={busy}
           className="flex-1 bg-ink text-bone py-3.5 text-sm font-bold uppercase tracking-wide hover:bg-royal disabled:opacity-50"
         >
-          {busy ? "Saving…" : "Save changes"}
+          {busy ? t("saving") : t("saveChanges")}
         </button>
       </div>
     </form>

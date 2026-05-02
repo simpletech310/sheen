@@ -6,6 +6,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import { fmtUSD } from "@/lib/pricing";
 import { computeFees } from "@/lib/stripe/fees";
 import { checkWasherEligibility, type WasherCapabilities } from "@/lib/job-matching";
+import { useTranslations } from "next-intl";
 
 // Single source of truth for the columns + joins the queue card needs.
 // Used both for the initial SSR query (queue/page.tsx) and for the
@@ -108,6 +109,7 @@ export function QueueRealtimeClient({
   serviceAreas: string[];
   washerCaps: WasherCaps;
 }) {
+  const t = useTranslations("proQueue");
   const [jobs, setJobs] = useState<QueueJob[]>(initialJobs);
   const [directRequests, setDirectRequests] = useState<QueueJob[]>(initialDirectRequests);
   // Track which IDs are direct requests so we don't show them in the general list
@@ -127,17 +129,17 @@ export function QueueRealtimeClient({
   const availableTiers = useMemo(() => {
     const tiers = new Set<string>();
     for (const j of jobs) {
-      const t = j.services?.tier_name;
-      if (t) tiers.add(t);
+      const tier = j.services?.tier_name;
+      if (tier) tiers.add(tier);
     }
     return Array.from(tiers).sort();
   }, [jobs]);
 
-  function toggleTier(t: string) {
+  function toggleTier(tier: string) {
     setTierFilter((prev) => {
       const next = new Set(prev);
-      if (next.has(t)) next.delete(t);
-      else next.add(t);
+      if (next.has(tier)) next.delete(tier);
+      else next.add(tier);
       return next;
     });
   }
@@ -341,7 +343,7 @@ export function QueueRealtimeClient({
           <div className="px-1 mb-2 flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-sol animate-pulse" />
             <span className="font-mono text-[10px] uppercase tracking-wider text-sol">
-              Requested for you · respond before they expire
+              {t("directRequestsBanner")}
             </span>
           </div>
           <div className="space-y-2">
@@ -371,10 +373,10 @@ export function QueueRealtimeClient({
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-1">
-                          Direct request · {minsLeft} min left
+                          {t("directRequestLabel", { minsLeft })}
                         </div>
                         <div className="text-sm font-bold uppercase">
-                          {j.services?.tier_name ?? "Service"}
+                          {j.services?.tier_name ?? t("service")}
                           {j.vehicle_count > 1 && (
                             <span className="ml-2 font-mono text-[10px] tracking-wider text-sol">
                               × {j.vehicle_count}
@@ -387,7 +389,7 @@ export function QueueRealtimeClient({
                       </div>
                       <div className="text-right">
                         <div className="display tabular text-2xl text-sol">{fmtUSD(net)}</div>
-                        <div className="font-mono text-[10px] text-bone/75">YOU GET</div>
+                        <div className="font-mono text-[10px] text-bone/75">{t("youGet")}</div>
                       </div>
                     </div>
                   </Link>
@@ -402,14 +404,14 @@ export function QueueRealtimeClient({
         <div className="mb-4 space-y-2">
           <div className="flex items-center gap-2">
             <span className="font-mono text-[9px] uppercase tracking-wider text-bone/60 shrink-0">
-              Sort
+              {t("sortLabel")}
             </span>
             <div className="flex gap-1 overflow-x-auto -mx-1 px-1">
               {([
-                ["default", "Smart"],
-                ["distance", "Nearest"],
-                ["pay", "Highest pay"],
-                ["soonest", "Soonest"],
+                ["default", t("sortSmart")],
+                ["distance", t("sortNearest")],
+                ["pay", t("sortHighestPay")],
+                ["soonest", t("sortSoonest")],
               ] as [SortMode, string][]).map(([k, label]) => (
                 <button
                   key={k}
@@ -426,20 +428,20 @@ export function QueueRealtimeClient({
           {availableTiers.length > 1 && (
             <div className="flex items-center gap-2">
               <span className="font-mono text-[9px] uppercase tracking-wider text-bone/60 shrink-0">
-                Tier
+                {t("tierLabel")}
               </span>
               <div className="flex gap-1 overflow-x-auto -mx-1 px-1">
-                {availableTiers.map((t) => {
-                  const active = tierFilter.has(t);
+                {availableTiers.map((tier) => {
+                  const active = tierFilter.has(tier);
                   return (
                     <button
-                      key={t}
-                      onClick={() => toggleTier(t)}
+                      key={tier}
+                      onClick={() => toggleTier(tier)}
                       className={`shrink-0 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider transition ${
                         active ? "bg-bone text-ink" : "bg-white/5 text-bone/70 hover:bg-white/10"
                       }`}
                     >
-                      {t}
+                      {tier}
                     </button>
                   );
                 })}
@@ -448,7 +450,7 @@ export function QueueRealtimeClient({
                     onClick={() => setTierFilter(new Set())}
                     className="shrink-0 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-bone/50 hover:text-bone"
                   >
-                    Clear
+                    {t("clearFilter")}
                   </button>
                 )}
               </div>
@@ -499,7 +501,7 @@ export function QueueRealtimeClient({
               : isHome
               ? "bg-sol text-ink"
               : "bg-royal text-bone";
-            const pillLabel = isBigRig ? "Big rig" : isHome ? "Home" : "Auto";
+            const pillLabel = isBigRig ? t("categoryBigRig") : isHome ? t("categoryHome") : t("categoryAuto");
             const isNew = newIds.has(j.id);
 
             return (
@@ -515,7 +517,7 @@ export function QueueRealtimeClient({
                   {isRush && (
                     <span className="font-mono text-[9px] uppercase tracking-wider bg-sol text-ink px-1.5 py-0.5 inline-flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-ink animate-pulse" />
-                      Rush · {minsLeft != null ? `${minsLeft} min left` : "now"}
+                      {t("rushLabel", { minsLeft: minsLeft ?? 0 })}
                     </span>
                   )}
                   <span className={`font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 ${pillClass}`}>
@@ -523,19 +525,19 @@ export function QueueRealtimeClient({
                   </span>
                   {j.vehicle_count > 1 && !isHome && (
                     <span className="font-mono text-[9px] uppercase tracking-wider bg-bone/20 text-bone px-1.5 py-0.5">
-                      × {j.vehicle_count} {isBigRig ? "rigs" : "vehicles"}
+                      × {j.vehicle_count} {isBigRig ? t("rigs") : t("vehicles")}
                     </span>
                   )}
                   {isNew && (
                     <span className="font-mono text-[9px] uppercase tracking-wider bg-sol text-ink px-1.5 py-0.5">
-                      New
+                      {t("newBadge")}
                     </span>
                   )}
                 </div>
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="text-sm font-bold uppercase">
-                      {j.services?.tier_name ?? "Service"}
+                      {j.services?.tier_name ?? t("service")}
                     </div>
                     <div className="text-xs text-bone/90 mt-1">
                       {j.addresses?.street}, {j.addresses?.city}{j.addresses?.state ? `, ${j.addresses.state}` : ""}
@@ -543,7 +545,7 @@ export function QueueRealtimeClient({
                     </div>
                     <div className="font-mono text-[10px] text-bone/75 uppercase mt-1.5 tabular">
                       {isRush
-                        ? "ASAP · pick up now"
+                        ? t("rushAsap")
                         : new Date(j.scheduled_window_start).toLocaleString([], {
                             month: "short",
                             day: "numeric",
@@ -555,7 +557,7 @@ export function QueueRealtimeClient({
                   <div className="text-right">
                     <div className="display tabular text-2xl text-sol">{fmtUSD(net)}</div>
                     <div className="font-mono text-[10px] text-bone/75">
-                      YOU GET{isRush && rushBonus > 0 ? ` (+${fmtUSD(rushBonus)} rush)` : ""}
+                      {t("youGet")}{isRush && rushBonus > 0 ? ` (+${fmtUSD(rushBonus)} ${t("rush")})` : ""}
                     </div>
                   </div>
                 </div>
@@ -571,15 +573,15 @@ export function QueueRealtimeClient({
           />
           <div className="absolute inset-0 bg-ink/65 flex flex-col items-center justify-center text-center px-6">
             <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-2">
-              {jobs.length > 0 ? "Filtered out" : "Quiet right now"}
+              {jobs.length > 0 ? t("filteredOutEyebrow") : t("quietEyebrow")}
             </div>
             <h2 className="display text-xl text-bone mb-1">
-              {jobs.length > 0 ? "No jobs match your filters" : "No jobs in your radius"}
+              {jobs.length > 0 ? t("noJobsMatchFilters") : t("noJobsInRadius")}
             </h2>
             <p className="text-xs text-bone/75 max-w-xs">
               {jobs.length > 0
-                ? "Clear a tier filter or switch sort to see what else is available."
-                : "We'll update this live — no need to refresh. New bookings pop in the moment they're placed."}
+                ? t("clearFilterHint")
+                : t("liveUpdateHint")}
             </p>
           </div>
         </div>

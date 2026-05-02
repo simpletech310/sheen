@@ -2,10 +2,12 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { AchievementGlyph } from "@/components/badges/AchievementGlyph";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AchievementsPage() {
+  const t = await getTranslations("appAchievements");
   const supabase = createClient();
   const {
     data: { user },
@@ -53,24 +55,24 @@ export default async function AchievementsPage() {
   return (
     <div className="px-5 pt-10 pb-8">
       <Link href="/app/me" className="text-smoke text-sm">
-        ← Profile
+        {t("backLink")}
       </Link>
-      <Eyebrow className="mt-4">Achievements</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">YOUR BADGES</h1>
+      <Eyebrow className="mt-4">{t("eyebrow")}</Eyebrow>
+      <h1 className="display text-3xl mt-3 mb-2">{t("heading")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
       {/* Progress hero */}
       <div className="bg-royal text-bone p-5 mb-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
         <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-          Unlocked
+          {t("progressLabel")}
         </div>
         <div className="display tabular text-[44px] leading-none mt-2">
           {earned}
           <span className="text-bone/50 text-2xl">/{total}</span>
         </div>
         <div className="text-xs opacity-80 mt-2 tabular">
-          +{totalPts.toLocaleString()} bonus points earned
+          {t("bonusPointsEarned", { pts: totalPts.toLocaleString() })}
         </div>
         <div className="mt-4 h-1.5 bg-bone/15 relative overflow-hidden">
           <div
@@ -83,57 +85,57 @@ export default async function AchievementsPage() {
       {/* Active perks + credits — only renders when there's something to show. */}
       {(hasAnyPerk || availableCredits.length > 0) && (
         <div className="bg-bone border border-mist p-5 mb-6">
-          <Eyebrow>Your perks</Eyebrow>
+          <Eyebrow>{t("yourPerks")}</Eyebrow>
           <div className="mt-3 space-y-2">
             {(perks?.discount_pct ?? 0) > 0 && (
               <div className="flex justify-between text-sm">
-                <span>Forever discount</span>
+                <span>{t("perkForeverDiscount")}</span>
                 <span className="font-mono tabular text-good font-bold">
-                  −{perks?.discount_pct}% on every wash
+                  {t("perkDiscountValue", { pct: perks?.discount_pct })}
                 </span>
               </div>
             )}
             {perks?.has_lifetime_express_upgrade && (
               <div className="flex justify-between text-sm">
-                <span>Express upgrade</span>
+                <span>{t("perkExpressUpgrade")}</span>
                 <span className="font-mono text-[10px] uppercase tracking-wider text-good">
-                  Free for life
+                  {t("perkFreeForLife")}
                 </span>
               </div>
             )}
             {perks?.is_founder && (
               <div className="flex justify-between text-sm">
-                <span>Founder cohort</span>
+                <span>{t("perkFounder")}</span>
                 <span className="font-mono text-[10px] uppercase tracking-wider text-sol">
-                  Charter member
+                  {t("perkCharterMember")}
                 </span>
               </div>
             )}
             {perks?.weekend_priority && (
               <div className="flex justify-between text-sm">
-                <span>Weekend slots</span>
+                <span>{t("perkWeekendSlots")}</span>
                 <span className="font-mono text-[10px] uppercase tracking-wider text-good">
-                  Priority routing
+                  {t("perkPriorityRouting")}
                 </span>
               </div>
             )}
             {availableCredits.map((c: any) => (
               <div key={c.id} className="flex justify-between text-sm pt-2 border-t border-mist">
                 <span>
-                  Free <strong>{c.service_tier_name}</strong>
+                  {t("creditFree")} <strong>{c.service_tier_name}</strong>
                   <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-smoke">
-                    from {c.source_achievement_id?.replace(/_/g, " ") ?? "achievement"}
+                    {t("creditFrom", { achievement: c.source_achievement_id?.replace(/_/g, " ") ?? t("creditAchievementFallback") })}
                   </span>
                 </span>
                 <span className="font-mono text-[10px] uppercase tracking-wider text-good">
-                  Ready to redeem
+                  {t("creditReadyToRedeem")}
                 </span>
               </div>
             ))}
           </div>
           {availableCredits.length > 0 && (
             <p className="text-[11px] text-smoke mt-3 leading-relaxed">
-              Apply your free wash on the pay step when you book a matching tier.
+              {t("creditApplyHint")}
             </p>
           )}
         </div>
@@ -183,11 +185,14 @@ export default async function AchievementsPage() {
                 }`}
               >
                 {isUnlocked
-                  ? `+${a.bonus_points} pts · ${new Date(unlockedAt!).toLocaleDateString([], {
-                      month: "short",
-                      day: "numeric",
-                    })}`
-                  : `Locked · +${a.bonus_points} pts`}
+                  ? t("badgeUnlockedMeta", {
+                      pts: a.bonus_points,
+                      date: new Date(unlockedAt!).toLocaleDateString([], {
+                        month: "short",
+                        day: "numeric",
+                      }),
+                    })
+                  : t("badgeLockedMeta", { pts: a.bonus_points })}
               </div>
             </div>
           );

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { fmtUSD } from "@/lib/pricing";
 import { computeFees } from "@/lib/stripe/fees";
+import { useTranslations } from "next-intl";
 
 type FilterTab = "active" | "completed" | "funded" | "cancelled";
 
@@ -23,6 +24,7 @@ export function ProJobsFilterClient({
 }: {
   jobs: ProJob[];
 }) {
+  const t = useTranslations("proJobs");
   const [tab, setTab] = useState<FilterTab>("active");
 
   const filtered = jobs.filter((j) => {
@@ -41,27 +43,27 @@ export function ProJobsFilterClient({
   };
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
-    { key: "active", label: "Active", count: counts.active },
-    { key: "completed", label: "Completed", count: counts.completed },
-    { key: "funded", label: "Funded", count: counts.funded },
-    { key: "cancelled", label: "Cancelled", count: counts.cancelled },
+    { key: "active", label: t("tabActive"), count: counts.active },
+    { key: "completed", label: t("tabCompleted"), count: counts.completed },
+    { key: "funded", label: t("tabFunded"), count: counts.funded },
+    { key: "cancelled", label: t("tabCancelled"), count: counts.cancelled },
   ];
 
   return (
     <>
       <div className="flex gap-1 mb-5">
-        {tabs.map((t) => (
+        {tabs.map((tab_item) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={tab_item.key}
+            onClick={() => setTab(tab_item.key)}
             className={`flex-1 py-2.5 text-center text-xs font-bold uppercase tracking-wide transition ${
-              tab === t.key
+              tab === tab_item.key
                 ? "bg-royal text-bone"
                 : "bg-white/5 text-bone/50 hover:bg-white/10 hover:text-bone"
             }`}
           >
-            {t.label}
-            <span className="ml-1.5 opacity-70">{t.count}</span>
+            {tab_item.label}
+            <span className="ml-1.5 opacity-70">{tab_item.count}</span>
           </button>
         ))}
       </div>
@@ -72,7 +74,7 @@ export function ProJobsFilterClient({
             const winStart = new Date(j.scheduled_window_start);
             const minsAway = Math.round((winStart.getTime() - Date.now()) / 60_000);
             const isActive = ACTIVE_STATUSES.includes(j.status);
-            
+
             // If completed, we show a basic view, if active we link to navigate
             return (
               <Link
@@ -88,7 +90,7 @@ export function ProJobsFilterClient({
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="text-sm font-bold uppercase">
-                      {j.services?.tier_name ?? "Service"}
+                      {j.services?.tier_name ?? t("service")}
                     </div>
                     {/* Once a wash funds, scrub the customer's home street
                         from the pro's history. Keep the city for context
@@ -98,7 +100,7 @@ export function ProJobsFilterClient({
                         full address — pro may need to return. */}
                     {j.status === "funded" ? (
                       <div className="text-xs text-bone/55 mt-1 italic">
-                        {j.address?.city ?? "—"} · address removed
+                        {j.address?.city ?? "—"} · {t("addressRemoved")}
                       </div>
                     ) : (
                       <div className="text-xs text-bone/90 mt-1">
@@ -111,7 +113,7 @@ export function ProJobsFilterClient({
                       {winStart.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                       {isActive && minsAway > 0 && minsAway < 240 && (
                         <span className="text-sol ml-2">
-                          in {minsAway < 60 ? `${minsAway} min` : `${Math.round(minsAway / 60)}h`}
+                          {t("inTime", { time: minsAway < 60 ? t("minutes", { n: minsAway }) : t("hours", { n: Math.round(minsAway / 60) }) })}
                         </span>
                       )}
                     </div>
@@ -126,7 +128,7 @@ export function ProJobsFilterClient({
                       )}
                     </div>
                     <div className="font-mono text-[10px] text-bone/75">
-                      {j.status === "completed" || j.status === "funded" ? "EARNED" : "YOU GET"}
+                      {j.status === "completed" || j.status === "funded" ? t("earned") : t("youGet")}
                     </div>
                   </div>
                 </div>
@@ -137,7 +139,11 @@ export function ProJobsFilterClient({
       ) : (
         <div className="bg-white/5 p-6 text-center border-l-2 border-bone/20">
           <div className="font-mono text-[10px] uppercase tracking-wider text-bone/50">
-            {tab === "active" ? "No active jobs" : tab === "completed" ? "No completed jobs yet" : "No cancelled jobs"}
+            {tab === "active"
+              ? t("noActiveJobs")
+              : tab === "completed"
+              ? t("noCompletedJobs")
+              : t("noCancelledJobs")}
           </div>
         </div>
       )}

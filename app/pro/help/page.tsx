@@ -1,58 +1,37 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { SupportForm } from "./SupportForm";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
-const faq = [
-  {
-    q: "How do I get more jobs?",
-    a: "Stay verified, keep your hours wide, and grow your radius. Customers also book direct via your @handle — share /r/YOURHANDLE and you'll skip the queue entirely.",
-  },
-  {
-    q: "When do I get paid?",
-    a: "Same-day standard payout to your bank for completed jobs. Tips are 100% yours and land same-day. Instant payouts cost 1.5%.",
-  },
-  {
-    q: "What if a customer is a no-show?",
-    a: "Hit the issue flag on the navigation page. We auto-charge the customer the no-show fee and you get paid for showing up.",
-  },
-  {
-    q: "How do I dispute a penalty?",
-    a: "Email hello@sheen.co with the booking ID. Disputes are reviewed within 48 hours. Pending fees pause withholding until the review lands.",
-  },
-  {
-    q: "What equipment do I need?",
-    a: "Pressure washer (min 1.6 GPM), foam cannon, two-bucket setup, microfiber towels, clay bar, wax, leather conditioner, $1M GL insurance.",
-  },
-  {
-    q: "How do I take time off?",
-    a: "Schedule → block-out dates. Add the date(s), save, and jobs scheduled for those days won't hit your queue.",
-  },
-  {
-    q: "How do I get verified?",
-    a: "Three steps on /pro/verify: set up payouts, upload insurance, submit for background check. Admin approves within 48 hours.",
-  },
-  {
-    q: "How do I unlock big-rig jobs?",
-    a: "Profile → Big rig service → toggle on. You confirm you have long hoses, foam cannon, ladders, and high-flow pumps. Jobs pay 2–6× a regular auto wash.",
-  },
-];
+export default async function ProHelpPage() {
+  const t = await getTranslations("proHelp");
 
-export default function ProHelpPage() {
+  const faq = [
+    { q: t("faq1Q"), a: t("faq1A") },
+    { q: t("faq2Q"), a: t("faq2A") },
+    { q: t("faq3Q"), a: t("faq3A") },
+    { q: t("faq4Q"), a: t("faq4A") },
+    { q: t("faq5Q"), a: t("faq5A") },
+    { q: t("faq6Q"), a: t("faq6A") },
+    { q: t("faq7Q"), a: t("faq7A") },
+    { q: t("faq8Q"), a: t("faq8A") },
+  ];
+
   return (
     <div className="px-5 pt-10 pb-8">
       <Link href="/pro" className="text-bone/60 text-sm">
-        ← Home
+        ← {t("backLink")}
       </Link>
       <Eyebrow className="!text-bone/60 mt-4" prefix={null}>
-        Help
+        {t("eyebrow")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">SUPPORT</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("headline")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Pros ask
+        {t("faqEyebrow")}
       </Eyebrow>
       <div className="mt-3 mb-8 space-y-2">
         {faq.map((f) => (
@@ -67,7 +46,7 @@ export default function ProHelpPage() {
       </div>
 
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Contact support
+        {t("contactEyebrow")}
       </Eyebrow>
       <div className="mt-3">
         <SupportForm />

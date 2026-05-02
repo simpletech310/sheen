@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 type Prefs = { push: boolean; email: boolean; sms: boolean };
 
-const opts: { k: keyof Prefs; label: string; hint: string }[] = [
-  { k: "push", label: "Push notifications", hint: "Job alerts, direct requests, customer messages." },
-  { k: "email", label: "Email", hint: "Receipts, weekly earnings, account changes." },
-  { k: "sms", label: "SMS", hint: "Urgent only — direct requests + cancellations." },
-];
-
 export function NotificationToggles({ initial }: { initial: Prefs }) {
+  const t = useTranslations("proSettings");
   const [prefs, setPrefs] = useState<Prefs>(initial);
   const [busy, setBusy] = useState<keyof Prefs | null>(null);
+
+  const opts: { k: keyof Prefs; label: string; hint: string }[] = [
+    { k: "push", label: t("notifPushLabel"), hint: t("notifPushHint") },
+    { k: "email", label: t("notifEmailLabel"), hint: t("notifEmailHint") },
+    { k: "sms", label: t("notifSmsLabel"), hint: t("notifSmsHint") },
+  ];
 
   async function toggle(k: keyof Prefs) {
     const next = !prefs[k];
@@ -25,11 +27,11 @@ export function NotificationToggles({ initial }: { initial: Prefs }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [k]: next }),
       });
-      if (!r.ok) throw new Error("Could not save");
+      if (!r.ok) throw new Error(t("notifSaveError"));
     } catch {
       // Roll back.
       setPrefs((p) => ({ ...p, [k]: !next }));
-      toast("Could not save preference", "error");
+      toast(t("notifSaveError"), "error");
     } finally {
       setBusy(null);
     }
@@ -38,7 +40,7 @@ export function NotificationToggles({ initial }: { initial: Prefs }) {
   return (
     <div className="bg-white/5 p-5 mb-3">
       <div className="font-mono text-[10px] uppercase tracking-wider text-bone/60 mb-3">
-        Notifications
+        {t("notifSectionLabel")}
       </div>
       <div className="space-y-3">
         {opts.map((o) => {

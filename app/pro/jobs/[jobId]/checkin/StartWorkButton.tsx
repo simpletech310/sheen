@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 /**
  * Manual "Start work" button for the pro. Calls /api/bookings/[id]/start
@@ -21,6 +22,7 @@ export function StartWorkButton({
   jobId: string;
   primary?: boolean;
 }) {
+  const t = useTranslations("proJobs");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -30,13 +32,13 @@ export function StartWorkButton({
       const r = await fetch(`/api/bookings/${jobId}/start`, { method: "POST" });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) {
-        throw new Error(d.error || `Could not start (status ${r.status})`);
+        throw new Error(d.error || t("startError", { status: r.status }));
       }
-      toast("Timer started", "success");
+      toast(t("timerStarted"), "success");
       router.push(`/pro/jobs/${jobId}/timer`);
       router.refresh();
     } catch (e: any) {
-      toast(e.message || "Could not start", "error");
+      toast(e.message || t("couldNotStart"), "error");
       setBusy(false);
     }
   }
@@ -52,7 +54,7 @@ export function StartWorkButton({
           : "bg-bone/10 text-bone hover:bg-bone hover:text-ink"
       }`}
     >
-      {busy ? "Starting…" : "Start work →"}
+      {busy ? t("starting") : t("startWork")}
     </button>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { createClient } from "@/lib/supabase/server";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ type Conversation = {
 };
 
 export default async function MessagesPage() {
+  const t = await getTranslations("proMessages");
   const supabase = createClient();
   const {
     data: { user },
@@ -72,7 +74,7 @@ export default async function MessagesPage() {
           booking_status: b.status,
           scheduled_window_start: b.scheduled_window_start,
           tier_name: b.services?.tier_name ?? null,
-          customer_name: c?.display_name || c?.full_name || "Customer",
+          customer_name: c?.display_name || c?.full_name || t("customerFallback"),
           customer_avatar_url: c?.avatar_url
             ? `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/avatars/${c.avatar_url}`
             : null,
@@ -89,18 +91,18 @@ export default async function MessagesPage() {
   return (
     <div className="px-5 pt-10 pb-8">
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Inbox
+        {t("eyebrow")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">MESSAGES</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("headline")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
       {conversations.length === 0 ? (
         <div className="bg-white/5 p-8 text-center">
           <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-2">
-            No threads yet
+            {t("noThreadsYet")}
           </div>
           <p className="text-sm text-bone/60">
-            When a customer messages you on a claimed job, the thread shows up here.
+            {t("noThreadsDesc")}
           </p>
         </div>
       ) : (
@@ -143,7 +145,7 @@ export default async function MessagesPage() {
                       </div>
                     </div>
                     <div className="text-xs text-bone/50 mt-0.5">
-                      {c.tier_name ?? "Service"}
+                      {c.tier_name ?? t("serviceFallback")}
                     </div>
                     <p className="text-sm text-bone/80 mt-1.5 line-clamp-2">
                       {c.last_message}

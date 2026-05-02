@@ -6,6 +6,7 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { CheckInPolling } from "./CheckInPolling";
 import { StartWorkButton } from "./StartWorkButton";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export default async function CheckInPage({
 }: {
   params: { jobId: string };
 }) {
+  const t = await getTranslations("proJobs");
   const supabase = createClient();
   const {
     data: { user },
@@ -39,28 +41,25 @@ export default async function CheckInPage({
   return (
     <div className="px-5 pt-10 pb-8">
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Check-in
+        {t("checkInEyebrow")}
       </Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">
-        {checkedIn ? "CHECKED IN ✓" : "SHOW THIS TO THE CUSTOMER"}
+        {checkedIn ? t("checkedInTitle") : t("showToCustomerTitle")}
       </h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
 
       {checkedIn ? (
         <p className="text-sm text-bone/60 mb-7">
-          Customer confirmed at{" "}
-          {new Date(job.started_at!).toLocaleTimeString([], {
-            hour: "numeric",
-            minute: "2-digit",
+          {t("checkedInBody", {
+            time: new Date(job.started_at!).toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+            }),
           })}
-          . Timer&rsquo;s running. You get paid as soon as the customer
-          approves the finished work.
         </p>
       ) : (
         <p className="text-sm text-bone/60 mb-7">
-          They scan with the camera app, or read off the code below. Once they
-          confirm, the timer starts. You get paid as soon as they approve
-          the finished work.
+          {t("checkInInstructions")}
         </p>
       )}
 
@@ -80,7 +79,7 @@ export default async function CheckInPage({
           </div>
           <div className="text-center mb-7">
             <div className="font-mono text-[10px] uppercase tracking-wider text-bone/50 mb-1">
-              Manual code
+              {t("manualCode")}
             </div>
             <div className="display tabular text-4xl tracking-[0.2em] text-sol">
               {job.qr_check_in_code?.toUpperCase()}
@@ -98,7 +97,7 @@ export default async function CheckInPage({
           href={`/pro/jobs/${params.jobId}/timer`}
           className="block w-full bg-sol text-ink hover:bg-bone py-4 text-sm font-bold uppercase tracking-wide text-center transition"
         >
-          Open timer →
+          {t("openTimer")} →
         </Link>
       ) : (
         <>
@@ -110,8 +109,7 @@ export default async function CheckInPage({
               jobs stuck on 'arrived'. */}
           <StartWorkButton jobId={params.jobId} primary />
           <p className="text-[11px] text-bone/45 mt-3 text-center leading-relaxed">
-            No QR? Start manually. The customer can still confirm via the
-            tracking link, and the timer is your record either way.
+            {t("noQrFallback")}
           </p>
         </>
       )}
@@ -120,7 +118,7 @@ export default async function CheckInPage({
         <ChatPanel
           bookingId={job.id}
           currentUserId={user.id}
-          otherName={(job as any).users?.full_name ?? "the customer"}
+          otherName={(job as any).users?.full_name ?? t("theCustomer")}
           variant="pro"
         />
       )}

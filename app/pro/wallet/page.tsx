@@ -3,10 +3,12 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { WalletActions } from "./WalletActions";
 import { getStripe } from "@/lib/stripe/server";
 import { WalletLiveTotals, type WalletPayout } from "@/components/pro/WalletLiveTotals";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function WalletPage() {
+  const t = await getTranslations("proWallet");
   const supabase = createClient();
   const stripe = getStripe();
   const { data: { user } } = await supabase.auth.getUser();
@@ -57,7 +59,7 @@ export default async function WalletPage() {
   return (
     <div className="px-5 pt-10 pb-8">
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Wallet
+        {t("eyebrow")}
       </Eyebrow>
 
       <WalletLiveTotals

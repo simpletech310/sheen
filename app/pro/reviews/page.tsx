@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReviewsPage() {
+  const t = await getTranslations("proReviews");
   const supabase = createClient();
   const {
     data: { user },
@@ -55,12 +57,12 @@ export default async function ReviewsPage() {
   return (
     <div className="px-5 pt-10 pb-8">
       <Link href="/pro" className="text-bone/60 text-sm">
-        ← Home
+        ← {t("backHome")}
       </Link>
       <Eyebrow className="!text-bone/60 mt-4" prefix={null}>
-        Reviews
+        {t("eyebrow")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">YOUR RATING</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("headline")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
       <div className="bg-white/5 p-6 mb-6 relative overflow-hidden">
@@ -72,7 +74,7 @@ export default async function ReviewsPage() {
               <span className="text-sol ml-2 text-3xl">★</span>
             </div>
             <div className="font-mono text-[10px] text-bone/60 uppercase tracking-wider mt-2">
-              {total} review{total === 1 ? "" : "s"}
+              {t("reviewCount", { count: total })}
             </div>
           </div>
           <div className="flex-1 max-w-[200px] space-y-1.5">
@@ -99,10 +101,10 @@ export default async function ReviewsPage() {
       {total === 0 ? (
         <div className="bg-white/5 p-8 text-center">
           <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-2">
-            No reviews yet
+            {t("noReviewsYet")}
           </div>
           <p className="text-sm text-bone/60">
-            Customers rate after every wash. Show up sharp and they will too.
+            {t("noReviewsDesc")}
           </p>
         </div>
       ) : (
@@ -111,7 +113,7 @@ export default async function ReviewsPage() {
             // Show the vehicle washed instead of the customer's name —
             // privacy by default, plus it's more useful context for the
             // pro ("ah, that was the Dodge Dart with the cracked dash").
-            const label = labelByBookingId.get(r.booking_id) ?? "Sheen customer";
+            const label = labelByBookingId.get(r.booking_id) ?? t("customerFallback");
             const hasComment = !!(r.comment && r.comment.trim());
             return (
               <div key={i} className="bg-white/5 p-4">
@@ -134,7 +136,7 @@ export default async function ReviewsPage() {
                 {hasComment ? (
                   <p className="text-sm text-bone/85 mt-2 leading-relaxed">{r.comment}</p>
                 ) : (
-                  <p className="text-xs text-bone/40 mt-2 italic">No written feedback.</p>
+                  <p className="text-xs text-bone/40 mt-2 italic">{t("noWrittenFeedback")}</p>
                 )}
               </div>
             );

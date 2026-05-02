@@ -6,10 +6,12 @@ import { LanguagePicker } from "@/components/i18n/LanguagePicker";
 import { fmtUSD } from "@/lib/pricing";
 import { WashHandleCard } from "./WashHandleCard";
 import { BigRigCapabilityCard } from "./BigRigCapabilityCard";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProMePage() {
+  const t = await getTranslations("proMe");
   const supabase = createClient();
   const {
     data: { user },
@@ -51,44 +53,44 @@ export default async function ProMePage() {
   type Tile = { label: string; href: string; sub?: string; tone?: "sol" | "muted" };
   const sections: { title: string; eyebrow: string; tiles: Tile[] }[] = [
     {
-      title: "WORK",
-      eyebrow: "Day to day",
+      title: t("sectionWorkTitle"),
+      eyebrow: t("sectionWorkEyebrow"),
       tiles: [
-        { label: "Today's queue", href: "/pro/queue", sub: "Open jobs in radius" },
-        { label: "Schedule", href: "/pro/availability", sub: "Hours + block-out dates" },
-        { label: "Inbox", href: "/pro/messages", sub: "Customer threads" },
+        { label: t("tileQueue"), href: "/pro/queue", sub: t("tileQueueSub") },
+        { label: t("tileSchedule"), href: "/pro/availability", sub: t("tileScheduleSub") },
+        { label: t("tileInbox"), href: "/pro/messages", sub: t("tileInboxSub") },
       ],
     },
     {
-      title: "MONEY",
-      eyebrow: "Earnings",
+      title: t("sectionMoneyTitle"),
+      eyebrow: t("sectionMoneyEyebrow"),
       tiles: [
-        { label: "Earnings", href: "/pro/earnings", sub: "12-week trend" },
-        { label: "Wallet", href: "/pro/wallet", sub: "Pending + paid payouts" },
-        { label: "Tax summary", href: "/pro/tax", sub: "Annual breakdown" },
+        { label: t("tileEarnings"), href: "/pro/earnings", sub: t("tileEarningsSub") },
+        { label: t("tileWallet"), href: "/pro/wallet", sub: t("tileWalletSub") },
+        { label: t("tileTax"), href: "/pro/tax", sub: t("tileTaxSub") },
       ],
     },
     {
-      title: "TRUST",
-      eyebrow: "Reputation",
+      title: t("sectionTrustTitle"),
+      eyebrow: t("sectionTrustEyebrow"),
       tiles: [
-        { label: "Reviews", href: "/pro/reviews", sub: "Customer ratings" },
-        { label: "Penalties", href: "/pro/penalties", sub: "Open + history" },
+        { label: t("tileReviews"), href: "/pro/reviews", sub: t("tileReviewsSub") },
+        { label: t("tilePenalties"), href: "/pro/penalties", sub: t("tilePenaltiesSub") },
         {
-          label: verifiedAll ? "Verification" : "Finish verification",
+          label: verifiedAll ? t("tileVerification") : t("tileFinishVerification"),
           href: "/pro/verify",
-          sub: verifiedAll ? "All three steps clear" : `${verifiedCount}/3 done · finish to go active`,
+          sub: verifiedAll ? t("tileVerificationDone") : t("tileVerificationProgress", { count: verifiedCount }),
           tone: verifiedAll ? "muted" : "sol",
         },
       ],
     },
     {
-      title: "ACCOUNT",
-      eyebrow: "Settings",
+      title: t("sectionAccountTitle"),
+      eyebrow: t("sectionAccountEyebrow"),
       tiles: [
-        { label: "Edit profile", href: "/pro/me/edit", sub: "Bio, radius, equipment" },
-        { label: "Settings", href: "/pro/settings", sub: "Notifications, sign out" },
-        { label: "Help", href: "/pro/help", sub: "FAQ + support ticket" },
+        { label: t("tileEditProfile"), href: "/pro/me/edit", sub: t("tileEditProfileSub") },
+        { label: t("tileSettings"), href: "/pro/settings", sub: t("tileSettingsSub") },
+        { label: t("tileHelp"), href: "/pro/help", sub: t("tileHelpSub") },
       ],
     },
   ];
@@ -128,7 +130,7 @@ export default async function ProMePage() {
             href="/pro/me/edit"
             className="font-mono text-[10px] uppercase tracking-wider text-sol hover:text-bone shrink-0"
           >
-            Edit →
+            {t("editLink")} →
           </Link>
         </div>
 
@@ -141,16 +143,16 @@ export default async function ProMePage() {
                 : "bg-bone/15 text-bone/80"
             }`}
           >
-            {wp?.status === "active" ? "Active" : (wp?.status ?? "Pending")}
+            {wp?.status === "active" ? t("statusActive") : (wp?.status ?? t("statusPending"))}
           </span>
           {bgOk && (
             <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-1 bg-bone/15 text-bone/80">
-              ✓ Verified
+              ✓ {t("statusVerified")}
             </span>
           )}
           {wp?.can_wash_big_rig && (
             <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-1 bg-bone/15 text-bone/80">
-              Big rig
+              {t("statusBigRig")}
             </span>
           )}
         </div>
@@ -158,33 +160,33 @@ export default async function ProMePage() {
         <div className="grid grid-cols-3 gap-3">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-              Jobs
+              {t("statJobs")}
             </div>
             <div className="display tabular text-2xl mt-1 leading-none">
               {wp?.jobs_completed ?? 0}
             </div>
-            <div className="text-[10px] tabular opacity-60 mt-0.5">lifetime</div>
+            <div className="text-[10px] tabular opacity-60 mt-0.5">{t("statLifetime")}</div>
           </div>
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-              Rating
+              {t("statRating")}
             </div>
             <div className="display tabular text-2xl mt-1 leading-none">
               {wp?.rating_avg ?? "—"}
               <span className="text-sol ml-1 text-base">★</span>
             </div>
             <div className="text-[10px] tabular opacity-60 mt-0.5">
-              avg score
+              {t("statAvgScore")}
             </div>
           </div>
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-              Earnings
+              {t("statEarnings")}
             </div>
             <div className="display tabular text-2xl mt-1 leading-none">
               {fmtUSD(lifetimeCents)}
             </div>
-            <div className="text-[10px] tabular opacity-60 mt-0.5">lifetime</div>
+            <div className="text-[10px] tabular opacity-60 mt-0.5">{t("statLifetime")}</div>
           </div>
         </div>
       </div>
@@ -216,33 +218,33 @@ export default async function ProMePage() {
             </Eyebrow>
             <h2 className="display text-xl mt-2 mb-3">{s.title}</h2>
             <div className="grid grid-cols-1 gap-2">
-              {s.tiles.map((t) => (
+              {s.tiles.map((tile) => (
                 <Link
-                  key={t.label}
-                  href={t.href}
+                  key={tile.label}
+                  href={tile.href}
                   className={`group flex items-center justify-between p-4 transition border ${
-                    t.tone === "sol"
+                    tile.tone === "sol"
                       ? "bg-sol border-sol text-ink hover:bg-bone"
                       : "bg-white/5 border-bone/10 hover:border-bone/30 hover:bg-white/10"
                   }`}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold uppercase tracking-wide">
-                      {t.label}
+                      {tile.label}
                     </div>
-                    {t.sub && (
+                    {tile.sub && (
                       <div
                         className={`text-xs mt-0.5 ${
-                          t.tone === "sol" ? "text-ink/75" : "text-bone/55"
+                          tile.tone === "sol" ? "text-ink/75" : "text-bone/55"
                         }`}
                       >
-                        {t.sub}
+                        {tile.sub}
                       </div>
                     )}
                   </div>
                   <span
                     className={`shrink-0 ml-3 transition ${
-                      t.tone === "sol" ? "text-ink" : "text-bone/40 group-hover:text-sol"
+                      tile.tone === "sol" ? "text-ink" : "text-bone/40 group-hover:text-sol"
                     }`}
                   >
                     →
@@ -256,12 +258,11 @@ export default async function ProMePage() {
 
       {/* App-shell controls — push notifications + home-screen install. */}
       <section className="mt-7">
-        <Eyebrow className="!text-bone/60" prefix={null}>App</Eyebrow>
-        <h2 className="display text-xl mt-2 mb-3 text-bone">Notifications &amp; home screen</h2>
+        <Eyebrow className="!text-bone/60" prefix={null}>{t("appSectionEyebrow")}</Eyebrow>
+        <h2 className="display text-xl mt-2 mb-3 text-bone">{t("appSectionTitle")}</h2>
         <div className="bg-white/5 border border-bone/10 p-4">
           <p className="text-xs text-bone/65 leading-relaxed mb-3">
-            Hear new jobs the second they post. Pin Sheen Pro to your home screen — opens
-            like a native app, no App Store, no install size.
+            {t("appSectionBody")}
           </p>
           <div className="flex flex-wrap gap-2">
             <EnablePushButton />
@@ -269,7 +270,7 @@ export default async function ProMePage() {
               href="?welcome=1"
               className="inline-block bg-sol text-ink px-4 py-2 text-xs font-bold uppercase tracking-wide hover:bg-bone transition"
             >
-              Add to home screen
+              {t("addToHomeScreen")}
             </a>
           </div>
         </div>
@@ -281,12 +282,11 @@ export default async function ProMePage() {
           messages from English-speaking customers also translate to your
           language on the client side. */}
       <section className="mt-7">
-        <Eyebrow className="!text-bone/60" prefix={null}>Preferences</Eyebrow>
-        <h2 className="display text-xl mt-2 mb-3 text-bone">Language</h2>
+        <Eyebrow className="!text-bone/60" prefix={null}>{t("prefSectionEyebrow")}</Eyebrow>
+        <h2 className="display text-xl mt-2 mb-3 text-bone">{t("prefSectionTitle")}</h2>
         <div className="bg-white/5 border border-bone/10 p-4 flex items-center justify-between gap-4">
           <p className="text-xs text-bone/65 leading-relaxed flex-1">
-            Pick the language you read in. Saved to your account so it follows
-            you across devices. Customer chat translates to here automatically.
+            {t("prefSectionBody")}
           </p>
           <LanguagePicker variant="dark" />
         </div>
@@ -296,11 +296,11 @@ export default async function ProMePage() {
         href="/pro/settings"
         className="mt-8 block text-center text-xs uppercase tracking-wider text-bone/50 hover:text-bone"
       >
-        Settings &amp; sign out →
+        {t("settingsLink")} →
       </Link>
 
       <div className="mt-8 font-mono text-[10px] uppercase tracking-wider text-bone/30 text-center">
-        SHEEN PRO · Los Angeles
+        {t("footerText")}
       </div>
     </div>
   );

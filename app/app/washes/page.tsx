@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { WashesFilterClient, Booking } from "./WashesFilterClient";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default async function WashesPage({
 }: {
   searchParams: { page?: string; sort?: string };
 }) {
+  const t = await getTranslations("appWashes");
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -75,10 +77,10 @@ export default async function WashesPage({
   return (
     <div className="px-5 pt-10 pb-8">
       <Eyebrow>
-        {bookedCount} {bookedCount === 1 ? "wash" : "washes"} ·{" "}
-        {fmtUSD(total)} spent
+        {bookedCount} {bookedCount === 1 ? t("washSingular") : t("washPlural")} ·{" "}
+        {fmtUSD(total)} {t("spent")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">Your washes</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("pageTitle")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
 
       <WashesFilterClient

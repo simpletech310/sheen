@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fmtUSD } from "@/lib/pricing";
+import { useTranslations } from "next-intl";
 
 type PayoutResult = {
   payout_id: string;
@@ -29,6 +30,7 @@ function formatArrival(unixSeconds: number | null) {
 }
 
 export function WalletActions() {
+  const t = useTranslations("proWallet");
   // The amount the Cash Out button can actually withdraw right now —
   // max(available, instant_available). Instant payouts can draw on
   // funds that haven't fully settled yet, which is what lets a freshly
@@ -59,7 +61,7 @@ export function WalletActions() {
     try {
       const r = await fetch("/api/stripe/payouts/instant", { method: "POST" });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Cash out failed");
+      if (!r.ok) throw new Error(d.error || t("cashOutFailed"));
       setSuccess({
         payout_id: d.payout_id,
         amount: d.amount,
@@ -81,7 +83,7 @@ export function WalletActions() {
       const r = await fetch("/api/stripe/dashboard-link", { method: "POST" });
       const d = await r.json();
       if (d.url) window.open(d.url, "_blank");
-      else setError(d.error || "Could not open dashboard");
+      else setError(d.error || t("dashboardOpenFailed"));
     } finally {
       setBusy("none");
     }
@@ -100,33 +102,33 @@ export function WalletActions() {
           {busy === "instant"
             ? "…"
             : cashable && cashable > 0
-            ? `Cash out ${fmtUSD(cashable)}`
-            : "Cash out (1.5%)"}
+            ? t("cashOutAmount", { amount: fmtUSD(cashable) })
+            : t("cashOutDefault")}
         </button>
         <button
           onClick={openDashboard}
           disabled={!connected || busy !== "none"}
           className="bg-bone text-ink py-3 text-xs font-bold uppercase tracking-wide disabled:opacity-50"
         >
-          {busy === "dashboard" ? "…" : "Tax & 1099 →"}
+          {busy === "dashboard" ? "…" : t("taxAndFormsBtn")}
         </button>
       </div>
       {success && (
         <div className="mt-3 bg-ink text-bone p-3 leading-snug">
           <div className="font-mono text-[10px] uppercase tracking-wider text-good">
-            ✓ Cashed out · verified by Stripe
+            {t("cashedOutConfirm")}
           </div>
           <div className="display tabular text-2xl mt-1">{fmtUSD(success.amount)}</div>
           <div className="text-[11px] text-bone/75 mt-1">
             {success.method === "instant"
-              ? "Instant payout — usually arrives in minutes."
+              ? t("methodInstant")
               : success.method === "standard"
-              ? "Standard payout — arrives in 1–2 business days."
-              : `Method: ${success.method}`}
+              ? t("methodStandard")
+              : t("methodOther", { method: success.method })}
             {formatArrival(success.arrival_date) && (
               <>
                 {" "}
-                Expected{" "}
+                {t("expectedArrivalPrefix")}{" "}
                 <span className="text-sol font-mono">
                   {formatArrival(success.arrival_date)}
                 </span>

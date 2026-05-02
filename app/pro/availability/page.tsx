@@ -4,12 +4,22 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { toast } from "@/components/ui/Toast";
-
-const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+import { useTranslations } from "next-intl";
 
 type Recurring = { day_of_week: number; start: string; end: string };
 
 export default function AvailabilityPage() {
+  const t = useTranslations("proAvailability");
+  const days = [
+    t("daySun"),
+    t("dayMon"),
+    t("dayTue"),
+    t("dayWed"),
+    t("dayThu"),
+    t("dayFri"),
+    t("daySat"),
+  ];
+
   const [recurring, setRecurring] = useState<Recurring[]>([]);
   const [blocks, setBlocks] = useState<string[]>([]);
   const [newBlock, setNewBlock] = useState("");
@@ -67,10 +77,7 @@ export default function AvailabilityPage() {
       (b) => isHHMM(b.start) && isHHMM(b.end) && b.start < b.end
     );
     if (cleanRecurring.length !== recurring.length) {
-      toast(
-        "Skipped windows that were missing a start or end time",
-        "info"
-      );
+      toast(t("skippedIncompleteWindows"), "info");
     }
     const rules = [
       ...cleanRecurring.map((b) => ({
@@ -89,12 +96,12 @@ export default function AvailabilityPage() {
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || `Save failed (status ${r.status})`);
+        throw new Error(d.error || t("saveFailed", { status: r.status }));
       }
       setSavedAt(new Date());
-      toast("Hours saved", "success");
+      toast(t("savedToast"), "success");
     } catch (e: any) {
-      toast(e.message || "Could not save hours", "error");
+      toast(e.message || t("saveError"), "error");
     } finally {
       setSaving(false);
     }
@@ -104,20 +111,19 @@ export default function AvailabilityPage() {
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/pro" className="text-bone/60 text-sm">
-          ← Home
+          ← {t("backHome")}
         </Link>
       </div>
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Schedule
+        {t("eyebrow")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">YOUR HOURS</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("headline")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
       <p className="text-sm text-bone/60 mb-7">
-        Recurring weekly availability + one-off blocked dates. Jobs only show in your
-        queue when you&rsquo;re open.
+        {t("subhead")}
       </p>
 
-      {!loaded && <p className="text-bone/60 text-sm">Loading…</p>}
+      {!loaded && <p className="text-bone/60 text-sm">{t("loading")}</p>}
 
       {loaded && (
         <>
@@ -134,11 +140,11 @@ export default function AvailabilityPage() {
                       onClick={() => add(i)}
                       className="text-[10px] uppercase tracking-wide text-sol hover:text-bone"
                     >
-                      + Add window
+                      {t("addWindow")}
                     </button>
                   </div>
                   {dayBlocks.length === 0 ? (
-                    <div className="text-xs text-bone/40">Off</div>
+                    <div className="text-xs text-bone/40">{t("off")}</div>
                   ) : (
                     dayBlocks.map((b) => (
                       <div key={b.idx} className="flex items-center gap-2 mb-2">
@@ -169,11 +175,10 @@ export default function AvailabilityPage() {
           {/* Block-out dates */}
           <div className="mt-10 border-t border-bone/10 pt-6">
             <div className="font-mono text-[10px] uppercase tracking-wider text-bone/60 mb-2">
-              Block-out dates
+              {t("blockOutDatesLabel")}
             </div>
             <p className="text-[11px] text-bone/50 mb-3 leading-relaxed">
-              Vacation, maintenance, big events. Jobs scheduled on these dates won&rsquo;t hit
-              your queue.
+              {t("blockOutDatesDesc")}
             </p>
             <div className="flex gap-2">
               <input
@@ -187,7 +192,7 @@ export default function AvailabilityPage() {
                 disabled={!newBlock}
                 className="px-4 bg-sol text-ink text-xs font-bold uppercase tracking-wide disabled:opacity-50"
               >
-                Block
+                {t("blockBtn")}
               </button>
             </div>
             {blocks.length > 0 && (
@@ -209,7 +214,7 @@ export default function AvailabilityPage() {
                       onClick={() => removeBlock(d)}
                       className="text-bad font-bold uppercase tracking-wide text-[10px]"
                     >
-                      Remove
+                      {t("removeBtn")}
                     </button>
                   </div>
                 ))}
@@ -225,9 +230,13 @@ export default function AvailabilityPage() {
           disabled={saving}
           className="bg-sol text-ink px-6 py-3 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("saving") : t("saveBtn")}
         </button>
-        {savedAt && <span className="text-xs text-good">Saved {savedAt.toLocaleTimeString()}</span>}
+        {savedAt && (
+          <span className="text-xs text-good">
+            {t("savedAt", { time: savedAt.toLocaleTimeString() })}
+          </span>
+        )}
       </div>
     </div>
   );

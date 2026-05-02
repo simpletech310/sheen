@@ -4,10 +4,12 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { StripeStep } from "./StripeStep";
 import { InsuranceStep } from "./InsuranceStep";
 import { BackgroundCheckStep } from "./BackgroundCheckStep";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function VerifyPage() {
+  const t = await getTranslations("proVerify");
   const supabase = createClient();
   const {
     data: { user },
@@ -23,16 +25,15 @@ export default async function VerifyPage() {
   return (
     <div className="px-5 pt-10 pb-8">
       <Link href="/pro" className="text-bone/60 text-sm">
-        ← Home
+        ← {t("backHome")}
       </Link>
       <Eyebrow className="!text-bone/60 mt-4" prefix={null}>
-        Verification
+        {t("eyebrow")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">GET VERIFIED</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("headline")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
       <p className="text-sm text-bone/60 mb-7 leading-relaxed">
-        Three steps to start receiving jobs. Each takes 1–2 minutes plus an admin
-        review (typically 24–48 hours).
+        {t("subhead")}
       </p>
 
       <div className="space-y-3">
@@ -48,7 +49,7 @@ export default async function VerifyPage() {
       </div>
 
       <p className="text-[11px] text-bone/40 mt-8 leading-relaxed">
-        Account status:{" "}
+        {t("accountStatusPrefix")}{" "}
         <span
           className={
             wp?.status === "active"
@@ -58,10 +59,9 @@ export default async function VerifyPage() {
               : "text-sol"
           }
         >
-          {wp?.status ?? "pending"}
+          {wp?.status ?? t("statusPending")}
         </span>
-        . Once all three steps are complete, an admin promotes you to{" "}
-        <span className="text-good">active</span> and jobs start hitting your queue.
+        . {t("accountStatusSuffix")}
       </p>
     </div>
   );

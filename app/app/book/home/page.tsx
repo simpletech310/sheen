@@ -5,18 +5,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { HOME_TIERS, fmtUSD } from "@/lib/pricing";
+import { useTranslations } from "next-intl";
 
 function HomeTierPickerInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const t = useTranslations("appBook");
   const [selected, setSelected] = useState<string>(
     params.get("tier") ?? HOME_TIERS[0].tier_name
   );
   const [qty, setQty] = useState<number>(1);
 
   useEffect(() => {
-    const t = params.get("tier");
-    if (t) setSelected(t);
+    const tier = params.get("tier");
+    if (tier) setSelected(tier);
   }, [params]);
 
   const tier = HOME_TIERS.find((t) => t.tier_name === selected);
@@ -38,35 +40,35 @@ function HomeTierPickerInner() {
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/app" className="text-smoke text-sm">
-          ← Back
+          {t("back")}
         </Link>
       </div>
-      <Eyebrow>Step 1 / 3 · Pick your service</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">Home & power-wash</h1>
+      <Eyebrow>{t("homeStep")}</Eyebrow>
+      <h1 className="display text-3xl mt-3 mb-2">{t("homeHeadline")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
       <div className="space-y-3">
-        {HOME_TIERS.map((t) => (
+        {HOME_TIERS.map((tier) => (
           <button
-            key={t.tier_name}
-            onClick={() => setSelected(t.tier_name)}
+            key={tier.tier_name}
+            onClick={() => setSelected(tier.tier_name)}
             className={`w-full text-left p-5 transition ${
-              selected === t.tier_name ? "bg-ink text-bone" : "bg-mist/50 hover:bg-mist text-ink"
+              selected === tier.tier_name ? "bg-ink text-bone" : "bg-mist/50 hover:bg-mist text-ink"
             }`}
           >
             <div className="flex justify-between items-start">
               <div className="flex-1 pr-3">
-                <div className="display text-xl">{t.tier_name}</div>
+                <div className="display text-xl">{tier.tier_name}</div>
                 <div
                   className={`text-xs mt-1 ${
-                    selected === t.tier_name ? "text-bone/70" : "text-smoke"
+                    selected === tier.tier_name ? "text-bone/70" : "text-smoke"
                   }`}
                 >
-                  {t.duration_minutes} min · {t.included.slice(0, 3).join(", ")}
+                  {tier.duration_minutes} min · {tier.included.slice(0, 3).join(", ")}
                 </div>
               </div>
               <div className="display tabular text-2xl whitespace-nowrap">
-                {fmtUSD(t.base_price_cents)}
+                {fmtUSD(tier.base_price_cents)}
               </div>
             </div>
           </button>
@@ -76,7 +78,7 @@ function HomeTierPickerInner() {
       {isSolarPanel && (
         <div className="mt-5 bg-mist/40 p-4">
           <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-3">
-            How many panels?
+            {t("howManyPanels")}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -103,7 +105,7 @@ function HomeTierPickerInner() {
             </button>
           </div>
           <div className="flex justify-between items-center mt-3 text-sm">
-            <span className="text-smoke">{qty} panel{qty === 1 ? "" : "s"}</span>
+            <span className="text-smoke">{t("panelCount", { count: qty })}</span>
             <span className="display tabular text-xl">{fmtUSD(total)}</span>
           </div>
         </div>
@@ -113,7 +115,7 @@ function HomeTierPickerInner() {
         onClick={next}
         className="mt-7 w-full bg-royal text-bone py-4 text-sm font-bold uppercase tracking-wide hover:bg-ink transition"
       >
-        Continue · Where & when →
+        {t("continueWhereWhen")}
       </button>
     </div>
   );

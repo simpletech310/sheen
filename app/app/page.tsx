@@ -3,12 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { NextWashHero } from "@/components/customer/NextWashHero";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 const ACTIVE_STATUSES = ["pending", "matched", "en_route", "arrived", "in_progress"];
 
 export default async function CustomerHome() {
+  const t = await getTranslations("appMe");
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase
@@ -80,36 +82,36 @@ export default async function CustomerHome() {
         <div className="absolute inset-0 bg-gradient-to-b from-royal/85 via-royal/70 to-ink/85" />
         <div className="relative px-5 pt-10 pb-9 text-bone">
           <Eyebrow className="!text-sol" prefix="──">
-            Hi, {firstName}
+            {t("hiName", { name: firstName })}
           </Eyebrow>
           <h1 className="display text-[36px] leading-[0.95] mt-4">
             {next ? (
               <>
-                Your next
+                {t("heroNextLine1")}
                 <br />
-                <span className="text-sol">wash is set.</span>
+                <span className="text-sol">{t("heroNextLine2")}</span>
               </>
             ) : (
               <>
-                What&rsquo;s getting
+                {t("heroIdleLine1")}
                 <br />
-                <span className="text-sol">cleaned today?</span>
+                <span className="text-sol">{t("heroIdleLine2")}</span>
               </>
             )}
           </h1>
           <div className="mt-5 flex gap-6 text-xs">
             <div>
               <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-                Washes
+                {t("statWashes")}
               </div>
               <div className="display tabular text-xl mt-0.5">{washCount ?? 0}</div>
             </div>
             <div>
               <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-                Status
+                {t("statStatus")}
               </div>
               <div className="display tabular text-xl mt-0.5">
-                {next ? "Active" : "Ready"}
+                {next ? t("statusActive") : t("statusReady")}
               </div>
             </div>
           </div>
@@ -142,7 +144,7 @@ export default async function CustomerHome() {
           </div>
         )}
 
-        <Eyebrow>{next ? "Book another" : "Pick a service"}</Eyebrow>
+        <Eyebrow>{next ? t("bookAnother") : t("pickService")}</Eyebrow>
         <div className="mt-3 space-y-3">
           <Link
             href="/app/book/auto"
@@ -150,11 +152,11 @@ export default async function CustomerHome() {
           >
             <div className="flex justify-between items-start">
               <div>
-                <div className="display text-2xl group-hover:text-royal transition">Auto</div>
-                <div className="text-xs text-smoke mt-1">4 tiers · Express → Showroom</div>
+                <div className="display text-2xl group-hover:text-royal transition">{t("categoryAuto")}</div>
+                <div className="text-xs text-smoke mt-1">{t("categoryAutoDesc")}</div>
               </div>
               <div className="text-right">
-                <div className="font-mono text-[10px] text-smoke uppercase">From</div>
+                <div className="font-mono text-[10px] text-smoke uppercase">{t("from")}</div>
                 <div className="display tabular text-xl">$35</div>
               </div>
             </div>
@@ -167,11 +169,11 @@ export default async function CustomerHome() {
           >
             <div className="flex justify-between items-start">
               <div>
-                <div className="display text-2xl group-hover:text-royal transition">Home</div>
-                <div className="text-xs text-smoke mt-1">Driveway · siding · deck · solar</div>
+                <div className="display text-2xl group-hover:text-royal transition">{t("categoryHome")}</div>
+                <div className="text-xs text-smoke mt-1">{t("categoryHomeDesc")}</div>
               </div>
               <div className="text-right">
-                <div className="font-mono text-[10px] text-smoke uppercase">From</div>
+                <div className="font-mono text-[10px] text-smoke uppercase">{t("from")}</div>
                 <div className="display tabular text-xl">$95</div>
               </div>
             </div>
@@ -183,15 +185,15 @@ export default async function CustomerHome() {
             className="block bg-bone border border-mist hover:border-ink p-5 transition group relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 bg-sol text-ink font-mono text-[9px] uppercase tracking-wider px-2 py-0.5">
-              New
+              {t("badgeNew")}
             </div>
             <div className="flex justify-between items-start">
               <div>
-                <div className="display text-2xl group-hover:text-royal transition">Big rig</div>
-                <div className="text-xs text-smoke mt-1">Semi · box · sprinter · RV</div>
+                <div className="display text-2xl group-hover:text-royal transition">{t("categoryBigRig")}</div>
+                <div className="text-xs text-smoke mt-1">{t("categoryBigRigDesc")}</div>
               </div>
               <div className="text-right">
-                <div className="font-mono text-[10px] text-smoke uppercase">From</div>
+                <div className="font-mono text-[10px] text-smoke uppercase">{t("from")}</div>
                 <div className="display tabular text-xl">$145</div>
               </div>
             </div>
@@ -205,14 +207,14 @@ export default async function CustomerHome() {
             <div className="flex justify-between items-start">
               <div>
                 <div className="display text-2xl group-hover:text-royal transition">
-                  Commercial
+                  {t("categoryCommercial")}
                 </div>
                 <div className="text-xs text-smoke mt-1">
-                  Storefront · fleet · post-construction
+                  {t("categoryCommercialDesc")}
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-mono text-[10px] text-smoke uppercase">Quoted</div>
+                <div className="font-mono text-[10px] text-smoke uppercase">{t("quoted")}</div>
                 <div className="display text-xl">→</div>
               </div>
             </div>

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export function ReferralActions({ code, shareUrl }: { code: string; shareUrl: string }) {
+  const t = useTranslations("appRefer");
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -20,7 +22,7 @@ export function ReferralActions({ code, shareUrl }: { code: string; shareUrl: st
       try {
         await navigator.share({
           title: "SHEEN",
-          text: `Get $25 off your first wash with my code ${code}`,
+          text: t("shareText", { code }),
           url: shareUrl,
         });
       } catch {
@@ -37,13 +39,13 @@ export function ReferralActions({ code, shareUrl }: { code: string; shareUrl: st
         onClick={share}
         className="bg-ink text-bone py-3.5 text-sm font-bold uppercase tracking-wide hover:bg-royal"
       >
-        Share
+        {t("share")}
       </button>
       <button
         onClick={copy}
         className="bg-mist text-ink py-3.5 text-sm font-bold uppercase tracking-wide hover:bg-mist/80"
       >
-        {copied ? "Copied!" : "Copy link"}
+        {copied ? t("copied") : t("copyLink")}
       </button>
     </div>
   );

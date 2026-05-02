@@ -6,6 +6,7 @@ import Link from "next/link";
 import { fmtUSD } from "@/lib/pricing";
 import { ConditionPhotoPicker } from "@/components/customer/ConditionPhotoPicker";
 import { writeDraft, readDraft } from "@/lib/booking-draft";
+import { useTranslations } from "next-intl";
 
 type Vehicle = {
   id: string;
@@ -32,6 +33,7 @@ export function VehiclesPicker({
   initialVehicles: Vehicle[];
 }) {
   const router = useRouter();
+  const t = useTranslations("appBook");
   const vehicles = initialVehicles;
   // Default-select the user's default vehicle (or the first one) synchronously
   // on first render so the sticky total bar never flashes "$0" before an
@@ -91,18 +93,16 @@ export function VehiclesPicker({
     return (
       <div className="bg-mist/40 p-6 text-sm text-smoke text-center">
         <div className="font-bold uppercase tracking-wide mb-2 text-ink">
-          {isBigRig ? "No big rigs in your garage yet" : "No vehicles in your garage yet"}
+          {isBigRig ? t("noRigsTitle") : t("noVehiclesTitle")}
         </div>
         <p className="mb-4">
-          {isBigRig
-            ? "Add a big rig (semi · box truck · sprinter · RV) to book this service."
-            : "Add at least one to book a wash."}
+          {isBigRig ? t("noRigsBody") : t("noVehiclesBody")}
         </p>
         <Link
           href={isBigRig ? "/app/garage/new?type=big_rig" : "/app/garage/new"}
           className="inline-block bg-ink text-bone px-5 py-3 text-xs font-bold uppercase tracking-wide hover:bg-royal"
         >
-          {isBigRig ? "Add a big rig →" : "Add a vehicle →"}
+          {isBigRig ? t("addRigCta") : t("addVehicleCta")}
         </Link>
       </div>
     );
@@ -111,8 +111,7 @@ export function VehiclesPicker({
   return (
     <>
       <p className="text-sm text-smoke mb-4">
-        Tap to include each vehicle. We&rsquo;ll multiply the wash price by the
-        number you pick.
+        {t("vehiclesPickerHint")}
       </p>
 
       <div className="space-y-3">
@@ -143,7 +142,7 @@ export function VehiclesPicker({
                   </div>
                   {v.is_default && (
                     <span className="inline-block mt-2 font-mono text-[9px] uppercase tracking-wider bg-royal text-bone px-1.5 py-0.5">
-                      Default
+                      {t("defaultBadge")}
                     </span>
                   )}
                 </div>
@@ -162,14 +161,14 @@ export function VehiclesPicker({
                   {v.notes && (
                     <div>
                       <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
-                        Special instructions
+                        {t("specialInstructions")}
                       </div>
                       <p className="text-xs leading-relaxed text-ink/85">{v.notes}</p>
                     </div>
                   )}
                   <div>
                     <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-2">
-                      Pre-wash photos (optional · up to 10)
+                      {t("preWashPhotos")}
                     </div>
                     <ConditionPhotoPicker
                       vehicleId={v.id}
@@ -188,7 +187,7 @@ export function VehiclesPicker({
         href={category === "big_rig" ? "/app/garage/new?type=big_rig" : "/app/garage/new"}
         className="block mt-3 text-center text-xs text-smoke underline"
       >
-        {category === "big_rig" ? "+ Add another rig to your garage" : "+ Add another vehicle to your garage"}
+        {category === "big_rig" ? t("addAnotherRig") : t("addAnotherVehicle")}
       </Link>
 
       {/* Sticky total bar */}
@@ -200,10 +199,11 @@ export function VehiclesPicker({
             </div>
             <div className="text-xs text-smoke">
               {selected.length === 0
-                ? `${fmtUSD(price)} per vehicle · pick at least one`
-                : `${fmtUSD(price)} × ${selected.length} vehicle${
-                    selected.length === 1 ? "" : "s"
-                  }`}
+                ? t("pricePerVehiclePickOne", { price: fmtUSD(price) })
+                : t("priceTimesVehicles", {
+                    price: fmtUSD(price),
+                    count: selected.length,
+                  })}
             </div>
           </div>
           <div className="display tabular text-2xl">
@@ -215,7 +215,7 @@ export function VehiclesPicker({
           disabled={selected.length === 0}
           className="w-full bg-royal text-bone py-3.5 text-sm font-bold uppercase tracking-wide hover:bg-ink disabled:opacity-50 transition"
         >
-          Continue · Where &amp; when →
+          {t("continueWhereWhen")}
         </button>
       </div>
     </>

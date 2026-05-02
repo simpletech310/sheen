@@ -11,21 +11,12 @@ import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
 import { CustomerChecklist } from "@/components/customer/CustomerChecklist";
 import { ApprovalPanel } from "@/components/customer/ApprovalPanel";
 import { signedUrls } from "@/lib/storage";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Awaiting pro",
-  matched: "Pro matched",
-  en_route: "On the way",
-  arrived: "Arrived",
-  in_progress: "Cleaning",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  disputed: "Under review",
-};
-
 export default async function WashDetailPage({ params }: { params: { id: string } }) {
+  const t = await getTranslations("appWashes");
   const supabase = createClient();
   const { data: booking } = await supabase
     .from("bookings")
@@ -91,6 +82,18 @@ export default async function WashDetailPage({ params }: { params: { id: string 
       : null;
   const canDispute = completedHours !== null && completedHours < 24 && booking.status === "completed";
   const isLive = !["completed", "cancelled", "disputed"].includes(booking.status);
+
+  const STATUS_LABEL: Record<string, string> = {
+    pending: t("statusPending"),
+    matched: t("statusMatched"),
+    en_route: t("statusEnRoute"),
+    arrived: t("statusArrived"),
+    in_progress: t("statusInProgress"),
+    completed: t("statusCompletedDetail"),
+    cancelled: t("statusCancelled"),
+    disputed: t("statusDisputed"),
+  };
+
   const statusLabel = STATUS_LABEL[booking.status] ?? booking.status.replace(/_/g, " ");
 
   const a: any = (booking as any).addresses;
@@ -99,10 +102,10 @@ export default async function WashDetailPage({ params }: { params: { id: string 
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/app/washes" className="text-smoke text-sm">
-          ← Washes
+          ← {t("backToWashes")}
         </Link>
       </div>
-      <Eyebrow>Wash · #{booking.id.slice(0, 8)}</Eyebrow>
+      <Eyebrow>{t("detailEyebrow", { id: booking.id.slice(0, 8) })}</Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">{(booking as any).services?.tier_name?.toUpperCase()}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-3" />
 
@@ -120,7 +123,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
       </div>
 
       <div className="bg-mist/40 p-4 mt-4 text-sm">
-        <Eyebrow>Schedule</Eyebrow>
+        <Eyebrow>{t("schedule")}</Eyebrow>
         <div className="mt-2">
           {new Date(booking.scheduled_window_start).toLocaleDateString([], {
             weekday: "long",
@@ -134,7 +137,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
             hour: "numeric",
             minute: "2-digit",
           })}{" "}
-          window
+          {t("window")}
         </div>
       </div>
 
@@ -153,7 +156,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
       )}
 
       <div className="bg-mist/40 p-4 mt-3 text-sm">
-        <Eyebrow>Address</Eyebrow>
+        <Eyebrow>{t("address")}</Eyebrow>
         <div className="mt-2">{a?.street}</div>
         <div className="text-xs text-smoke">
           {a?.city}, {a?.state} {a?.zip}
@@ -161,25 +164,25 @@ export default async function WashDetailPage({ params }: { params: { id: string 
       </div>
 
       <div className="bg-mist/40 p-5 mt-3 space-y-2.5 text-sm">
-        <Eyebrow>Receipt</Eyebrow>
+        <Eyebrow>{t("receipt")}</Eyebrow>
         <div className="flex justify-between mt-2">
           <span className="text-smoke">
-            Service{booking.vehicle_count && booking.vehicle_count > 1 ? ` × ${booking.vehicle_count}` : ""}
+            {t("service")}{booking.vehicle_count && booking.vehicle_count > 1 ? ` × ${booking.vehicle_count}` : ""}
           </span>
           <span className="tabular">{fmtUSD(booking.service_cents)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-smoke">Trust fee</span>
+          <span className="text-smoke">{t("trustFee")}</span>
           <span className="tabular">{fmtUSD(booking.fees_cents)}</span>
         </div>
         {booking.tip_cents ? (
           <div className="flex justify-between">
-            <span className="text-smoke">Tip · 100% to your pro</span>
+            <span className="text-smoke">{t("tip")}</span>
             <span className="tabular">{fmtUSD(booking.tip_cents)}</span>
           </div>
         ) : null}
         <div className="flex justify-between pt-3 border-t border-mist">
-          <span className="font-bold">Total</span>
+          <span className="font-bold">{t("total")}</span>
           <span className="display tabular text-2xl">
             {fmtUSD((booking.total_cents ?? 0) + (booking.tip_cents ?? 0))}
           </span>
@@ -189,15 +192,15 @@ export default async function WashDetailPage({ params }: { params: { id: string 
             href="/app/wallet"
             className="flex justify-between items-center text-xs text-good bg-good/10 -mx-2 px-2 py-2 mt-2 hover:bg-good/15 transition"
           >
-            <span>Loyalty earned</span>
-            <span className="font-mono">+{booking.points_earned} pts →</span>
+            <span>{t("loyaltyEarned")}</span>
+            <span className="font-mono">+{booking.points_earned} {t("pts")} →</span>
           </Link>
         ) : null}
       </div>
 
       {review && (
         <div className="bg-mist/40 p-4 mt-3">
-          <Eyebrow>Your review</Eyebrow>
+          <Eyebrow>{t("yourReview")}</Eyebrow>
           <div className="text-sol text-base tracking-widest mt-2">
             {"★".repeat(review.rating_int)}
             <span className="text-mist">{"★".repeat(5 - review.rating_int)}</span>
@@ -213,7 +216,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
           href={`/app/tracking/${booking.id}`}
           className="mt-4 block text-center bg-ink text-bone py-3.5 text-sm font-bold uppercase tracking-wide hover:bg-royal"
         >
-          Track live →
+          {t("trackLive")}
         </Link>
       )}
 
@@ -239,7 +242,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
           href={`/app/rate/${booking.id}`}
           className="mt-3 block text-center bg-royal text-bone py-3.5 text-sm font-bold uppercase tracking-wide hover:bg-ink"
         >
-          Rate &amp; tip your pro →
+          {t("rateAndTip")}
         </Link>
       )}
 
@@ -266,7 +269,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
           href="/app/me/recurring"
           className="mt-3 block text-center bg-mist/50 text-smoke py-3 text-xs font-mono uppercase tracking-wider hover:bg-mist transition"
         >
-          ↻ From your recurring schedule · manage
+          {t("fromRecurring")}
         </Link>
       )}
 

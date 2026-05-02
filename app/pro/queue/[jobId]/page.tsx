@@ -10,6 +10,7 @@ import { ChatPanel } from "@/components/chat/ChatPanel";
 import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
 import { signedUrls } from "@/lib/storage";
 import { checkWasherEligibility } from "@/lib/job-matching";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ const REQUIREMENT_LABELS: Array<[
 ];
 
 export default async function JobDetailPage({ params }: { params: { jobId: string } }) {
+  const t = await getTranslations("proQueue");
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: job } = await supabase
@@ -113,11 +115,11 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/pro/queue" className="text-bone/75 text-sm">
-          ← Queue
+          ← {t("backToQueue")}
         </Link>
       </div>
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Job · #{job.id.slice(0, 8)}
+        {t("jobEyebrow", { id: job.id.slice(0, 8) })}
       </Eyebrow>
       <div className="flex items-center gap-2 mt-3 mb-2">
         {(() => {
@@ -129,12 +131,12 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
                 isHome ? "bg-sol text-ink" : "bg-royal text-bone"
               }`}
             >
-              {isHome ? "Home" : "Auto"}
+              {isHome ? t("categoryHome") : t("categoryAuto")}
             </span>
           );
         })()}
       </div>
-      <h1 className="display text-3xl mb-2">{(job as any).services?.tier_name ?? "Service"}</h1>
+      <h1 className="display text-3xl mb-2">{(job as any).services?.tier_name ?? t("service")}</h1>
       <div className="font-mono text-[11px] text-bone/90 uppercase">
         {new Date((job as any).scheduled_window_start).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
       </div>
@@ -143,11 +145,11 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
         <div className="flex justify-between items-baseline">
           <div>
             <div className="display tabular text-3xl text-cobalt">{fmtUSD(fees.washerOrPartnerNet)}</div>
-            <div className="font-mono text-[10px] text-bone/75 mt-1">YOU GET</div>
+            <div className="font-mono text-[10px] text-bone/75 mt-1">{t("youGet")}</div>
           </div>
           <div className="text-right text-xs text-bone/85">
-            <div className="tabular">Gross {fmtUSD(fees.serviceCents)}</div>
-            <div className="tabular">−22% commission</div>
+            <div className="tabular">{t("gross")} {fmtUSD(fees.serviceCents)}</div>
+            <div className="tabular">{t("commission")}</div>
           </div>
         </div>
       </div>
@@ -159,13 +161,13 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
           city + state only. */}
       <div className="mt-5">
         <Eyebrow className="!text-bone/60" prefix={null}>
-          {job.status === "funded" ? "Service area" : "Address"}
+          {job.status === "funded" ? t("serviceArea") : t("address")}
         </Eyebrow>
         {job.status === "funded" ? (
           <div className="mt-2 text-sm text-bone/85">
             {(job as any).addresses?.city}, {(job as any).addresses?.state}
             <div className="text-xs text-bone/55 mt-1">
-              Address removed after the wash funded — your customer&rsquo;s privacy stays protected once the job is done.
+              {t("addressRemovedNote")}
             </div>
           </div>
         ) : (
@@ -184,7 +186,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
       {(job as any).customer_note && (
         <div className="mt-5">
           <Eyebrow className="!text-bone/60" prefix={null}>
-            Customer note
+            {t("customerNote")}
           </Eyebrow>
           <div className="mt-2 text-sm bg-white/5 p-3">{(job as any).customer_note}</div>
         </div>
@@ -193,7 +195,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
       {(bvRows ?? []).length > 0 && (
         <div className="mt-5">
           <Eyebrow className="!text-bone/60" prefix={null}>
-            {bvRows!.length === 1 ? "Vehicle" : `Vehicles · ${bvRows!.length}`}
+            {bvRows!.length === 1 ? t("vehicle") : t("vehicles_count", { count: bvRows!.length })}
           </Eyebrow>
           <div className="mt-2">
             <BookingVehicleList rows={(bvRows ?? []) as any} signedPhotoUrls={photoUrls} dark />
@@ -208,25 +210,31 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
       {job.status !== "funded" && (
       <div className="mt-5">
         <Eyebrow className="!text-bone/60" prefix={null}>
-          Site access
+          {t("siteAccess")}
         </Eyebrow>
         <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
           <SiteFlag
-            label="Water"
+            label={t("water")}
             on={addr.has_water === true}
             off={addr.has_water === false}
             note={addr.water_notes}
+            onSiteLabel={t("onSite")}
+            bringYourOwnLabel={t("bringYourOwn")}
+            notSpecifiedLabel={t("notSpecified")}
           />
           <SiteFlag
-            label="Power"
+            label={t("power")}
             on={addr.has_power === true}
             off={addr.has_power === false}
             note={addr.power_notes}
+            onSiteLabel={t("onSite")}
+            bringYourOwnLabel={t("bringYourOwn")}
+            notSpecifiedLabel={t("notSpecified")}
           />
         </div>
         {addr.gate_code && (
           <div className="mt-2 bg-sol/10 border-l-2 border-sol px-3 py-2 text-xs">
-            <span className="font-mono uppercase tracking-wider text-sol">Gate code</span>{" "}
+            <span className="font-mono uppercase tracking-wider text-sol">{t("gateCode")}</span>{" "}
             <span className="font-mono font-bold tabular ml-1">{addr.gate_code}</span>
           </div>
         )}
@@ -239,7 +247,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
                 target="_blank"
                 rel="noreferrer"
                 className="block w-16 h-16 bg-white/5 overflow-hidden"
-                aria-label="Site photo"
+                aria-label={t("sitePhoto")}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={u} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -260,32 +268,45 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
         (svc.requires_power && addr.has_power === false)) && (
         <div className="mt-5">
           <Eyebrow className="!text-bone/60" prefix={null}>
-            What you&rsquo;ll need
+            {t("whatYouNeed")}
           </Eyebrow>
           <div className="mt-2 space-y-1.5 text-sm">
             {REQUIREMENT_LABELS.filter(([flag]) => svc[flag]).map(([, capKey, label]) => {
               const has = !!(washerProfile as any)?.[capKey];
               return (
-                <RequirementRow key={label} label={label} ok={has} />
+                <RequirementRow
+                  key={label}
+                  label={label}
+                  ok={has}
+                  youHaveIt={t("youHaveIt")}
+                  youDontHaveIt={t("youDontHaveIt")}
+                />
               );
             })}
             {svc.requires_water && addr.has_water === false && (
               <RequirementRow
-                label="BYO water (no spigot on-site)"
+                label={t("byoWater")}
                 ok={!!(washerProfile as any)?.has_own_water}
+                youHaveIt={t("youHaveIt")}
+                youDontHaveIt={t("youDontHaveIt")}
               />
             )}
             {svc.requires_power && addr.has_power === false && (
               <RequirementRow
-                label="BYO power (no outlet on-site)"
+                label={t("byoPower")}
                 ok={!!(washerProfile as any)?.has_own_power}
+                youHaveIt={t("youHaveIt")}
+                youDontHaveIt={t("youDontHaveIt")}
               />
             )}
           </div>
           {!eligibility.ok && (
             <div className="mt-3 bg-bad/15 border-l-2 border-bad px-3 py-2 text-xs text-bone">
-              Can&rsquo;t take this job — {eligibility.reasons.join(" · ")}.
-              Update equipment in <Link href="/pro/me/edit" className="underline">your profile</Link> if that changes.
+              {t("notEligibleNote", { reasons: eligibility.reasons.join(" · ") })}
+              {" "}
+              {t("updateEquipmentPrefix")}{" "}
+              <Link href="/pro/me/edit" className="underline">{t("yourProfile")}</Link>{" "}
+              {t("updateEquipmentSuffix")}
             </div>
           )}
         </div>
@@ -297,7 +318,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
       {(checklistItems ?? []).length > 0 && (
         <div className="mt-5">
           <Eyebrow className="!text-bone/60" prefix={null}>
-            What you&rsquo;ll do · {(checklistItems ?? []).length} steps
+            {t("whatYoullDo", { count: (checklistItems ?? []).length })}
           </Eyebrow>
           <ol className="mt-2 space-y-1.5 text-sm">
             {(checklistItems ?? []).map((it: any, i: number) => (
@@ -309,7 +330,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
                   {it.label}
                   {it.requires_photo && (
                     <span className="ml-2 font-mono text-[9px] uppercase tracking-wider text-sol">
-                      photo
+                      {t("photo")}
                     </span>
                   )}
                 </span>
@@ -332,7 +353,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
               className="block w-full text-center bg-white/10 text-bone/40 rounded-full py-4 text-sm font-semibold cursor-not-allowed"
               aria-disabled
             >
-              Not eligible
+              {t("notEligible")}
             </button>
           )
         )}
@@ -341,11 +362,11 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
             href={`/pro/jobs/${job.id}/navigate`}
             className="block w-full text-center bg-cobalt text-bone rounded-full py-4 text-sm font-semibold"
           >
-            Navigate →
+            {t("navigate")} →
           </Link>
         )}
         {claimed && !mine && (
-          <div className="text-center text-bone/80 text-sm py-4">Claimed by another washer</div>
+          <div className="text-center text-bone/80 text-sm py-4">{t("claimedByOther")}</div>
         )}
       </div>
 
@@ -353,7 +374,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
         <ChatPanel
           bookingId={job.id}
           currentUserId={user.id}
-          otherName={(job as any).users?.full_name ?? "the customer"}
+          otherName={(job as any).users?.full_name ?? t("theCustomer")}
           variant="pro"
         />
       )}
@@ -366,11 +387,17 @@ function SiteFlag({
   on,
   off,
   note,
+  onSiteLabel,
+  bringYourOwnLabel,
+  notSpecifiedLabel,
 }: {
   label: string;
   on: boolean;
   off: boolean;
   note?: string | null;
+  onSiteLabel: string;
+  bringYourOwnLabel: string;
+  notSpecifiedLabel: string;
 }) {
   // Three states: on-site (green), not on-site (amber — BYO), unknown (grey).
   const tone = on
@@ -378,7 +405,7 @@ function SiteFlag({
     : off
     ? "bg-sol/15 border-sol"
     : "bg-white/5 border-bone/15";
-  const status = on ? "On-site" : off ? "Bring your own" : "Not specified";
+  const status = on ? onSiteLabel : off ? bringYourOwnLabel : notSpecifiedLabel;
   return (
     <div className={`p-3 border-l-2 ${tone}`}>
       <div className="font-mono text-[10px] uppercase tracking-wider text-bone/70">
@@ -390,7 +417,17 @@ function SiteFlag({
   );
 }
 
-function RequirementRow({ label, ok }: { label: string; ok: boolean }) {
+function RequirementRow({
+  label,
+  ok,
+  youHaveIt,
+  youDontHaveIt,
+}: {
+  label: string;
+  ok: boolean;
+  youHaveIt: string;
+  youDontHaveIt: string;
+}) {
   return (
     <div className="flex items-center gap-2">
       <span
@@ -402,7 +439,7 @@ function RequirementRow({ label, ok }: { label: string; ok: boolean }) {
       </span>
       <span className={ok ? "text-bone" : "text-bone/70"}>{label}</span>
       <span className={`ml-auto font-mono text-[9px] uppercase tracking-wider ${ok ? "text-good" : "text-bad"}`}>
-        {ok ? "you have it" : "you don't"}
+        {ok ? youHaveIt : youDontHaveIt}
       </span>
     </div>
   );

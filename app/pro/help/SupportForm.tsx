@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 export function SupportForm() {
+  const t = useTranslations("proHelp");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
@@ -18,13 +20,13 @@ export function SupportForm() {
         body: JSON.stringify({ subject: subject.trim(), body: body.trim() }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Could not submit");
+      if (!r.ok) throw new Error(d.error || t("formSubmitError"));
       setSentId(d.id);
       setSubject("");
       setBody("");
-      toast("Sent · we'll be in touch", "success");
+      toast(t("formSubmitToast"), "success");
     } catch (e: any) {
-      toast(e.message || "Could not submit", "error");
+      toast(e.message || t("formSubmitError"), "error");
     } finally {
       setBusy(false);
     }
@@ -34,16 +36,16 @@ export function SupportForm() {
     return (
       <div className="bg-good/15 border-l-2 border-good p-5">
         <div className="font-mono text-[10px] uppercase tracking-wider text-good mb-1">
-          Sent
+          {t("formSentLabel")}
         </div>
         <div className="text-sm text-bone">
-          Ticket logged. We respond within one business day.
+          {t("formSentBody")}
         </div>
         <button
           onClick={() => setSentId(null)}
           className="mt-3 text-[10px] uppercase tracking-wider text-bone/60 hover:text-bone"
         >
-          + Send another
+          + {t("formSendAnother")}
         </button>
       </div>
     );
@@ -55,14 +57,14 @@ export function SupportForm() {
         type="text"
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
-        placeholder="Subject"
+        placeholder={t("formSubjectPlaceholder")}
         maxLength={200}
         className="w-full px-4 py-3 bg-bone/5 border border-bone/15 text-bone text-sm focus:outline-none focus:border-sol"
       />
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="Tell us what's going on. Include booking IDs if relevant."
+        placeholder={t("formBodyPlaceholder")}
         rows={5}
         maxLength={4000}
         className="w-full px-4 py-3 bg-bone/5 border border-bone/15 text-bone text-sm focus:outline-none focus:border-sol"
@@ -72,14 +74,14 @@ export function SupportForm() {
         disabled={busy || subject.trim().length < 3 || body.trim().length < 5}
         className="w-full bg-sol text-ink py-3 text-xs font-bold uppercase tracking-wide disabled:opacity-50 hover:bg-bone"
       >
-        {busy ? "Sending…" : "Send to support"}
+        {busy ? t("formSending") : t("formSubmitBtn")}
       </button>
       <p className="text-[11px] text-bone/50 leading-relaxed">
-        Or email{" "}
+        {t("formEmailPrefix")}{" "}
         <a href="mailto:hello@sheen.co" className="text-sol underline">
           hello@sheen.co
         </a>{" "}
-        directly.
+        {t("formEmailSuffix")}
       </p>
     </div>
   );

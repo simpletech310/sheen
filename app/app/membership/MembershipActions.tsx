@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 export function MembershipActions({
   planId,
@@ -16,6 +17,7 @@ export function MembershipActions({
   disabled?: boolean;
   isPaused?: boolean;
 }) {
+  const t = useTranslations("appMembership");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -32,8 +34,8 @@ export function MembershipActions({
       const d = await r.json();
       if (d.url) window.location.href = d.url;
       else {
-        setErr(d.error || "Failed");
-        toast(d.error || "Could not start checkout", "error");
+        setErr(d.error || t("subscribeError"));
+        toast(d.error || t("subscribeError"), "error");
       }
     } finally {
       setBusy(false);
@@ -41,17 +43,17 @@ export function MembershipActions({
   }
 
   async function cancel() {
-    if (!confirm("Cancel your membership at the end of this period?")) return;
+    if (!confirm(t("cancelConfirm"))) return;
     setBusy(true);
     try {
       const r = await fetch("/api/stripe/subscriptions", { method: "DELETE" });
       if (r.ok) {
-        toast("Membership will cancel at period end", "success");
+        toast(t("cancelSuccess"), "success");
         window.location.reload();
       } else {
         const d = await r.json();
-        setErr(d.error || "Failed");
-        toast(d.error || "Could not cancel", "error");
+        setErr(d.error || t("cancelError"));
+        toast(d.error || t("cancelError"), "error");
       }
     } finally {
       setBusy(false);
@@ -67,11 +69,11 @@ export function MembershipActions({
         body: JSON.stringify({ action }),
       });
       if (r.ok) {
-        toast(action === "pause" ? "Membership paused" : "Membership resumed", "success");
+        toast(action === "pause" ? t("pauseSuccess") : t("resumeSuccess"), "success");
         window.location.reload();
       } else {
         const d = await r.json();
-        toast(d.error || "Could not update", "error");
+        toast(d.error || t("updateError"), "error");
       }
     } finally {
       setBusy(false);
@@ -87,21 +89,21 @@ export function MembershipActions({
           disabled={busy}
           className="text-xs underline opacity-80 disabled:opacity-50"
         >
-          {busy ? "…" : isPaused ? "Resume" : "Pause billing"}
+          {busy ? "…" : isPaused ? t("resume") : t("pauseBilling")}
         </button>
         <button
           onClick={cancel}
           disabled={busy}
           className="text-xs underline opacity-80 disabled:opacity-50"
         >
-          {busy ? "…" : "Cancel at period end"}
+          {busy ? "…" : t("cancelAtPeriodEnd")}
         </button>
       </div>
     );
   }
 
   if (isCurrent) {
-    return <div className="font-mono text-xs text-royal uppercase tracking-wide">★ Current plan</div>;
+    return <div className="font-mono text-xs text-royal uppercase tracking-wide">{t("currentPlan")}</div>;
   }
 
   return (
@@ -111,7 +113,7 @@ export function MembershipActions({
         disabled={busy || disabled}
         className="bg-ink text-bone px-5 py-2.5 text-xs font-bold uppercase tracking-wide disabled:opacity-50"
       >
-        {disabled ? "Coming soon" : busy ? "Redirecting…" : hasActive ? "Switch plan →" : "Subscribe →"}
+        {disabled ? t("comingSoon") : busy ? t("redirecting") : hasActive ? t("switchPlan") : t("subscribe")}
       </button>
       {err && <div className="text-xs text-bad mt-2">{err}</div>}
     </>

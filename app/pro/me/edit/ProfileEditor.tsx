@@ -6,6 +6,7 @@ import { AddressAutocomplete } from "@/components/customer/AddressAutocomplete";
 import { AvatarUpload } from "@/components/customer/AvatarUpload";
 import { ServiceRadiusMap } from "@/components/pro/ServiceRadiusMap";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 type Initial = {
   full_name: string;
@@ -26,29 +27,13 @@ type Initial = {
   can_do_paint_correction: boolean;
 };
 
-const equipmentOpts: {
-  key:
-    | "has_own_water"
-    | "has_own_power"
-    | "has_pressure_washer"
-    | "can_detail_interior"
-    | "can_do_paint_correction";
-  label: string;
-  hint: string;
-}[] = [
-  { key: "has_own_water", label: "I bring my own water", hint: "Tank or buffer reservoir" },
-  { key: "has_own_power", label: "I bring my own power", hint: "Generator, battery, or inverter" },
-  { key: "has_pressure_washer", label: "I have a pressure washer", hint: "Min 1.6 GPM" },
-  { key: "can_detail_interior", label: "I can detail interiors", hint: "Vacuum, leather, dash" },
-  { key: "can_do_paint_correction", label: "I can do paint correction", hint: "Polishers, compounds, ceramic" },
-];
-
 export function ProfileEditor({ userId, initial }: { userId: string; initial: Initial }) {
+  const t = useTranslations("proMe");
   const router = useRouter();
   const [form, setForm] = useState(initial);
   const [base, setBase] = useState<{ lat: number; lng: number; label: string } | null>(
     initial.base_lat && initial.base_lng
-      ? { lat: initial.base_lat, lng: initial.base_lng, label: "Saved base location" }
+      ? { lat: initial.base_lat, lng: initial.base_lng, label: t("editBaseSaved") }
       : null
   );
   const [busy, setBusy] = useState(false);
@@ -57,6 +42,23 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
   // commits a chip via Enter / comma / blur.
   const [cityDraft, setCityDraft] = useState("");
 
+  const equipmentOpts: {
+    key:
+      | "has_own_water"
+      | "has_own_power"
+      | "has_pressure_washer"
+      | "can_detail_interior"
+      | "can_do_paint_correction";
+    label: string;
+    hint: string;
+  }[] = [
+    { key: "has_own_water", label: t("equipWaterLabel"), hint: t("equipWaterHint") },
+    { key: "has_own_power", label: t("equipPowerLabel"), hint: t("equipPowerHint") },
+    { key: "has_pressure_washer", label: t("equipPressureLabel"), hint: t("equipPressureHint") },
+    { key: "can_detail_interior", label: t("equipInteriorLabel"), hint: t("equipInteriorHint") },
+    { key: "can_do_paint_correction", label: t("equipPaintLabel"), hint: t("equipPaintHint") },
+  ];
+
   function set<K extends keyof Initial>(k: K, v: Initial[K]) {
     setForm((s) => ({ ...s, [k]: v }));
   }
@@ -64,10 +66,6 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
   function commitCity(raw: string) {
     const city = raw.trim().replace(/^,+|,+$/g, "").trim();
     if (!city) return;
-    // Normalise to title case so "los angeles" === "Los Angeles" === "LA"
-    // collisions don't slip through. Light touch — Mapbox returns the
-    // canonical form on the customer side, so we just compare lowercase
-    // server-side.
     setForm((s) => {
       if (s.service_areas.some((c) => c.toLowerCase() === city.toLowerCase())) {
         return s;
@@ -119,13 +117,13 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || "Could not save");
+        throw new Error(d.error || t("editSaveError"));
       }
-      toast("Profile saved", "success");
+      toast(t("editSaved"), "success");
       router.push("/pro/me");
       router.refresh();
     } catch (e: any) {
-      toast(e.message || "Could not save", "error");
+      toast(e.message || t("editSaveError"), "error");
     } finally {
       setBusy(false);
     }
@@ -136,7 +134,7 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
       {/* About */}
       <section>
         <div className="font-mono text-[10px] uppercase tracking-wider text-bone/60 mb-2">
-          Avatar
+          {t("editAvatarLabel")}
         </div>
         <AvatarUpload
           userId={userId}
@@ -147,25 +145,25 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
         />
 
         <div className="font-mono text-[10px] uppercase tracking-wider text-bone/60 mt-5 mb-2">
-          About
+          {t("editAboutLabel")}
         </div>
         <input
           value={form.full_name}
           onChange={(e) => set("full_name", e.target.value)}
-          placeholder="Full name"
+          placeholder={t("editFullNamePlaceholder")}
           className="w-full px-4 py-3.5 bg-white/5 border border-bone/15 text-bone text-sm focus:outline-none focus:border-sol"
         />
         <input
           value={form.display_name}
           onChange={(e) => set("display_name", e.target.value)}
-          placeholder="Display name (what customers see — e.g. Tj W.)"
+          placeholder={t("editDisplayNamePlaceholder")}
           maxLength={60}
           className="w-full mt-3 px-4 py-3.5 bg-white/5 border border-bone/15 text-bone text-sm focus:outline-none focus:border-sol"
         />
         <textarea
           value={form.bio}
           onChange={(e) => set("bio", e.target.value)}
-          placeholder="Short bio — show up on your /r/HANDLE referral page (max 280)"
+          placeholder={t("editBioPlaceholder")}
           rows={3}
           maxLength={280}
           className="w-full mt-3 px-4 py-3 bg-white/5 border border-bone/15 text-bone text-sm focus:outline-none focus:border-sol"
@@ -176,36 +174,34 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
       <section>
         <div className="flex justify-between items-baseline mb-2">
           <span className="font-mono text-[10px] uppercase tracking-wider text-bone/60">
-            Service area · base location
+            {t("editAreaLabel")}
           </span>
           <span className="font-mono text-[10px] text-bone/40">
-            default search center
+            {t("editAreaDefault")}
           </span>
         </div>
         <AddressAutocomplete
           onSelect={(r) =>
             setBase({ lat: r.lat, lng: r.lng, label: r.name })
           }
-          placeholder="e.g. Long Beach, CA"
+          placeholder={t("editAreaPlaceholder")}
         />
         {base && (
           <div className="mt-2 bg-sol text-ink px-3 py-2 text-xs font-mono uppercase tracking-wide">
-            ✓ Starting from {base.label}
+            ✓ {t("editBaseFrom", { label: base.label })}
           </div>
         )}
         <p className="text-[11px] text-bone/50 mt-2 leading-relaxed">
-          Where you start your day. The queue searches for jobs around
-          this location, out to your radius below. Type a city or
-          address and pick from the dropdown.
+          {t("editAreaHint")}
         </p>
 
         <label className="block mt-5">
           <div className="flex justify-between text-xs">
             <span className="font-mono uppercase tracking-wider text-bone/60">
-              Service radius
+              {t("editRadiusLabel")}
             </span>
             <span className="display tabular text-bone">
-              {form.service_radius_miles} mi
+              {t("editRadiusValue", { miles: form.service_radius_miles })}
             </span>
           </div>
           <input
@@ -237,10 +233,10 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
         <div className="mt-5">
           <div className="flex justify-between items-baseline mb-2">
             <span className="font-mono text-[10px] uppercase tracking-wider text-bone/60">
-              Cities you'll take jobs in
+              {t("editCitiesLabel")}
             </span>
             <span className="font-mono text-[10px] text-bone/40">
-              optional · adds to radius
+              {t("editCitiesOptional")}
             </span>
           </div>
           {form.service_areas.length > 0 && (
@@ -255,7 +251,7 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
                     type="button"
                     onClick={() => removeCity(city)}
                     className="text-ink/70 hover:text-ink"
-                    aria-label={`Remove ${city}`}
+                    aria-label={t("editCityRemove", { city })}
                   >
                     ×
                   </button>
@@ -282,13 +278,11 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
               }
             }}
             onBlur={() => commitCity(cityDraft)}
-            placeholder="e.g. Riverside, Los Angeles, San Bernardino"
+            placeholder={t("editCitiesPlaceholder")}
             className="w-full px-4 py-3.5 bg-bone border border-mist text-ink placeholder:text-smoke text-sm focus:outline-none focus:border-royal"
           />
           <p className="text-[11px] text-bone/50 mt-2 leading-relaxed">
-            Cities outside your radius that you'll still take jobs in.
-            Type a city, hit Enter or comma to add. Match is
-            case-insensitive.
+            {t("editCitiesHint")}
           </p>
         </div>
       </section>
@@ -296,7 +290,7 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
       {/* Equipment */}
       <section>
         <div className="font-mono text-[10px] uppercase tracking-wider text-bone/60 mb-2">
-          Equipment
+          {t("editEquipmentLabel")}
         </div>
         <div className="space-y-2">
           {equipmentOpts.map((opt) => {
@@ -334,8 +328,7 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
           })}
         </div>
         <p className="text-[11px] text-bone/50 mt-3 leading-relaxed">
-          Customers see your equipment in your /r/HANDLE profile and the queue surfaces
-          equipment-matched jobs to you first.
+          {t("editEquipmentHint")}
         </p>
       </section>
 
@@ -344,7 +337,7 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
         disabled={busy || !form.full_name}
         className="w-full bg-sol text-ink py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50 hover:bg-bone"
       >
-        {busy ? "Saving…" : "Save profile"}
+        {busy ? t("editSaving") : t("editSaveBtn")}
       </button>
     </div>
   );

@@ -3,6 +3,7 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { createClient } from "@/lib/supabase/server";
 import { fmtUSD } from "@/lib/pricing";
 import { StripeDashboardLink } from "./StripeDashboardLink";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ export default async function TaxPage({
 }: {
   searchParams: { year?: string };
 }) {
+  const t = await getTranslations("proTax");
   const supabase = createClient();
   const {
     data: { user },
@@ -73,12 +75,12 @@ export default async function TaxPage({
   return (
     <div className="px-5 pt-10 pb-8">
       <Link href="/pro" className="text-bone/60 text-sm">
-        ← Home
+        ← {t("backHome")}
       </Link>
       <Eyebrow className="!text-bone/60 mt-4" prefix={null}>
-        Tax · {requestedYear}
+        {t("eyebrow", { year: requestedYear })}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">YOUR EARNINGS</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("headline")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
       {/* Year picker */}
@@ -102,32 +104,32 @@ export default async function TaxPage({
       <div className="bg-royal text-bone p-6 mb-3 relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
         <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-          Take-home {requestedYear}
+          {t("takeHomeLabel", { year: requestedYear })}
         </div>
         <div className="display tabular text-[56px] leading-none mt-3">
           {fmtUSD(netCents)}
         </div>
         <div className="text-xs opacity-80 mt-2 tabular">
-          Across {jobsCount} job{jobsCount === 1 ? "" : "s"}
+          {t("jobsCount", { count: jobsCount })}
         </div>
       </div>
 
       {/* Breakdown */}
       <div className="grid grid-cols-2 gap-2 mb-6">
         <div className="bg-white/5 p-4">
-          <div className="font-mono text-[10px] uppercase opacity-60">Wash earnings</div>
+          <div className="font-mono text-[10px] uppercase opacity-60">{t("washEarnings")}</div>
           <div className="display tabular text-2xl mt-1">{fmtUSD(washCents)}</div>
         </div>
         <div className="bg-white/5 p-4">
-          <div className="font-mono text-[10px] uppercase opacity-60">Tips</div>
+          <div className="font-mono text-[10px] uppercase opacity-60">{t("tips")}</div>
           <div className="display tabular text-2xl mt-1 text-sol">{fmtUSD(tipCents)}</div>
         </div>
         <div className="bg-white/5 p-4">
-          <div className="font-mono text-[10px] uppercase opacity-60">Gross paid</div>
+          <div className="font-mono text-[10px] uppercase opacity-60">{t("grossPaid")}</div>
           <div className="display tabular text-2xl mt-1">{fmtUSD(grossCents)}</div>
         </div>
         <div className="bg-bad/10 p-4 border-l-2 border-bad">
-          <div className="font-mono text-[10px] uppercase opacity-60">Fees withheld</div>
+          <div className="font-mono text-[10px] uppercase opacity-60">{t("feesWithheld")}</div>
           <div className="display tabular text-2xl mt-1 text-bad">
             −{fmtUSD(penaltyCents)}
           </div>
@@ -137,7 +139,7 @@ export default async function TaxPage({
       {(firstJob || lastJob) && (
         <div className="bg-white/5 p-4 mb-6 grid grid-cols-2 gap-4">
           <div>
-            <div className="font-mono text-[10px] uppercase opacity-60">First job</div>
+            <div className="font-mono text-[10px] uppercase opacity-60">{t("firstJob")}</div>
             <div className="text-sm tabular mt-1">
               {firstJob
                 ? new Date(firstJob).toLocaleDateString([], {
@@ -149,7 +151,7 @@ export default async function TaxPage({
             </div>
           </div>
           <div>
-            <div className="font-mono text-[10px] uppercase opacity-60">Last job</div>
+            <div className="font-mono text-[10px] uppercase opacity-60">{t("lastJob")}</div>
             <div className="text-sm tabular mt-1">
               {lastJob
                 ? new Date(lastJob).toLocaleDateString([], {
@@ -166,21 +168,17 @@ export default async function TaxPage({
       {/* Payments dashboard deep-link — our payments processor
           generates the actual 1099-K. */}
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Tax forms
+        {t("taxFormsEyebrow")}
       </Eyebrow>
       <div className="mt-3 bg-white/5 p-5">
         <p className="text-sm text-bone/85 leading-relaxed">
-          Your <span className="font-bold">1099-K</span> is prepared and delivered
-          by our payments partner. Open your payouts dashboard to download tax
-          documents and update your tax profile.
+          {t("taxFormsBody")}
         </p>
         <StripeDashboardLink connected={!!profile?.stripe_account_id} />
       </div>
 
       <p className="text-[11px] text-bone/40 mt-6 leading-relaxed">
-        Sheen does not file taxes for you. This summary is for your records.
-        Numbers reflect platform payouts only — refer to your payouts dashboard
-        for the official 1099-K.
+        {t("disclaimer")}
       </p>
     </div>
   );

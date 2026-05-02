@@ -2,10 +2,12 @@ import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { createClient } from "@/lib/supabase/server";
 import { fmtUSD } from "@/lib/pricing";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProPenaltiesPage() {
+  const t = await getTranslations("proPenalties");
   const supabase = createClient();
   const {
     data: { user },
@@ -34,21 +36,21 @@ export default async function ProPenaltiesPage() {
   return (
     <div className="px-5 pt-10 pb-8">
       <Link href="/pro" className="text-bone/60 text-sm">
-        ← Home
+        ← {t("backHome")}
       </Link>
       <Eyebrow className="!text-bone/60 mt-4" prefix={null}>
-        Penalties
+        {t("eyebrow")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">YOUR FEES</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("headline")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
       <div className="bg-bad/15 border-l-2 border-bad p-5 mb-6">
         <div className="font-mono text-[10px] uppercase tracking-wider text-bad mb-1">
-          Outstanding
+          {t("outstandingLabel")}
         </div>
         <div className="display tabular text-3xl">−{fmtUSD(outstandingCents)}</div>
         <p className="text-[11px] text-bone/60 mt-2 leading-relaxed">
-          Pending fees are withheld from your next payout. Disputes go to{" "}
+          {t("outstandingDesc")}{" "}
           <a href="mailto:hello@sheen.co" className="underline text-bone">
             hello@sheen.co
           </a>
@@ -59,7 +61,7 @@ export default async function ProPenaltiesPage() {
       {outstanding.length > 0 && (
         <>
           <Eyebrow className="!text-bone/60" prefix={null}>
-            Open
+            {t("openEyebrow")}
           </Eyebrow>
           <div className="mt-3 mb-6 space-y-2">
             {outstanding.map((p: any) => (
@@ -93,7 +95,7 @@ export default async function ProPenaltiesPage() {
       {resolved.length > 0 && (
         <>
           <Eyebrow className="!text-bone/60" prefix={null}>
-            History
+            {t("historyEyebrow")}
           </Eyebrow>
           <div className="mt-3 space-y-2">
             {resolved.map((p: any) => (
@@ -127,10 +129,10 @@ export default async function ProPenaltiesPage() {
       {all.length === 0 && (
         <div className="bg-white/5 p-8 text-center">
           <div className="font-mono text-[10px] uppercase tracking-wider text-good mb-2">
-            Clean record
+            {t("cleanRecord")}
           </div>
           <p className="text-sm text-bone/60">
-            No fees on file. Keep showing up sharp.
+            {t("cleanRecordDesc")}
           </p>
         </div>
       )}

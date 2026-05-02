@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fmtUSD } from "@/lib/pricing";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 export function RecurringRow({
   id,
@@ -28,6 +29,7 @@ export function RecurringRow({
   addressLine: string | null;
   paused: boolean;
 }) {
+  const t = useTranslations("appRecurring");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const total = category === "auto" ? perVehiclePrice * vehicleCount : perVehiclePrice;
@@ -42,26 +44,26 @@ export function RecurringRow({
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || "Failed");
+        throw new Error(d.error || t("errorFailed"));
       }
       toast(
         updates.active === false
-          ? "Schedule deleted"
+          ? t("toastDeleted")
           : updates.paused
-          ? "Schedule paused"
-          : "Schedule resumed",
+          ? t("toastPaused")
+          : t("toastResumed"),
         "success"
       );
       router.refresh();
     } catch (e: any) {
-      toast(e.message || "Could not update", "error");
+      toast(e.message || t("errorUpdate"), "error");
     } finally {
       setBusy(false);
     }
   }
 
   async function remove() {
-    if (!confirm("Delete this recurring schedule? Past bookings stay intact.")) return;
+    if (!confirm(t("confirmDelete"))) return;
     setBusy(true);
     try {
       const r = await fetch("/api/recurring", {
@@ -71,12 +73,12 @@ export function RecurringRow({
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || "Failed");
+        throw new Error(d.error || t("errorFailed"));
       }
-      toast("Schedule deleted", "success");
+      toast(t("toastDeleted"), "success");
       router.refresh();
     } catch (e: any) {
-      toast(e.message || "Could not delete", "error");
+      toast(e.message || t("errorDelete"), "error");
     } finally {
       setBusy(false);
     }
@@ -95,23 +97,23 @@ export function RecurringRow({
         <div className="flex-1 min-w-0">
           <div className="font-mono text-[10px] uppercase tracking-wider text-smoke">
             {cadence}
-            {paused && <span className="ml-2 text-bad">· Paused</span>}
+            {paused && <span className="ml-2 text-bad">· {t("pausedBadge")}</span>}
           </div>
           <div className="display text-xl mt-1">{tier}</div>
           <div className="text-xs text-smoke mt-1">
             {category === "auto"
-              ? `${vehicleCount} vehicle${vehicleCount === 1 ? "" : "s"} · `
+              ? t("vehicleCount", { count: vehicleCount }) + " · "
               : ""}
             {window.replace(/_/g, " ")}
           </div>
           {addressLine && <div className="text-xs text-smoke">{addressLine}</div>}
           <div className="text-xs text-smoke mt-1">
-            Next: <span className="font-mono">{nextLabel}</span>
+            {t("nextRun")} <span className="font-mono">{nextLabel}</span>
           </div>
         </div>
         <div className="text-right">
           <div className="display tabular text-lg">{fmtUSD(total)}</div>
-          <div className="font-mono text-[10px] uppercase text-smoke">per wash</div>
+          <div className="font-mono text-[10px] uppercase text-smoke">{t("perWash")}</div>
         </div>
       </div>
       <div className="flex gap-2 mt-3">
@@ -120,14 +122,14 @@ export function RecurringRow({
           disabled={busy}
           className="flex-1 bg-bone border border-mist text-ink py-2 text-xs font-bold uppercase tracking-wide disabled:opacity-50 hover:bg-mist"
         >
-          {busy ? "…" : paused ? "Resume" : "Pause"}
+          {busy ? "…" : paused ? t("resume") : t("pause")}
         </button>
         <button
           onClick={remove}
           disabled={busy}
           className="px-4 bg-mist text-ink py-2 text-xs font-bold uppercase tracking-wide disabled:opacity-50 hover:bg-bad hover:text-bone"
         >
-          Delete
+          {t("delete")}
         </button>
       </div>
     </div>

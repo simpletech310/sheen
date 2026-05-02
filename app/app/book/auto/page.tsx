@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { AUTO_TIERS, fmtUSD } from "@/lib/pricing";
+import { useTranslations } from "next-intl";
 
 function TierPickerInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const t = useTranslations("appBook");
   const [selected, setSelected] = useState<string>(params.get("tier") ?? "Premium Detail");
 
   useEffect(() => {
@@ -33,13 +35,13 @@ function TierPickerInner() {
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/app" className="text-smoke text-sm">
-          ← Back
+          {t("back")}
         </Link>
       </div>
-      <Eyebrow>Step 1 / 4 · Pick your wash</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">Choose a tier</h1>
+      <Eyebrow>{t("autoStep")}</Eyebrow>
+      <h1 className="display text-3xl mt-3 mb-2">{t("chooseTier")}</h1>
       <p className="text-xs text-smoke mb-5 leading-relaxed">
-        Launch promo · standard price shown beside.
+        {t("launchPromoNote")}
       </p>
       <div className="space-y-3">
         {AUTO_TIERS.map((t) => {
@@ -79,7 +81,7 @@ function TierPickerInner() {
         onClick={next}
         className="mt-7 w-full bg-cobalt text-bone rounded-full py-4 text-sm font-semibold"
       >
-        Continue · Vehicles →
+        {t("continueVehicles")}
       </button>
     </div>
   );

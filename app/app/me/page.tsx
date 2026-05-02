@@ -3,10 +3,12 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { EnablePushButton } from "@/components/PWARegister";
 import { LanguagePicker } from "@/components/i18n/LanguagePicker";
 import { createClient } from "@/lib/supabase/server";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function MePage() {
+  const t = await getTranslations("appMe");
   const supabase = createClient();
   const {
     data: { user },
@@ -66,39 +68,39 @@ export default async function MePage() {
   };
   const sections: { title: string; eyebrow: string; tiles: Tile[] }[] = [
     {
-      title: "BOOKING",
-      eyebrow: "Trip prep",
+      title: t("sectionBookingTitle"),
+      eyebrow: t("sectionBookingEyebrow"),
       tiles: [
-        { label: "Garage", href: "/app/garage", sub: "Vehicles & big rigs" },
-        { label: "Places", href: "/app/places", sub: "Saved addresses" },
-        { label: "Recurring", href: "/app/me/recurring", sub: "Auto-rebook routines" },
-        { label: "Washes", href: "/app/washes", sub: "Trip history" },
+        { label: t("tileGarage"), href: "/app/garage", sub: t("tileGarageSub") },
+        { label: t("tilePlaces"), href: "/app/places", sub: t("tilePlacesSub") },
+        { label: t("tileRecurring"), href: "/app/me/recurring", sub: t("tileRecurringSub") },
+        { label: t("tileWashes"), href: "/app/washes", sub: t("tileWashesSub") },
       ],
     },
     {
-      title: "PAYMENTS",
-      eyebrow: "Money",
+      title: t("sectionPaymentsTitle"),
+      eyebrow: t("sectionPaymentsEyebrow"),
       tiles: [
-        { label: "Wallet", href: "/app/wallet", sub: "Points · membership · fees" },
-        { label: "Payment methods", href: "/app/me/payment-methods", sub: "Cards on file" },
-        { label: "Sheen+ plans", href: "/app/membership", sub: "Save 20%+ monthly", cta: true },
+        { label: t("tileWallet"), href: "/app/wallet", sub: t("tileWalletSub") },
+        { label: t("tilePaymentMethods"), href: "/app/me/payment-methods", sub: t("tilePaymentMethodsSub") },
+        { label: t("tileSheenPlus"), href: "/app/membership", sub: t("tileSheenPlusSub"), cta: true },
       ],
     },
     {
-      title: "REWARDS",
-      eyebrow: "You earn this",
+      title: t("sectionRewardsTitle"),
+      eyebrow: t("sectionRewardsEyebrow"),
       tiles: [
-        { label: "Achievements", href: "/app/me/achievements", sub: "Badges unlocked" },
-        { label: "Refer a friend", href: "/app/me/refer", sub: "$25 each side" },
+        { label: t("tileAchievements"), href: "/app/me/achievements", sub: t("tileAchievementsSub") },
+        { label: t("tileRefer"), href: "/app/me/refer", sub: t("tileReferSub") },
       ],
     },
     {
-      title: "TRUST",
-      eyebrow: "We've got you",
+      title: t("sectionTrustTitle"),
+      eyebrow: t("sectionTrustEyebrow"),
       tiles: [
-        { label: "File a claim", href: "/app/washes", sub: "From a recent wash" },
-        { label: "Safety standards", href: "/safety" },
-        { label: "Help & support", href: "mailto:hello@sheen.co" },
+        { label: t("tileFileClaim"), href: "/app/washes", sub: t("tileFileClaimSub") },
+        { label: t("tileSafetyStandards"), href: "/safety" },
+        { label: t("tileHelpSupport"), href: "mailto:hello@sheen.co" },
       ],
     },
   ];
@@ -114,7 +116,7 @@ export default async function MePage() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="display text-2xl truncate">
-              {profile?.full_name ?? "You"}
+              {profile?.full_name ?? t("youFallback")}
             </div>
             <div className="text-xs opacity-75 truncate">{profile?.email}</div>
           </div>
@@ -122,14 +124,14 @@ export default async function MePage() {
             href="/app/me/profile"
             className="font-mono text-[10px] uppercase tracking-wider text-sol hover:text-bone shrink-0"
           >
-            Edit →
+            {t("editLink")}
           </Link>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-              Points
+              {t("statPoints")}
             </div>
             <div className="display tabular text-2xl mt-1 leading-none">
               {balance.toLocaleString()}
@@ -140,24 +142,24 @@ export default async function MePage() {
           </div>
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-              Washes
+              {t("statWashesLabel")}
             </div>
             <div className="display tabular text-2xl mt-1 leading-none">
               {washCount ?? 0}
             </div>
             <div className="text-[10px] tabular opacity-60 mt-0.5">
-              completed
+              {t("statWashesSub")}
             </div>
           </div>
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-              Badges
+              {t("statBadges")}
             </div>
             <div className="display tabular text-2xl mt-1 leading-none">
               {badgeCount ?? 0}
             </div>
             <div className="text-[10px] tabular opacity-60 mt-0.5">
-              unlocked
+              {t("statBadgesSub")}
             </div>
           </div>
         </div>
@@ -167,7 +169,7 @@ export default async function MePage() {
           <div className="mt-5 inline-flex items-center gap-2 bg-sol/15 border border-sol/40 px-3 py-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-sol" />
             <span className="font-mono text-[10px] uppercase tracking-wider text-sol">
-              SHEEN+ {planName} active
+              {t("membershipPill", { plan: planName })}
             </span>
           </div>
         )}
@@ -223,12 +225,11 @@ export default async function MePage() {
       {/* Notifications & home-screen install — surfaced here so users who
           dismissed the welcome flow can still wire it up later. */}
       <section className="mt-7">
-        <Eyebrow>App</Eyebrow>
-        <h2 className="display text-xl mt-2 mb-3">Notifications &amp; home screen</h2>
+        <Eyebrow>{t("sectionAppEyebrow")}</Eyebrow>
+        <h2 className="display text-xl mt-2 mb-3">{t("sectionAppTitle")}</h2>
         <div className="bg-bone border border-mist p-4">
           <p className="text-xs text-smoke leading-relaxed mb-3">
-            Get pinged when your wash is matched, on the way, and done. Pin Sheen to your
-            home screen and it opens like a real app — no App Store, no install size.
+            {t("notificationsDesc")}
           </p>
           <div className="flex flex-wrap gap-2">
             <EnablePushButton />
@@ -236,7 +237,7 @@ export default async function MePage() {
               href="?welcome=1"
               className="inline-block bg-ink text-bone px-4 py-2 text-xs font-bold uppercase tracking-wide hover:bg-royal transition"
             >
-              Add to home screen
+              {t("addToHomeScreen")}
             </a>
           </div>
         </div>
@@ -248,13 +249,11 @@ export default async function MePage() {
           surface; this lives here so signed-in customers can change it
           without going back to /. */}
       <section className="mt-7">
-        <Eyebrow>Preferences</Eyebrow>
-        <h2 className="display text-xl mt-2 mb-3">Language</h2>
+        <Eyebrow>{t("sectionPrefsEyebrow")}</Eyebrow>
+        <h2 className="display text-xl mt-2 mb-3">{t("sectionPrefsTitle")}</h2>
         <div className="bg-bone border border-mist p-4 flex items-center justify-between gap-4">
           <p className="text-xs text-smoke leading-relaxed flex-1">
-            Pick the language you read in. Saved to your account so it
-            follows you across devices. Chat messages from your pro stay
-            translated either way.
+            {t("languageDesc")}
           </p>
           <LanguagePicker variant="light" />
         </div>
@@ -266,12 +265,12 @@ export default async function MePage() {
           type="submit"
           className="w-full py-3.5 text-sm font-bold uppercase tracking-wide bg-mist/30 text-bad hover:bg-bad hover:text-bone transition border border-mist"
         >
-          Sign out
+          {t("signOut")}
         </button>
       </form>
 
       <div className="mt-10 font-mono text-[10px] uppercase tracking-wider text-smoke text-center">
-        SHEEN · Los Angeles
+        {t("footer")}
       </div>
     </div>
   );

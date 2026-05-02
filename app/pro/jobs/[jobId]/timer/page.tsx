@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 /**
  * Persistent job timer with pause support.
@@ -23,13 +24,14 @@ import { toast } from "@/components/ui/Toast";
  *   b) the job status reaches 'completed'
  */
 export default function TimerPage({ params }: { params: { jobId: string } }) {
+  const t = useTranslations("proJobs");
   const { jobId } = params;
 
   // Core timing state — all sourced from DB on mount
-  const [, setStartedAt]           = useState<number | null>(null); // unix ms
-  const [, setPausedAt]             = useState<number | null>(null); // unix ms or null
-  const [, setTotalPausedMs]   = useState(0);
-  const [jobStatus, setJobStatus]           = useState<string>("in_progress");
+  const [, setStartedAt]         = useState<number | null>(null); // unix ms
+  const [, setPausedAt]           = useState<number | null>(null); // unix ms or null
+  const [, setTotalPausedMs] = useState(0);
+  const [jobStatus, setJobStatus]         = useState<string>("in_progress");
 
   // Derived display state
   const [elapsed, setElapsed]     = useState(0);
@@ -71,7 +73,7 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
         const r = await fetch(`/api/bookings/${jobId}/start`, { method: "POST" });
         if (!r.ok) {
           const d = await r.json().catch(() => ({}));
-          throw new Error(d.error || `Could not start (${r.status})`);
+          throw new Error(d.error || t("startError", { status: r.status }));
         }
         const d = await r.json();
 
@@ -96,7 +98,7 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
         }
       } catch (e: any) {
         setStartError(e.message);
-        toast(e.message || "Could not start work", "error");
+        toast(e.message || t("couldNotStartWork"), "error");
       } finally {
         setReady(true);
       }
@@ -108,12 +110,12 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
 
   // ── Tick every second (only when not paused and not completed) ─────────────
   useEffect(() => {
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       if (!pausedAtRef.current && jobStatus === "in_progress") {
         setElapsed(computeElapsed());
       }
     }, 1000);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [jobStatus, computeElapsed]);
 
   // ── Pause / Resume ─────────────────────────────────────────────────────────
@@ -124,7 +126,7 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
       const r = await fetch(`/api/bookings/${jobId}/pause`, { method: "POST" });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        toast(d.error || "Could not toggle pause", "error");
+        toast(d.error || t("couldNotTogglePause"), "error");
         return;
       }
       const d = await r.json();
@@ -157,10 +159,10 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
 
   const isCompleted = jobStatus === "completed";
   const statusLabel = isCompleted
-    ? "● Completed"
+    ? t("statusCompleted")
     : isPaused
-    ? "● Paused"
-    : "● Live · timer running";
+    ? t("statusPaused")
+    : t("statusLive");
   const statusColor = isCompleted
     ? "text-good"
     : isPaused
@@ -172,7 +174,7 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
   return (
     <div className="px-5 pt-10 pb-8">
       <Eyebrow className="!text-bone/75" prefix={null}>
-        {isCompleted ? "Job complete" : "In progress"}
+        {isCompleted ? t("jobCompleteEyebrow") : t("inProgressEyebrow")}
       </Eyebrow>
 
       {/* Big clock */}
@@ -187,7 +189,7 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
       </div>
 
       <div className={`font-mono text-[11px] uppercase tracking-wider ${statusColor}`}>
-        {startError ? "● Status not updated — see error" : statusLabel}
+        {startError ? t("statusNotUpdated") : statusLabel}
       </div>
 
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mt-5 mb-6" />
@@ -204,7 +206,7 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
               : "bg-bone/10 text-bone hover:bg-bone/20 border border-bone/20"
           } disabled:opacity-50`}
         >
-          {pausePending ? "…" : isPaused ? "▶ Resume timer" : "⏸ Pause timer"}
+          {pausePending ? "…" : isPaused ? t("resumeTimer") : t("pauseTimer")}
         </button>
       )}
 
@@ -212,7 +214,7 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
       {startError && (
         <div className="bg-bad/15 border-l-2 border-bad p-4 mb-6">
           <div className="font-mono text-[10px] uppercase tracking-wider text-bad mb-1">
-            Could not flip status to in-progress
+            {t("couldNotFlipStatus")}
           </div>
           <div className="text-sm text-bone/85">{startError}</div>
           <button
@@ -230,7 +232,7 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
             }}
             className="mt-3 px-3 py-2 bg-bad text-bone text-xs font-bold uppercase tracking-wide hover:bg-bone hover:text-bad transition"
           >
-            Retry
+            {t("retry")}
           </button>
         </div>
       )}
@@ -239,11 +241,10 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
       {isPaused && !isCompleted && (
         <div className="bg-sol/10 border-l-2 border-sol p-4 mb-6">
           <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-1">
-            Timer paused
+            {t("timerPausedLabel")}
           </div>
           <p className="text-sm text-bone/85 leading-relaxed">
-            The clock is frozen. Tap <strong>Resume</strong> when you&rsquo;re back
-            on the job. Pause time is not counted in your job duration.
+            {t("timerPausedBody")}
           </p>
         </div>
       )}
@@ -252,18 +253,17 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
       {isCompleted && (
         <div className="bg-good/10 border-l-2 border-good p-4 mb-6">
           <div className="font-mono text-[10px] uppercase tracking-wider text-good mb-1">
-            Job complete
+            {t("jobCompleteLabel")}
           </div>
           <p className="text-sm text-bone/85 leading-relaxed">
-            This job is done. The time above is your final job duration.
+            {t("jobCompleteBody")}
           </p>
         </div>
       )}
 
       {!isPaused && !isCompleted && (
         <p className="text-sm text-bone/75 leading-relaxed mb-6">
-          Work through the per-job checklist as you go. When everything&rsquo;s
-          checked off the customer approves and you get paid.
+          {t("timerRunningHint")}
         </p>
       )}
 
@@ -272,7 +272,7 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
           href={`/pro/jobs/${jobId}/checklist`}
           className="block w-full bg-sol text-ink py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone transition text-center"
         >
-          Open job checklist →
+          {t("openJobChecklist")} →
         </Link>
       )}
 
@@ -280,7 +280,7 @@ export default function TimerPage({ params }: { params: { jobId: string } }) {
         href={`/pro/jobs/${jobId}/navigate`}
         className="mt-3 block w-full bg-bone/10 text-bone py-3 text-xs font-bold uppercase tracking-wide hover:bg-bone hover:text-ink transition text-center"
       >
-        ← Back to navigate
+        ← {t("backToNavigate")}
       </Link>
     </div>
   );

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { ChecklistClient } from "./ChecklistClient";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ export default async function JobChecklistPage({
 }: {
   params: { jobId: string };
 }) {
+  const t = await getTranslations("proJobs");
   const supabase = createClient();
   const {
     data: { user },
@@ -29,7 +31,7 @@ export default async function JobChecklistPage({
     return (
       <div className="px-5 pt-10 pb-8">
         <p className="text-sm text-bone/65">
-          This job isn&rsquo;t assigned to you.
+          {t("notAssigned")}
         </p>
       </div>
     );
@@ -50,20 +52,18 @@ export default async function JobChecklistPage({
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href={`/pro/jobs/${params.jobId}/timer`} className="text-bone/60 text-sm">
-          ← Timer
+          ← {t("backToTimer")}
         </Link>
       </div>
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Job checklist
+        {t("checklistEyebrow")}
       </Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">
-        {(booking as any).services?.tier_name?.toUpperCase() ?? "JOB"}
+        {(booking as any).services?.tier_name?.toUpperCase() ?? t("jobFallback")}
       </h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
       <p className="text-sm text-bone/60 mb-6 leading-relaxed">
-        Check off each step as you finish. Items with the camera icon need a
-        photo to count as done. Once everything&rsquo;s checked, you can mark
-        the job complete and the customer gets the approval prompt.
+        {t("checklistInstructions")}
       </p>
 
       <ChecklistClient

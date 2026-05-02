@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
-
-const FREQUENCIES = [
-  { v: "weekly", l: "Every week" },
-  { v: "biweekly", l: "Every 2 weeks" },
-  { v: "monthly", l: "Every month" },
-];
+import { useTranslations } from "next-intl";
 
 export function RepeatButton({
   serviceId,
@@ -21,10 +16,17 @@ export function RepeatButton({
   vehicleIds: string[];
   preferredWindow: string;
 }) {
+  const t = useTranslations("appWashes");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [freq, setFreq] = useState<"weekly" | "biweekly" | "monthly">("biweekly");
   const [busy, setBusy] = useState(false);
+
+  const FREQUENCIES = [
+    { v: "weekly", l: t("freqWeekly") },
+    { v: "biweekly", l: t("freqBiweekly") },
+    { v: "monthly", l: t("freqMonthly") },
+  ];
 
   async function submit() {
     setBusy(true);
@@ -42,11 +44,11 @@ export function RepeatButton({
         }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Failed");
-      toast("Recurring schedule saved", "success");
+      if (!r.ok) throw new Error(d.error || t("repeatErrorDefault"));
+      toast(t("repeatSaved"), "success");
       router.push("/app/me/recurring");
     } catch (e: any) {
-      toast(e.message || "Could not save", "error");
+      toast(e.message || t("repeatErrorDefault"), "error");
     } finally {
       setBusy(false);
     }
@@ -58,7 +60,7 @@ export function RepeatButton({
         onClick={() => setOpen(true)}
         className="mt-3 w-full bg-bone border border-mist text-ink py-3 text-xs font-bold uppercase tracking-wide hover:bg-mist transition"
       >
-        Make this recurring →
+        {t("makeRecurring")}
       </button>
     );
   }
@@ -66,7 +68,7 @@ export function RepeatButton({
   return (
     <div className="mt-3 bg-mist/40 p-4">
       <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-3">
-        How often?
+        {t("howOften")}
       </div>
       <div className="grid grid-cols-3 gap-2 mb-3">
         {FREQUENCIES.map((f) => (
@@ -88,18 +90,17 @@ export function RepeatButton({
           disabled={busy}
           className="flex-1 bg-royal text-bone py-3 text-xs font-bold uppercase tracking-wide disabled:opacity-50 hover:bg-ink"
         >
-          {busy ? "Saving…" : "Save schedule"}
+          {busy ? t("repeatSavingBusy") : t("saveSchedule")}
         </button>
         <button
           onClick={() => setOpen(false)}
           className="px-4 bg-mist text-ink py-3 text-xs font-bold uppercase tracking-wide"
         >
-          Cancel
+          {t("cancelAction")}
         </button>
       </div>
       <p className="text-[11px] text-smoke mt-2">
-        We&rsquo;ll auto-create a new booking each period. You can pause or
-        delete the schedule any time from Account → Recurring.
+        {t("repeatNote")}
       </p>
     </div>
   );

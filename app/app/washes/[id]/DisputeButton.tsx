@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 export function DisputeButton({ bookingId }: { bookingId: string }) {
+  const t = useTranslations("appWashes");
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -24,12 +26,12 @@ export function DisputeButton({ bookingId }: { bookingId: string }) {
         }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Failed");
+      if (!r.ok) throw new Error(d.error || t("disputeErrorDefault"));
       setDone(true);
-      toast("Claim filed — we’ll be in touch within 24 hours", "success");
+      toast(t("disputeSuccess"), "success");
     } catch (e: any) {
       setErr(e.message);
-      toast(e.message || "Could not file claim", "error");
+      toast(e.message || t("disputeErrorDefault"), "error");
     } finally {
       setSubmitting(false);
     }
@@ -38,9 +40,9 @@ export function DisputeButton({ bookingId }: { bookingId: string }) {
   if (done) {
     return (
       <div className="mt-6 bg-good/15 text-ink p-5">
-        <div className="font-bold uppercase tracking-wide text-sm">Claim filed</div>
+        <div className="font-bold uppercase tracking-wide text-sm">{t("claimFiled")}</div>
         <p className="text-xs mt-2">
-          We&rsquo;ll reach out within 24 hours. Your $2,500 damage guarantee covers the full claim.
+          {t("claimFiledNote")}
         </p>
       </div>
     );
@@ -52,25 +54,25 @@ export function DisputeButton({ bookingId }: { bookingId: string }) {
         onClick={() => setOpen(true)}
         className="mt-6 w-full bg-mist text-ink py-3.5 text-sm font-bold uppercase tracking-wide hover:bg-bad hover:text-bone"
       >
-        Report damage
+        {t("reportDamage")}
       </button>
     );
   }
 
   return (
     <div className="mt-6 bg-mist/40 p-5">
-      <div className="font-bold uppercase tracking-wide text-sm mb-3">Report damage</div>
+      <div className="font-bold uppercase tracking-wide text-sm mb-3">{t("reportDamage")}</div>
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        placeholder="What happened? (min 10 chars)"
+        placeholder={t("disputeDescPlaceholder")}
         rows={4}
         className="w-full px-3 py-3 bg-bone border border-mist text-sm"
       />
       <input
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        placeholder="Estimated repair cost ($)"
+        placeholder={t("disputeAmountPlaceholder")}
         inputMode="decimal"
         className="w-full px-3 py-3 bg-bone border border-mist text-sm mt-2"
       />
@@ -81,13 +83,13 @@ export function DisputeButton({ bookingId }: { bookingId: string }) {
           disabled={submitting || description.length < 10}
           className="flex-1 bg-bad text-bone py-3 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
         >
-          {submitting ? "Filing…" : "Submit claim"}
+          {submitting ? t("disputeFiling") : t("submitClaim")}
         </button>
         <button
           onClick={() => setOpen(false)}
           className="px-4 bg-mist text-ink py-3 text-sm font-bold uppercase tracking-wide"
         >
-          Cancel
+          {t("cancelAction")}
         </button>
       </div>
     </div>

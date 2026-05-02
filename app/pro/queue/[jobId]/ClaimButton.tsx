@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 export function ClaimButton({ jobId }: { jobId: string }) {
+  const t = useTranslations("proQueue");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -18,11 +20,11 @@ export function ClaimButton({ jobId }: { jobId: string }) {
         const e = await res.json().catch(() => ({}));
         throw new Error(e.error || `Status ${res.status}`);
       }
-      toast("Job claimed — let’s go", "success");
+      toast(t("claimSuccess"), "success");
       router.push(`/pro/jobs/${jobId}/navigate`);
     } catch (e: any) {
       setErr(e.message);
-      toast(e.message || "Could not claim job", "error");
+      toast(e.message || t("claimError"), "error");
       setLoading(false);
     }
   }
@@ -34,7 +36,7 @@ export function ClaimButton({ jobId }: { jobId: string }) {
         disabled={loading}
         className="w-full bg-cobalt text-bone rounded-full py-4 text-sm font-semibold disabled:opacity-50"
       >
-        {loading ? "Claiming…" : "Claim this job →"}
+        {loading ? t("claiming") : t("claimJob")}
       </button>
       {err && <div className="text-sm text-bad mt-3 text-center">{err}</div>}
     </>

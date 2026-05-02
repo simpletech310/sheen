@@ -4,8 +4,10 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { NavigateClient } from "./NavigateClient";
 import { StatusButtons } from "./StatusButtons";
 import { IssueFlagButton } from "@/components/pro/IssueFlagButton";
+import { getTranslations } from "next-intl/server";
 
 export default async function NavigatePage({ params }: { params: { jobId: string } }) {
+  const t = await getTranslations("proJobs");
   const supabase = createClient();
   const { data: job } = await supabase
     .from("bookings")
@@ -26,9 +28,9 @@ export default async function NavigatePage({ params }: { params: { jobId: string
   return (
     <div className="px-5 pt-10 pb-8">
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Navigate
+        {t("navigateEyebrow")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-3">{(job as any).services?.tier_name ?? "Job"}</h1>
+      <h1 className="display text-3xl mt-3 mb-3">{(job as any).services?.tier_name ?? t("jobFallback")}</h1>
 
       <NavigateClient
         jobId={job.id}
@@ -43,7 +45,7 @@ export default async function NavigatePage({ params }: { params: { jobId: string
           <>
             <div className="text-sm font-bold">{addr?.city}, {addr?.state}</div>
             <div className="text-xs text-bone/55 mt-1 leading-snug">
-              Address removed once the wash funded. Customer privacy stays protected.
+              {t("addressRemovedNote")}
             </div>
           </>
         ) : (

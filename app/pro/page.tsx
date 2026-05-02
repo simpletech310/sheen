@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { ProJobsFilterClient, ProJob } from "./ProJobsFilterClient";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ function startOfWeekMon(d = new Date()) {
 }
 
 export default async function ProDashboard() {
+  const t = await getTranslations("proMe");
   const supabase = createClient();
   const {
     data: { user },
@@ -48,13 +50,13 @@ export default async function ProDashboard() {
     .eq("assigned_washer_id", userId)
     .order("scheduled_window_start", { ascending: false })
     .limit(50);
-  
+
   // For the hero strip, we still count today's active jobs
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayEnd = new Date(todayStart);
   todayEnd.setDate(todayEnd.getDate() + 1);
-  const todayJobs = (allJobs ?? []).filter(j => 
+  const todayJobs = (allJobs ?? []).filter(j =>
     ACTIVE.includes(j.status) &&
     new Date(j.scheduled_window_start) >= todayStart &&
     new Date(j.scheduled_window_start) < todayEnd
@@ -67,10 +69,6 @@ export default async function ProDashboard() {
     .select("amount_cents, kind, created_at")
     .eq("washer_id", userId)
     .gte("created_at", weekStart.toISOString());
-  // Earned = washes only (the "Tips" tile next to it owns the tip total
-  // separately so a pro can see what they actually got paid for the work
-  // vs what came from the customer's gratitude). Sum of washes + tips
-  // shows on the wallet's Lifetime total instead.
   const weekWash = (weekPayouts ?? [])
     .filter((p: any) => p.kind !== "tip")
     .reduce((a: number, p: any) => a + (p.amount_cents ?? 0), 0);
@@ -83,7 +81,7 @@ export default async function ProDashboard() {
   const actions: { label: string; href: string; tone: "sol" | "royal" | "bad" }[] = [];
   if (!profile?.stripe_account_id) {
     actions.push({
-      label: "Set up payouts so you can get paid",
+      label: t("actionSetupPayouts"),
       href: "/pro/verify",
       tone: "sol",
     });
@@ -95,13 +93,13 @@ export default async function ProDashboard() {
       30 * 86400 * 1000;
   if (insuranceMissing) {
     actions.push({
-      label: "Upload proof of insurance",
+      label: t("actionUploadInsurance"),
       href: "/pro/verify",
       tone: "sol",
     });
   } else if (insuranceExpiringSoon) {
     actions.push({
-      label: "Insurance expiring soon — replace before it lapses",
+      label: t("actionInsuranceExpiring"),
       href: "/pro/verify",
       tone: "bad",
     });
@@ -110,8 +108,8 @@ export default async function ProDashboard() {
     actions.push({
       label:
         profile?.background_check_status === "pending"
-          ? "Background check in review (24–48h)"
-          : "Submit for background check",
+          ? t("actionBgCheckPending")
+          : t("actionBgCheckSubmit"),
       href: "/pro/verify",
       tone: "royal",
     });
@@ -130,7 +128,7 @@ export default async function ProDashboard() {
   );
   if (penaltyCents > 0) {
     actions.push({
-      label: `${fmtUSD(penaltyCents)} in outstanding fees`,
+      label: t("actionOutstandingFees", { amount: fmtUSD(penaltyCents) }),
       href: "/pro/penalties",
       tone: "bad",
     });
@@ -157,35 +155,35 @@ export default async function ProDashboard() {
         <div className="absolute inset-0 bg-gradient-to-b from-royal/85 via-ink/85 to-ink" />
         <div className="relative px-5 pt-10 pb-9 text-bone">
           <Eyebrow className="!text-sol" prefix="──">
-            Hi, {firstName}
+            {t("heroGreeting", { name: firstName })}
           </Eyebrow>
           <h1 className="display text-[36px] leading-[0.95] mt-4">
             {todayJobs && todayJobs.length > 0 ? (
               <>
-                You have{" "}
+                {t("heroJobsPrefix")}{" "}
                 <span className="text-sol">
-                  {todayJobs.length} job{todayJobs.length === 1 ? "" : "s"}
+                  {todayJobs.length} {todayJobs.length === 1 ? t("heroJobSingular") : t("heroJobPlural")}
                 </span>{" "}
-                today.
+                {t("heroJobsSuffix")}
               </>
             ) : (
               <>
-                Ready to <span className="text-sol">work?</span>
+                {t("heroReadyPrefix")} <span className="text-sol">{t("heroReadyWork")}</span>
               </>
             )}
           </h1>
           <div className="mt-5 flex gap-6 text-xs">
             <div>
               <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-                Status
+                {t("statStatus")}
               </div>
               <div className="display tabular text-xl mt-0.5">
-                {verified ? "Active" : "Pending"}
+                {verified ? t("statActive") : t("statPending")}
               </div>
             </div>
             <div>
               <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-                Lifetime jobs
+                {t("statLifetimeJobs")}
               </div>
               <div className="display tabular text-xl mt-0.5">
                 {profile?.jobs_completed ?? 0}
@@ -193,7 +191,7 @@ export default async function ProDashboard() {
             </div>
             <div>
               <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-                Rating
+                {t("statRating")}
               </div>
               <div className="display tabular text-xl mt-0.5">
                 {profile?.rating_avg ?? "—"}
@@ -210,7 +208,7 @@ export default async function ProDashboard() {
         {actions.length > 0 && (
           <div className="mb-6">
             <Eyebrow className="!text-bone/60" prefix={null}>
-              Action items
+              {t("sectionActionItems")}
             </Eyebrow>
             <div className="mt-3 space-y-2">
               {actions.map((a, i) => (
@@ -237,7 +235,7 @@ export default async function ProDashboard() {
 
         {/* Jobs List */}
         <Eyebrow className="!text-bone/60" prefix={null}>
-          Your Jobs
+          {t("sectionYourJobs")}
         </Eyebrow>
         <div className="mt-3 mb-6">
           <ProJobsFilterClient jobs={((allJobs as unknown) as ProJob[]) ?? []} />
@@ -245,21 +243,21 @@ export default async function ProDashboard() {
 
         {/* This week earnings */}
         <Eyebrow className="!text-bone/60" prefix={null}>
-          This week
+          {t("sectionThisWeek")}
         </Eyebrow>
         <div className="mt-3 mb-6 grid grid-cols-3 gap-2">
           <div className="bg-white/5 p-4">
-            <div className="font-mono text-[10px] uppercase opacity-60">Earned</div>
+            <div className="font-mono text-[10px] uppercase opacity-60">{t("weekEarned")}</div>
             <div className="display tabular text-2xl mt-1 text-sol">
               {fmtUSD(weekWash)}
             </div>
           </div>
           <div className="bg-white/5 p-4">
-            <div className="font-mono text-[10px] uppercase opacity-60">Jobs</div>
+            <div className="font-mono text-[10px] uppercase opacity-60">{t("weekJobs")}</div>
             <div className="display tabular text-2xl mt-1">{weekJobs}</div>
           </div>
           <div className="bg-white/5 p-4 border-l-2 border-good/30">
-            <div className="font-mono text-[10px] uppercase opacity-60">Tips</div>
+            <div className="font-mono text-[10px] uppercase opacity-60">{t("weekTips")}</div>
             <div className="display tabular text-2xl mt-1 text-good">{fmtUSD(weekTips)}</div>
           </div>
         </div>
@@ -269,13 +267,13 @@ export default async function ProDashboard() {
           <>
             <div className="flex justify-between items-baseline">
               <Eyebrow className="!text-bone/60" prefix={null}>
-                Recent reviews
+                {t("sectionRecentReviews")}
               </Eyebrow>
               <Link
                 href="/pro/reviews"
                 className="text-[10px] uppercase text-sol hover:underline"
               >
-                See all →
+                {t("seeAll")} →
               </Link>
             </div>
             <div className="mt-3 mb-6 space-y-2">
@@ -308,29 +306,29 @@ export default async function ProDashboard() {
 
         {/* Quick links */}
         <Eyebrow className="!text-bone/60" prefix={null}>
-          Quick links
+          {t("sectionQuickLinks")}
         </Eyebrow>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Link href="/pro/queue" className="bg-white/5 p-4 text-sm hover:bg-white/10">
-            Queue →
+            {t("quickQueue")} →
           </Link>
           <Link
             href="/pro/availability"
             className="bg-white/5 p-4 text-sm hover:bg-white/10"
           >
-            Schedule →
+            {t("quickSchedule")} →
           </Link>
           <Link
             href="/pro/messages"
             className="bg-white/5 p-4 text-sm hover:bg-white/10"
           >
-            Inbox →
+            {t("quickInbox")} →
           </Link>
           <Link
             href="/pro/earnings"
             className="bg-white/5 p-4 text-sm hover:bg-white/10"
           >
-            Earnings →
+            {t("quickEarnings")} →
           </Link>
         </div>
       </div>

@@ -2,10 +2,12 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { ProfileEditor } from "./ProfileEditor";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProMeEditPage() {
+  const t = await getTranslations("proMe");
   const supabase = createClient();
   const {
     data: { user },
@@ -29,12 +31,12 @@ export default async function ProMeEditPage() {
   return (
     <div className="px-5 pt-10 pb-8">
       <Link href="/pro/me" className="text-bone/60 text-sm">
-        ← Profile
+        ← {t("editBackLink")}
       </Link>
       <Eyebrow className="!text-bone/60 mt-4" prefix={null}>
-        Edit profile
+        {t("editPageEyebrow")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">YOUR PROFILE</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("editPageHeadline")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
       <ProfileEditor
         userId={user?.id ?? ""}

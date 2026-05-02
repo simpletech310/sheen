@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { VehiclesPicker } from "./VehiclesPicker";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ export default async function VehiclesPage({
 }: {
   searchParams: { tier?: string; price?: string; handle?: string; category?: string };
 }) {
+  const t = await getTranslations("appBook");
   const category = searchParams.category === "big_rig" ? "big_rig" : "auto";
   const defaultTier = category === "big_rig" ? "Trailer Wash" : "Premium Detail";
   const defaultPrice = category === "big_rig" ? 28500 : 18500;
@@ -41,14 +43,14 @@ export default async function VehiclesPage({
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href={backHref} className="text-smoke text-sm">
-          ← Back
+          {t("back")}
         </Link>
       </div>
       <Eyebrow>
-        Step 2 / 4 · {category === "big_rig" ? "Pick your big rig" : "Pick your vehicles"}
+        {category === "big_rig" ? t("vehiclesStepBigRig") : t("vehiclesStepAuto")}
       </Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">
-        {category === "big_rig" ? "WHICH RIG?" : "WHICH RIDES?"}
+        {category === "big_rig" ? t("whichRig") : t("whichRides")}
       </h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
 

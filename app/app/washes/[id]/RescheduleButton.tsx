@@ -3,20 +3,23 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
-
-const windows = [
-  { label: "Today · 2–4 PM", value: "today_14_16" },
-  { label: "Today · 4–6 PM", value: "today_16_18" },
-  { label: "Tomorrow · 10 AM–12 PM", value: "tomorrow_10_12" },
-  { label: "Tomorrow · 2–4 PM", value: "tomorrow_14_16" },
-  { label: "Tomorrow · 4–6 PM", value: "tomorrow_16_18" },
-];
+import { useTranslations } from "next-intl";
 
 export function RescheduleButton({ bookingId }: { bookingId: string }) {
+  const t = useTranslations("appWashes");
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [w, setW] = useState(windows[2].value);
   const [busy, setBusy] = useState(false);
+
+  const windows = [
+    { label: t("windowToday2"), value: "today_14_16" },
+    { label: t("windowToday4"), value: "today_16_18" },
+    { label: t("windowTomorrow10"), value: "tomorrow_10_12" },
+    { label: t("windowTomorrow2"), value: "tomorrow_14_16" },
+    { label: t("windowTomorrow4"), value: "tomorrow_16_18" },
+  ];
+
+  const [w, setW] = useState(windows[2].value);
 
   async function submit() {
     setBusy(true);
@@ -27,12 +30,12 @@ export function RescheduleButton({ bookingId }: { bookingId: string }) {
         body: JSON.stringify({ window: w }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Could not reschedule");
-      toast("Window updated", "success");
+      if (!r.ok) throw new Error(d.error || t("rescheduleErrorDefault"));
+      toast(t("rescheduleSuccess"), "success");
       router.refresh();
       setOpen(false);
     } catch (e: any) {
-      toast(e.message || "Could not reschedule", "error");
+      toast(e.message || t("rescheduleErrorDefault"), "error");
     } finally {
       setBusy(false);
     }
@@ -44,7 +47,7 @@ export function RescheduleButton({ bookingId }: { bookingId: string }) {
         onClick={() => setOpen(true)}
         className="mt-3 w-full bg-bone border border-mist text-ink py-3 text-xs font-bold uppercase tracking-wide hover:bg-mist transition"
       >
-        Reschedule
+        {t("reschedule")}
       </button>
     );
   }
@@ -52,7 +55,7 @@ export function RescheduleButton({ bookingId }: { bookingId: string }) {
   return (
     <div className="mt-3 bg-mist/40 p-4">
       <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-3">
-        Pick a new window
+        {t("pickNewWindow")}
       </div>
       <div className="space-y-2 mb-3">
         {windows.map((opt) => (
@@ -73,17 +76,17 @@ export function RescheduleButton({ bookingId }: { bookingId: string }) {
           disabled={busy}
           className="flex-1 bg-royal text-bone py-3 text-xs font-bold uppercase tracking-wide disabled:opacity-50 hover:bg-ink"
         >
-          {busy ? "Saving…" : "Save"}
+          {busy ? t("rescheduleSavingBusy") : t("save")}
         </button>
         <button
           onClick={() => setOpen(false)}
           className="px-4 bg-mist text-ink py-3 text-xs font-bold uppercase tracking-wide"
         >
-          Cancel
+          {t("cancelAction")}
         </button>
       </div>
       <p className="text-[11px] text-smoke mt-2">
-        Reschedule must happen at least 1 hour before the original window.
+        {t("rescheduleNote")}
       </p>
     </div>
   );

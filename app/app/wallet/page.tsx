@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { createClient } from "@/lib/supabase/server";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function WalletPage() {
+  const t = await getTranslations("appWallet");
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -39,26 +41,26 @@ export default async function WalletPage() {
 
   return (
     <div className="px-5 pt-10 pb-8">
-      <Eyebrow>Wallet</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">YOUR WALLET</h1>
+      <Eyebrow>{t("eyebrow")}</Eyebrow>
+      <h1 className="display text-3xl mt-3 mb-2">{t("pageTitle")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
       <div className="bg-royal text-bone p-6 mb-5 relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
-        <div className="font-mono text-[10px] uppercase opacity-80">Loyalty balance</div>
-        <div className="display tabular text-5xl mt-2">{balance.toLocaleString()}<span className="text-2xl ml-2 opacity-80">pts</span></div>
-        <div className="text-xs opacity-80 mt-2 tabular">≈ ${creditDollars} in credit · 100 pts = $1</div>
-        <div className="text-[11px] opacity-70 mt-1">Earn 1 pt for every $1 spent on a wash.</div>
+        <div className="font-mono text-[10px] uppercase opacity-80">{t("loyaltyBalance")}</div>
+        <div className="display tabular text-5xl mt-2">{balance.toLocaleString()}<span className="text-2xl ml-2 opacity-80">{t("pts")}</span></div>
+        <div className="text-xs opacity-80 mt-2 tabular">{t("creditApprox", { dollars: creditDollars })}</div>
+        <div className="text-[11px] opacity-70 mt-1">{t("earnRate")}</div>
       </div>
 
       {membership ? (
         <Link href="/app/membership" className="block bg-mist p-5 mb-5 hover:bg-mist/70">
           <div className="flex justify-between">
             <div>
-              <div className="font-mono text-[10px] uppercase text-smoke">Active membership</div>
+              <div className="font-mono text-[10px] uppercase text-smoke">{t("activeMembership")}</div>
               <div className="display text-2xl mt-1">{(membership as any).membership_plans?.display_name?.toUpperCase()}</div>
               <div className="text-xs text-smoke mt-1">
-                {membership.washes_used ?? 0}/{(membership as any).membership_plans?.included_washes} washes used
+                {t("washesUsed", { used: membership.washes_used ?? 0, total: (membership as any).membership_plans?.included_washes })}
               </div>
             </div>
             <div className="text-smoke text-2xl">→</div>
@@ -68,9 +70,9 @@ export default async function WalletPage() {
         <Link href="/app/membership" className="block bg-sol p-5 mb-5 hover:bg-bone">
           <div className="flex justify-between items-center">
             <div>
-              <div className="font-mono text-[10px] uppercase">Save with Sheen+</div>
-              <div className="display text-2xl mt-1">JOIN A PLAN</div>
-              <div className="text-xs mt-1">From $59/mo · 2 washes included</div>
+              <div className="font-mono text-[10px] uppercase">{t("saveWithSheenPlus")}</div>
+              <div className="display text-2xl mt-1">{t("joinPlan")}</div>
+              <div className="text-xs mt-1">{t("joinPlanDesc")}</div>
             </div>
             <div className="text-2xl">→</div>
           </div>
@@ -80,9 +82,9 @@ export default async function WalletPage() {
       <Link href="/app/me/achievements" className="block bg-mist/40 p-5 mb-5 hover:bg-mist">
         <div className="flex justify-between">
           <div>
-            <div className="font-mono text-[10px] uppercase text-smoke">Achievements</div>
-            <div className="display text-2xl mt-1">YOUR BADGES</div>
-            <div className="text-xs text-smoke mt-1">Unlock more by booking, referring, and tipping.</div>
+            <div className="font-mono text-[10px] uppercase text-smoke">{t("achievementsLabel")}</div>
+            <div className="display text-2xl mt-1">{t("yourBadges")}</div>
+            <div className="text-xs text-smoke mt-1">{t("achievementsDesc")}</div>
           </div>
           <div className="text-smoke text-2xl">→</div>
         </div>
@@ -91,7 +93,7 @@ export default async function WalletPage() {
       {(penalties ?? []).length > 0 && (
         <div className="bg-bad/10 border-l-2 border-bad p-4 mb-5">
           <div className="font-mono text-[10px] uppercase tracking-wider text-bad mb-2">
-            Outstanding fees
+            {t("outstandingFees")}
           </div>
           <div className="space-y-2">
             {(penalties ?? []).map((p: any) => (
@@ -115,14 +117,13 @@ export default async function WalletPage() {
             ))}
           </div>
           <div className="text-[11px] text-smoke mt-3 leading-relaxed">
-            Fees apply when a wash is cancelled late, or when a pro flags an
-            issue on site (no water/power, no-show). Disputes go to{" "}
+            {t("penaltyNote")}{" "}
             <a href="mailto:hello@sheen.co" className="underline">hello@sheen.co</a>.
           </div>
         </div>
       )}
 
-      <Eyebrow>Points history</Eyebrow>
+      <Eyebrow>{t("pointsHistory")}</Eyebrow>
       <div className="mt-3 space-y-2">
         {(ledger ?? []).map((r, i) => (
           <div key={i} className="bg-mist/40 p-3 flex justify-between text-sm">
@@ -134,13 +135,13 @@ export default async function WalletPage() {
             </div>
             <div className={`display tabular ${r.points >= 0 ? "text-good" : "text-bad"}`}>
               {r.points >= 0 ? "+" : ""}
-              {r.points} pts
+              {r.points} {t("pts")}
             </div>
           </div>
         ))}
         {(ledger ?? []).length === 0 && (
           <div className="bg-mist/40 p-6 text-center text-sm text-smoke">
-            No points yet. Book a wash and start collecting.
+            {t("noPoints")}
           </div>
         )}
       </div>

@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 const APP_BASE =
   process.env.NEXT_PUBLIC_APP_URL ?? "https://sheen-iota.vercel.app";
 
 export function WashHandleCard({ handle }: { handle: string }) {
+  const t = useTranslations("proMe");
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(handle);
@@ -25,10 +27,10 @@ export function WashHandleCard({ handle }: { handle: string }) {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      toast("Copied", "success");
+      toast(t("handleCopied"), "success");
       setTimeout(() => setCopied(false), 1800);
     } catch {
-      toast("Could not copy", "error");
+      toast(t("handleCopyError"), "error");
     }
   }
 
@@ -41,12 +43,12 @@ export function WashHandleCard({ handle }: { handle: string }) {
         body: JSON.stringify({ handle: draft }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Failed");
-      toast(`@${d.handle} saved`, "success");
+      if (!r.ok) throw new Error(d.error || t("handleSaveError"));
+      toast(t("handleSaved", { handle: d.handle }), "success");
       setEditing(false);
       router.refresh();
     } catch (e: any) {
-      toast(e.message || "Could not update", "error");
+      toast(e.message || t("handleSaveError"), "error");
     } finally {
       setBusy(false);
     }
@@ -56,7 +58,7 @@ export function WashHandleCard({ handle }: { handle: string }) {
     <div className="bg-sol text-ink p-5 relative">
       <div className="absolute top-0 left-0 right-0 h-1 bg-ink" />
       <div className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-        Your washer ID
+        {t("handleLabel")}
       </div>
 
       {editing ? (
@@ -73,7 +75,7 @@ export function WashHandleCard({ handle }: { handle: string }) {
             />
           </div>
           <div className="text-xs opacity-80 mt-2">
-            3–20 letters/numbers · uppercase · must be unique
+            {t("handleEditHint")}
           </div>
           <div className="flex gap-2 mt-3">
             <button
@@ -81,7 +83,7 @@ export function WashHandleCard({ handle }: { handle: string }) {
               disabled={busy || draft.length < 3}
               className="flex-1 bg-ink text-bone py-2.5 text-xs font-bold uppercase tracking-wide hover:bg-royal disabled:opacity-50"
             >
-              {busy ? "Saving…" : "Save"}
+              {busy ? t("handleSaving") : t("handleSaveBtn")}
             </button>
             <button
               onClick={() => {
@@ -90,7 +92,7 @@ export function WashHandleCard({ handle }: { handle: string }) {
               }}
               className="px-4 bg-bone text-ink py-2.5 text-xs font-bold uppercase tracking-wide"
             >
-              Cancel
+              {t("cancel")}
             </button>
           </div>
         </div>
@@ -101,35 +103,32 @@ export function WashHandleCard({ handle }: { handle: string }) {
             <span>{handle}</span>
           </div>
           <div className="text-xs opacity-80 mt-2 leading-relaxed">
-            Hand this out — cards, social, sticker on the cooler. When someone
-            books with @{handle}, you get a 10-minute exclusive window to accept
-            before the queue ever sees it. Repeat customers drop your platform
-            take to 18%.
+            {t("handleDesc", { handle })}
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             <button
               onClick={() => copy(`@${handle}`)}
               className="bg-ink text-bone px-4 py-2 text-xs font-bold uppercase tracking-wide hover:bg-royal transition"
             >
-              {copied ? "Copied ✓" : "Copy @ID"}
+              {copied ? t("handleCopiedBtn") : t("handleCopyIdBtn")}
             </button>
             <button
               onClick={() => copy(shareUrl)}
               className="bg-ink text-bone px-4 py-2 text-xs font-bold uppercase tracking-wide hover:bg-royal transition"
             >
-              Copy link
+              {t("handleCopyLinkBtn")}
             </button>
             <button
               onClick={() => setShowQR((s) => !s)}
               className="bg-ink text-bone px-4 py-2 text-xs font-bold uppercase tracking-wide hover:bg-royal transition"
             >
-              {showQR ? "Hide QR" : "Show QR"}
+              {showQR ? t("handleHideQR") : t("handleShowQR")}
             </button>
             <button
               onClick={() => setEditing(true)}
               className="bg-bone text-ink px-4 py-2 text-xs font-bold uppercase tracking-wide hover:bg-mist transition"
             >
-              Edit
+              {t("handleEditBtn")}
             </button>
           </div>
           {showQR && (
@@ -137,7 +136,7 @@ export function WashHandleCard({ handle }: { handle: string }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={qrUrl}
-                alt={`QR code for @${handle}`}
+                alt={t("handleQRAlt", { handle })}
                 className="w-48 h-48 mx-auto"
               />
               <div className="text-xs text-smoke mt-3 break-all font-mono">

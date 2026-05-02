@@ -3,10 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { MembershipActions } from "./MembershipActions";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function MembershipPage() {
+  const t = await getTranslations("appMembership");
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in?next=/app/membership");
@@ -30,25 +32,25 @@ export default async function MembershipPage() {
 
   return (
     <div className="px-5 pt-10 pb-8">
-      <Eyebrow>Membership</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-6">SHEEN+</h1>
+      <Eyebrow>{t("eyebrow")}</Eyebrow>
+      <h1 className="display text-3xl mt-3 mb-6">{t("pageTitle")}</h1>
 
       {current ? (
         <div className="bg-royal text-bone p-5 mb-6 relative">
           <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
           <div className="font-mono text-[10px] uppercase opacity-80">
-            {current.status === "paused" ? "Paused" : "Active"} ·{" "}
+            {current.status === "paused" ? t("statusPaused") : t("statusActive")} ·{" "}
             {(current as any).membership_plans?.tier?.toUpperCase()}
           </div>
           <div className="display text-3xl mt-2 mb-2">{(current as any).membership_plans?.display_name}</div>
           <div className="text-sm opacity-90">
-            {current.washes_used ?? 0} of {(current as any).membership_plans?.included_washes} washes used this period.
+            {t("washesUsed", { used: current.washes_used ?? 0, total: (current as any).membership_plans?.included_washes })}
           </div>
           <div className="text-xs opacity-70 mt-1">
             {current.status === "paused"
-              ? "Billing paused — resume any time."
-              : `Renews ${new Date(current.current_period_end).toLocaleDateString()}${
-                  current.cancel_at_period_end ? " · cancelling at period end" : ""
+              ? t("billingPaused")
+              : `${t("renews")} ${new Date(current.current_period_end).toLocaleDateString()}${
+                  current.cancel_at_period_end ? ` · ${t("cancellingAtPeriodEnd")}` : ""
                 }`}
           </div>
           {!current.cancel_at_period_end && (
@@ -57,7 +59,7 @@ export default async function MembershipPage() {
         </div>
       ) : (
         <p className="text-sm text-smoke mb-6">
-          Pick a plan. Cancel anytime — no charges past your current billing period.
+          {t("noPlanDesc")}
         </p>
       )}
 
@@ -80,7 +82,7 @@ export default async function MembershipPage() {
                 <div className="flex-1 pr-3">
                   <div className="display text-2xl">{p.display_name?.toUpperCase()}</div>
                   <div className="text-xs text-smoke mt-1">
-                    {p.included_washes} washes / month
+                    {t("washesPerMonth", { n: p.included_washes })}
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {(p.service_categories ?? ["auto"]).map((cat: string) => (
@@ -113,10 +115,10 @@ export default async function MembershipPage() {
                       </div>
                     )}
                   </div>
-                  <div className="font-mono text-[10px] text-smoke">/MO</div>
+                  <div className="font-mono text-[10px] text-smoke">{t("perMonth")}</div>
                   {showPromo && (
                     <div className="font-mono text-[9px] uppercase tracking-wider text-royal mt-1">
-                      Promo · locks for life
+                      {t("promoLocksForLife")}
                     </div>
                   )}
                 </div>
@@ -136,14 +138,13 @@ export default async function MembershipPage() {
 
       {current?.is_promo_locked && (
         <div className="mt-4 bg-good/10 border-l-2 border-good p-3 text-xs">
-          <span className="font-mono uppercase tracking-wider text-good">Promo locked</span>{" "}
-          You signed up during launch — you keep this rate as long as your membership stays active.
+          <span className="font-mono uppercase tracking-wider text-good">{t("promoLockedBadge")}</span>{" "}
+          {t("promoLockedNote")}
         </div>
       )}
 
       <p className="text-[11px] text-smoke text-center mt-6">
-        Membership washes count toward your monthly allowance. Booking above your tier max charges normal rates. 100%
-        of tips go to your pro.
+        {t("footer")}
       </p>
     </div>
   );

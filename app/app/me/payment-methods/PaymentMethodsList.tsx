@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 type PM = {
   id: string;
@@ -22,6 +23,7 @@ const BRAND_LABEL: Record<string, string> = {
 };
 
 export function PaymentMethodsList() {
+  const t = useTranslations("appPayments");
   const [methods, setMethods] = useState<PM[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
@@ -42,18 +44,18 @@ export function PaymentMethodsList() {
   }, []);
 
   async function remove(id: string) {
-    if (!confirm("Remove this card? You can add it again at checkout.")) return;
+    if (!confirm(t("confirmRemove"))) return;
     setRemoving(id);
     try {
       const r = await fetch(`/api/stripe/payment-methods/${id}`, { method: "DELETE" });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || "Failed");
+        throw new Error(d.error || t("errorFailed"));
       }
       setMethods((prev) => prev.filter((m) => m.id !== id));
-      toast("Card removed", "success");
+      toast(t("toastRemoved"), "success");
     } catch (e: any) {
-      toast(e.message || "Could not remove", "error");
+      toast(e.message || t("errorRemove"), "error");
     } finally {
       setRemoving(null);
     }
@@ -71,7 +73,7 @@ export function PaymentMethodsList() {
   if (methods.length === 0) {
     return (
       <div className="bg-mist/40 p-6 text-sm text-smoke text-center">
-        No saved cards yet. Book a wash and your card will save here.
+        {t("noCards")}
       </div>
     );
   }
@@ -89,7 +91,10 @@ export function PaymentMethodsList() {
             </div>
             {m.exp_month && m.exp_year && (
               <div className="text-xs text-smoke font-mono mt-0.5 tabular">
-                Exp {String(m.exp_month).padStart(2, "0")}/{String(m.exp_year).slice(-2)}
+                {t("expiry", {
+                  month: String(m.exp_month).padStart(2, "0"),
+                  year: String(m.exp_year).slice(-2),
+                })}
               </div>
             )}
           </div>
@@ -98,7 +103,7 @@ export function PaymentMethodsList() {
             disabled={removing === m.id}
             className="font-mono text-[10px] uppercase tracking-wider text-bad hover:underline disabled:opacity-50"
           >
-            {removing === m.id ? "…" : "Remove"}
+            {removing === m.id ? "…" : t("removeBtn")}
           </button>
         </div>
       ))}

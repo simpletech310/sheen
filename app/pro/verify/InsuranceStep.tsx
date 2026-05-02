@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 export function InsuranceStep({
   docPath,
@@ -11,6 +12,7 @@ export function InsuranceStep({
   docPath: string | null;
   expiresAt: string | null;
 }) {
+  const t = useTranslations("proVerify");
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(!docPath);
@@ -19,20 +21,20 @@ export function InsuranceStep({
 
   // Status pill colour. Empty = todo (sol). Far out = good. Soon = sol. Past = bad.
   let pill: { tone: "good" | "sol" | "bad"; label: string };
-  if (!docPath) pill = { tone: "sol", label: "Todo" };
-  else if (!expiresAt) pill = { tone: "sol", label: "Active" };
+  if (!docPath) pill = { tone: "sol", label: t("insTodo") };
+  else if (!expiresAt) pill = { tone: "sol", label: t("insActive") };
   else {
     const d = new Date(expiresAt);
     const days = Math.round((d.getTime() - Date.now()) / 86400000);
-    if (days < 0) pill = { tone: "bad", label: "Expired" };
-    else if (days < 30) pill = { tone: "sol", label: `Expires in ${days}d` };
-    else pill = { tone: "good", label: "Active" };
+    if (days < 0) pill = { tone: "bad", label: t("insExpired") };
+    else if (days < 30) pill = { tone: "sol", label: t("insExpiresSoon", { days }) };
+    else pill = { tone: "good", label: t("insActive") };
   }
 
   async function submit() {
     const f = fileRef.current?.files?.[0];
-    if (!f) return toast("Pick a file first", "error");
-    if (!expDate) return toast("Add the expiration date", "error");
+    if (!f) return toast(t("insPickFileFirst"), "error");
+    if (!expDate) return toast(t("insAddExpDate"), "error");
     setBusy(true);
     try {
       // 1. Get a signed upload URL.
@@ -42,7 +44,7 @@ export function InsuranceStep({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bucket: "washer-documents", scope: "insurance", ext }),
       });
-      if (!r.ok) throw new Error("Could not start upload");
+      if (!r.ok) throw new Error(t("insUploadStartFailed"));
       const { signed_url, path } = await r.json();
 
       // 2. Put the file directly to the signed URL.
@@ -51,7 +53,7 @@ export function InsuranceStep({
         headers: { "Content-Type": f.type || "application/octet-stream" },
         body: f,
       });
-      if (!put.ok) throw new Error("Upload failed");
+      if (!put.ok) throw new Error(t("insUploadFailed"));
 
       // 3. Tell the server to record the path + expiration.
       const post = await fetch("/api/pro/insurance", {
@@ -61,13 +63,13 @@ export function InsuranceStep({
       });
       if (!post.ok) {
         const d = await post.json().catch(() => ({}));
-        throw new Error(d.error || "Could not save insurance");
+        throw new Error(d.error || t("insSaveFailed"));
       }
-      toast("Insurance saved · admin will review", "success");
+      toast(t("insSavedToast"), "success");
       setEditing(false);
       router.refresh();
     } catch (e: any) {
-      toast(e.message || "Upload failed", "error");
+      toast(e.message || t("insUploadFailed"), "error");
     } finally {
       setBusy(false);
     }
@@ -86,17 +88,17 @@ export function InsuranceStep({
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="font-mono text-[10px] uppercase tracking-wider opacity-60">
-            Step 02 · Insurance
+            {t("insStepLabel")}
           </div>
           <div className="text-sm font-bold mt-1">
-            {docPath ? "Insurance on file" : "Upload proof of insurance"}
+            {docPath ? t("insOnFileTitle") : t("insUploadTitle")}
           </div>
           <p className="text-[12px] text-bone/65 mt-1.5 leading-relaxed">
-            $1M general liability. PDF or image of the certificate.
+            {t("insDesc")}
           </p>
           {docPath && expiresAt && !editing && (
             <p className="text-[11px] text-bone/55 mt-1.5 font-mono tabular">
-              Expires {new Date(expiresAt).toLocaleDateString()}
+              {t("insExpiresLabel")} {new Date(expiresAt).toLocaleDateString()}
             </p>
           )}
         </div>
@@ -123,7 +125,7 @@ export function InsuranceStep({
           />
           <div>
             <label className="font-mono text-[10px] uppercase tracking-wider text-bone/50 mb-1 block">
-              Expiration date
+              {t("insExpDateLabel")}
             </label>
             <input
               type="date"
@@ -138,7 +140,7 @@ export function InsuranceStep({
               disabled={busy}
               className="flex-1 bg-sol text-ink py-3 text-xs font-bold uppercase tracking-wide disabled:opacity-50"
             >
-              {busy ? "Uploading…" : "Submit"}
+              {busy ? t("insUploading") : t("insSubmitBtn")}
             </button>
             {docPath && (
               <button
@@ -146,7 +148,7 @@ export function InsuranceStep({
                 disabled={busy}
                 className="px-4 bg-bone text-ink py-3 text-xs font-bold uppercase tracking-wide"
               >
-                Cancel
+                {t("insCancelBtn")}
               </button>
             )}
           </div>
@@ -156,7 +158,7 @@ export function InsuranceStep({
           onClick={() => setEditing(true)}
           className="mt-4 w-full py-3 text-xs font-bold uppercase tracking-wide bg-bone/10 text-bone hover:bg-bone hover:text-ink transition"
         >
-          Replace insurance →
+          {t("insReplaceBtn")}
         </button>
       )}
     </div>

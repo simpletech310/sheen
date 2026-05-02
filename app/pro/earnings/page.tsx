@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { fmtUSD } from "@/lib/pricing";
 import { EarningsChart } from "@/components/pro/EarningsChart";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,7 @@ function startOfYear(d: Date) {
 }
 
 export default async function EarningsPage() {
+  const t = await getTranslations("proEarnings");
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -89,22 +91,24 @@ export default async function EarningsPage() {
   return (
     <div className="px-5 pt-10 pb-8">
       <Eyebrow className="!text-bone/60" prefix={null}>
-        Earnings
+        {t("eyebrow")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">{fmtUSD(thisWeek)} this week</h1>
+      <h1 className="display text-3xl mt-3 mb-2">
+        {fmtUSD(thisWeek)} {t("thisWeekSuffix")}
+      </h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white/5 p-4">
-          <div className="font-mono text-[10px] uppercase opacity-60">This month</div>
+          <div className="font-mono text-[10px] uppercase opacity-60">{t("thisMonth")}</div>
           <div className="display tabular text-2xl mt-1">{fmtUSD(thisMonth)}</div>
         </div>
         <div className="bg-white/5 p-4">
-          <div className="font-mono text-[10px] uppercase opacity-60">This year</div>
+          <div className="font-mono text-[10px] uppercase opacity-60">{t("thisYear")}</div>
           <div className="display tabular text-2xl mt-1">{fmtUSD(thisYear)}</div>
         </div>
         <div className="bg-sol/15 p-4">
-          <div className="font-mono text-[10px] uppercase opacity-60">Lifetime</div>
+          <div className="font-mono text-[10px] uppercase opacity-60">{t("lifetime")}</div>
           <div className="display tabular text-2xl mt-1 text-sol">{fmtUSD(lifetime)}</div>
         </div>
       </div>
@@ -112,13 +116,13 @@ export default async function EarningsPage() {
       <div className="grid grid-cols-2 gap-3 mt-3">
         <div className="bg-white/5 p-4">
           <div className="font-mono text-[10px] uppercase opacity-60">
-            Jobs · {now.getFullYear()}
+            {t("jobsYear", { year: now.getFullYear() })}
           </div>
           <div className="display tabular text-2xl mt-1">{jobsThisYear}</div>
         </div>
         <div className="bg-white/5 p-4">
           <div className="font-mono text-[10px] uppercase opacity-60">
-            Tips · {now.getFullYear()}
+            {t("tipsYear", { year: now.getFullYear() })}
           </div>
           <div className="display tabular text-2xl mt-1">{fmtUSD(tipsThisYear)}</div>
         </div>
@@ -126,12 +130,12 @@ export default async function EarningsPage() {
 
       <div className="mt-7">
         <Eyebrow className="!text-bone/60" prefix={null}>
-          12-week trend
+          {t("trendEyebrow")}
         </Eyebrow>
         <div className="mt-3 bg-white/5 p-4">
           {earned.length === 0 ? (
             <div className="text-center text-bone/60 text-sm py-12">
-              Complete your first job to start tracking earnings.
+              {t("noEarningsYet")}
             </div>
           ) : (
             <EarningsChart data={weeks} />
@@ -141,17 +145,17 @@ export default async function EarningsPage() {
 
       <div className="mt-7">
         <Eyebrow className="!text-bone/60" prefix={null}>
-          Recent payouts
+          {t("recentPayoutsEyebrow")}
         </Eyebrow>
         <div className="mt-3 space-y-2">
           {recent.map((p: any) => (
             <div key={p.id} className="bg-white/5 p-3 flex justify-between text-sm">
               <div>
                 <div className="font-medium flex items-center gap-2">
-                  {p.bookings?.services?.tier_name ?? "Service"}
+                  {p.bookings?.services?.tier_name ?? t("serviceFallback")}
                   {p.kind === "tip" && (
                     <span className="font-mono text-[9px] uppercase tracking-wider bg-sol text-ink px-1.5 py-0.5">
-                      Tip
+                      {t("tipBadge")}
                     </span>
                   )}
                 </div>
@@ -179,7 +183,7 @@ export default async function EarningsPage() {
           ))}
           {recent.length === 0 && (
             <div className="bg-white/5 p-6 text-center text-sm text-bone/60">
-              No payouts yet.
+              {t("noPayoutsYet")}
             </div>
           )}
         </div>
@@ -189,7 +193,7 @@ export default async function EarningsPage() {
         href="/pro/wallet"
         className="mt-6 block w-full text-center bg-sol text-ink py-3.5 text-sm font-bold uppercase tracking-wide hover:bg-bone transition"
       >
-        Manage wallet &amp; instant payout →
+        {t("manageWalletCta")}
       </Link>
     </div>
   );

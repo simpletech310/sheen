@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 export function BigRigCapabilityCard({ initialCapable }: { initialCapable: boolean }) {
+  const t = useTranslations("proMe");
   const router = useRouter();
   const [capable, setCapable] = useState(initialCapable);
   const [confirming, setConfirming] = useState(false);
@@ -20,17 +22,17 @@ export function BigRigCapabilityCard({ initialCapable }: { initialCapable: boole
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || "Could not update");
+        throw new Error(d.error || t("bigRigErrorUpdate"));
       }
       setCapable(next);
       setConfirming(false);
       toast(
-        next ? "Big-rig jobs are now in your queue" : "Big-rig jobs removed from your queue",
+        next ? t("bigRigToastOn") : t("bigRigToastOff"),
         "success"
       );
       router.refresh();
     } catch (e: any) {
-      toast(e.message || "Could not update", "error");
+      toast(e.message || t("bigRigErrorUpdate"), "error");
     } finally {
       setBusy(false);
     }
@@ -41,15 +43,15 @@ export function BigRigCapabilityCard({ initialCapable }: { initialCapable: boole
       <div className="flex justify-between items-start">
         <div className="flex-1 pr-3">
           <div className="font-mono text-[10px] uppercase opacity-60 tracking-wider">
-            Big rig service
+            {t("bigRigServiceLabel")}
           </div>
           <div className="text-sm font-bold mt-1">
-            {capable ? "You take big-rig jobs" : "Add big-rig jobs to your queue"}
+            {capable ? t("bigRigCapableHeadline") : t("bigRigIncapableHeadline")}
           </div>
           <div className="text-xs text-bone/60 mt-1 leading-relaxed">
-            Semi · box · sprinter · RV. Requires long hoses, foam cannon, telescoping brushes,
-            ladders, and high-flow pumps. Pays{" "}
-            <span className="text-sol font-semibold">2–6×</span> a standard auto job.
+            {t("bigRigDesc")}{" "}
+            <span className="text-sol font-semibold">{t("bigRigPayMultiplier")}</span>{" "}
+            {t("bigRigDescSuffix")}
           </div>
         </div>
         <span
@@ -57,7 +59,7 @@ export function BigRigCapabilityCard({ initialCapable }: { initialCapable: boole
             capable ? "bg-sol text-ink" : "bg-bone/10 text-bone/60"
           }`}
         >
-          {capable ? "On" : "Off"}
+          {capable ? t("bigRigOn") : t("bigRigOff")}
         </span>
       </div>
 
@@ -71,14 +73,14 @@ export function BigRigCapabilityCard({ initialCapable }: { initialCapable: boole
               : "bg-sol text-ink hover:bg-bone"
           }`}
         >
-          {capable ? "Turn off big-rig jobs" : "I have the equipment — turn on"}
+          {capable ? t("bigRigTurnOff") : t("bigRigTurnOn")}
         </button>
       ) : (
         <div className="mt-3 bg-ink/40 p-3">
           <p className="text-[11px] text-bone/80 mb-3 leading-relaxed">
             {capable
-              ? "Stop showing big-rig jobs in your queue?"
-              : "By turning this on you confirm you own (or can rent) the gear and have washed rigs before. Customer fees on these are higher — so are the standards."}
+              ? t("bigRigConfirmOff")
+              : t("bigRigConfirmOn")}
           </p>
           <div className="flex gap-2">
             <button
@@ -86,14 +88,14 @@ export function BigRigCapabilityCard({ initialCapable }: { initialCapable: boole
               disabled={busy}
               className="flex-1 bg-sol text-ink py-2 text-xs font-bold uppercase tracking-wide disabled:opacity-50"
             >
-              {busy ? "…" : capable ? "Confirm off" : "Confirm — turn on"}
+              {busy ? "…" : capable ? t("bigRigConfirmOffBtn") : t("bigRigConfirmOnBtn")}
             </button>
             <button
               onClick={() => setConfirming(false)}
               disabled={busy}
               className="px-3 bg-bone text-ink py-2 text-xs font-bold uppercase tracking-wide"
             >
-              Cancel
+              {t("cancel")}
             </button>
           </div>
         </div>

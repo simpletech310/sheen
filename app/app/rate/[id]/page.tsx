@@ -7,6 +7,7 @@ import { Eyebrow } from "@/components/brand/Eyebrow";
 import { toast } from "@/components/ui/Toast";
 import { StripePaymentElement } from "@/components/customer/StripePaymentElement";
 import { fmtUSD } from "@/lib/pricing";
+import { useTranslations } from "next-intl";
 
 const tips = [
   { pct: 18, label: "18%" },
@@ -19,6 +20,7 @@ const tips = [
 const TIPPABLE_STATUSES = new Set(["completed", "funded"]);
 
 function RateInner({ params }: { params: { id: string } }) {
+  const t = useTranslations("appRate");
   const { id } = params;
   const router = useRouter();
   const [stars, setStars] = useState(5);
@@ -63,11 +65,11 @@ function RateInner({ params }: { params: { id: string } }) {
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d?.client_secret) {
-        throw new Error(d?.error || "Couldn't prepare tip");
+        throw new Error(d?.error || t("tipPrepareError"));
       }
       setClientSecret(d.client_secret);
     } catch (e: any) {
-      toast(e.message || "Couldn't prepare tip", "error");
+      toast(e.message || t("tipPrepareError"), "error");
       setShowPayModal(false);
     } finally {
       setPreparingTip(false);
@@ -84,17 +86,17 @@ function RateInner({ params }: { params: { id: string } }) {
         body: JSON.stringify({ bucket: "booking-photos", scope: `review_${id}`, ext }),
       });
       const sigData = await sig.json();
-      if (!sig.ok) throw new Error(sigData.error || "Upload setup failed");
+      if (!sig.ok) throw new Error(sigData.error || t("uploadSetupError"));
       const put = await fetch(sigData.signed_url, {
         method: "PUT",
         headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
-      if (!put.ok) throw new Error("Upload failed");
+      if (!put.ok) throw new Error(t("uploadError"));
       setPhotoPath(sigData.path);
-      toast("Photo added — every photo review counts toward Sheen Star", "success");
+      toast(t("photoAdded"), "success");
     } catch (e: any) {
-      toast(e.message || "Could not upload photo", "error");
+      toast(e.message || t("uploadError"), "error");
     } finally {
       setUploadingPhoto(false);
     }
@@ -110,32 +112,32 @@ function RateInner({ params }: { params: { id: string } }) {
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || "Could not submit rating");
+        throw new Error(d.error || t("submitError"));
       }
       toast(
-        tipPct > 0 ? "Rating + tip sent · thanks!" : "Rating sent · thanks!",
+        tipPct > 0 ? t("submitSuccessWithTip") : t("submitSuccess"),
         "success"
       );
       router.push("/app/washes");
     } catch (e: any) {
-      toast(e.message || "Could not submit rating", "error");
+      toast(e.message || t("submitError"), "error");
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (loading) return <div className="p-10 text-center text-smoke">Loading…</div>;
-  if (!booking) return <div className="p-10 text-center text-bad">Booking not found</div>;
+  if (loading) return <div className="p-10 text-center text-smoke">{t("loading")}</div>;
+  if (!booking) return <div className="p-10 text-center text-bad">{t("notFound")}</div>;
 
   return (
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href={`/app/tracking/${id}`} className="text-smoke text-sm">
-          ← Back
+          ← {t("back")}
         </Link>
       </div>
-      <Eyebrow>Rate your wash</Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-6">How&rsquo;d we do?</h1>
+      <Eyebrow>{t("eyebrow")}</Eyebrow>
+      <h1 className="display text-3xl mt-3 mb-6">{t("headline")}</h1>
 
       <div className="flex gap-2 mb-7">
         {[1, 2, 3, 4, 5].map((n) => (
@@ -143,33 +145,33 @@ function RateInner({ params }: { params: { id: string } }) {
             key={n}
             onClick={() => setStars(n)}
             className={`text-4xl ${n <= stars ? "text-cobalt" : "text-mist"}`}
-            aria-label={`${n} stars`}
+            aria-label={t("starAriaLabel", { n })}
           >
             ★
           </button>
         ))}
       </div>
 
-      <Eyebrow>Add a tip · 100% to your pro</Eyebrow>
+      <Eyebrow>{t("addTipEyebrow")}</Eyebrow>
       <div className="grid grid-cols-4 gap-2 mt-3 mb-6">
-        {tips.map((t) => (
+        {tips.map((tip) => (
           <button
-            key={t.pct}
-            onClick={() => setTipPct(t.pct)}
-            className={`p-3 text-sm font-bold uppercase tracking-wide ${tipPct === t.pct ? "bg-ink text-bone" : "bg-mist/50"}`}
+            key={tip.pct}
+            onClick={() => setTipPct(tip.pct)}
+            className={`p-3 text-sm font-bold uppercase tracking-wide ${tipPct === tip.pct ? "bg-ink text-bone" : "bg-mist/50"}`}
           >
-            {t.label}
+            {tip.label}
           </button>
         ))}
         <button onClick={() => setTipPct(0)} className={`p-3 text-sm font-bold uppercase tracking-wide ${tipPct === 0 ? "bg-ink text-bone" : "bg-mist/50"}`}>
-          Skip
+          {t("skipTip")}
         </button>
       </div>
 
       <textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
-        placeholder="Anything to say? (optional)"
+        placeholder={t("commentPlaceholder")}
         rows={3}
         className="w-full px-4 py-3 bg-bone border border-mist rounded-none text-sm mb-3"
       />
@@ -180,18 +182,18 @@ function RateInner({ params }: { params: { id: string } }) {
         {photoPath ? (
           <div className="flex items-center gap-3 bg-mist/40 px-3 py-2 text-xs">
             <div className="w-8 h-8 bg-good/20 flex items-center justify-center text-good">✓</div>
-            <div className="flex-1 text-smoke">Photo on this review</div>
+            <div className="flex-1 text-smoke">{t("photoOnReview")}</div>
             <button
               type="button"
               onClick={() => setPhotoPath(null)}
               className="font-mono text-[10px] uppercase tracking-wider text-bad hover:text-ink"
             >
-              Remove
+              {t("removePhoto")}
             </button>
           </div>
         ) : (
           <label className={`block w-full text-center py-3 text-xs font-bold uppercase tracking-wide cursor-pointer transition border border-dashed ${uploadingPhoto ? "bg-mist text-smoke border-mist" : "bg-bone text-ink border-smoke hover:bg-mist/40"}`}>
-            {uploadingPhoto ? "Uploading…" : "+ Add a photo (optional)"}
+            {uploadingPhoto ? t("uploading") : t("addPhoto")}
             <input
               type="file"
               accept="image/*"
@@ -214,7 +216,7 @@ function RateInner({ params }: { params: { id: string } }) {
           disabled={submitting}
           className="w-full bg-cobalt text-bone rounded-none py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
         >
-          {submitting ? "Submitting…" : "Submit Rating →"}
+          {submitting ? t("submitting") : t("submitRating")}
         </button>
       ) : tipAllowed ? (
         <button
@@ -225,21 +227,19 @@ function RateInner({ params }: { params: { id: string } }) {
           disabled={submitting || preparingTip}
           className="w-full bg-cobalt text-bone rounded-none py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
         >
-          {preparingTip ? "Preparing…" : `Submit & Pay ${fmtUSD(tipCents)} →`}
+          {preparingTip ? t("preparing") : t("submitAndPay", { amount: fmtUSD(tipCents) })}
         </button>
       ) : (
         <div>
           <div className="bg-mist/40 border-l-2 border-sol p-3 text-xs text-smoke leading-relaxed">
-            Tip will unlock once your wash is approved and the funds release
-            to your pro. You can come back here from Washes &rarr; this booking
-            once that's done.
+            {t("tipLockedNote")}
           </div>
           <button
             onClick={submit}
             disabled={submitting}
             className="mt-3 w-full bg-mist text-ink rounded-none py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
           >
-            {submitting ? "Submitting…" : "Submit rating without tip →"}
+            {submitting ? t("submitting") : t("submitWithoutTip")}
           </button>
         </div>
       )}
@@ -250,19 +250,19 @@ function RateInner({ params }: { params: { id: string } }) {
           <div className="bg-bone w-full max-w-md p-6 animate-in slide-in-from-bottom duration-300 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <Eyebrow>Secure Tip</Eyebrow>
-                <h2 className="display text-2xl">Pay your tip</h2>
+                <Eyebrow>{t("secureTipEyebrow")}</Eyebrow>
+                <h2 className="display text-2xl">{t("payTipTitle")}</h2>
               </div>
-              <button 
+              <button
                 onClick={() => setShowPayModal(false)}
                 className="text-smoke hover:text-ink transition p-2"
               >
                 ✕
               </button>
             </div>
-            
+
             <div className="mb-6 text-sm text-smoke">
-              Your 100% tip of <span className="text-ink font-bold">{fmtUSD(tipCents)}</span> goes directly to your pro.
+              {t("tipGoesToPro", { amount: fmtUSD(tipCents) })}
             </div>
 
             {clientSecret ? (
@@ -276,12 +276,12 @@ function RateInner({ params }: { params: { id: string } }) {
               />
             ) : (
               <div className="py-12 text-center text-sm text-smoke">
-                Preparing secure payment…
+                {t("preparingPayment")}
               </div>
             )}
-            
+
             <p className="text-[10px] text-smoke text-center mt-6 uppercase tracking-wider">
-              Securely processed by Stripe
+              {t("stripeNote")}
             </p>
           </div>
         </div>

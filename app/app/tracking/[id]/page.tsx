@@ -10,10 +10,12 @@ import { BookingVehicleList } from "@/components/customer/BookingVehicleList";
 import { CustomerChecklist } from "@/components/customer/CustomerChecklist";
 import { signedUrls } from "@/lib/storage";
 import { ApprovalPanel } from "@/components/customer/ApprovalPanel";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function TrackingPage({ params }: { params: { id: string } }) {
+  const t = await getTranslations("appTracking");
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: booking } = await supabase
@@ -107,13 +109,13 @@ export default async function TrackingPage({ params }: { params: { id: string } 
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/app/washes" className="text-smoke text-sm">
-          ← Washes
+          ← {t("backToWashes")}
         </Link>
       </div>
 
-      <Eyebrow>Wash · #{booking.id.slice(0, 8)} · live</Eyebrow>
+      <Eyebrow>{t("eyebrow", { id: booking.id.slice(0, 8) })}</Eyebrow>
       <h1 className="display text-3xl mt-3 mb-2">
-        {(booking as any).services?.tier_name ?? "Service"}
+        {(booking as any).services?.tier_name ?? t("defaultServiceName")}
       </h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-6" />
 
@@ -127,7 +129,7 @@ export default async function TrackingPage({ params }: { params: { id: string } 
 
       {washerProfile && (
         <div className="mt-6">
-          <Eyebrow>Your pro</Eyebrow>
+          <Eyebrow>{t("yourPro")}</Eyebrow>
           <div className="mt-2">
             <WasherProfileCard profile={washerProfile} publicLink />
           </div>
@@ -152,14 +154,14 @@ export default async function TrackingPage({ params }: { params: { id: string } 
         <ChatPanel
           bookingId={booking.id}
           currentUserId={user.id}
-          otherName={washerName ?? "your pro"}
+          otherName={washerName ?? t("yourProFallback")}
           variant="customer"
         />
       )}
 
       <div className="mt-6 bg-mist/40 p-4 text-sm">
         <div className="flex justify-between">
-          <span className="text-smoke">Total</span>
+          <span className="text-smoke">{t("total")}</span>
           <span className="display tabular text-xl">{fmtUSD(booking.total_cents)}</span>
         </div>
       </div>

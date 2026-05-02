@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 export function StripeStep({ connected }: { connected: boolean }) {
+  const t = useTranslations("proVerify");
   const [busy, setBusy] = useState(false);
 
   async function start(action: "onboard" | "dashboard") {
@@ -16,7 +18,7 @@ export function StripeStep({ connected }: { connected: boolean }) {
       const r = await fetch(path, { method: "POST" });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || `Payouts ${action} failed`);
+        throw new Error(d.error || t("stripeActionFailed", { action }));
       }
       const { url } = await r.json();
       window.location.href = url;
@@ -35,14 +37,13 @@ export function StripeStep({ connected }: { connected: boolean }) {
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="font-mono text-[10px] uppercase tracking-wider opacity-60">
-            Step 01 · Payouts
+            {t("stripeStepLabel")}
           </div>
           <div className="text-sm font-bold mt-1">
-            {connected ? "Payouts connected" : "Set up payouts"}
+            {connected ? t("stripeConnectedTitle") : t("stripeSetUpTitle")}
           </div>
           <p className="text-[12px] text-bone/65 mt-1.5 leading-relaxed">
-            Link your bank or debit card. Tips paid same-day, instant cash-out
-            available for 1.5%.
+            {t("stripeDesc")}
           </p>
         </div>
         <span
@@ -50,7 +51,7 @@ export function StripeStep({ connected }: { connected: boolean }) {
             connected ? "bg-good text-ink" : "bg-bone/10 text-bone/60"
           }`}
         >
-          {connected ? "Done" : "Todo"}
+          {connected ? t("stripeDone") : t("stripeTodo")}
         </span>
       </div>
       <button
@@ -62,7 +63,7 @@ export function StripeStep({ connected }: { connected: boolean }) {
             : "bg-sol text-ink hover:bg-bone"
         }`}
       >
-        {busy ? "…" : connected ? "View payouts dashboard →" : "Set up payouts →"}
+        {busy ? "…" : connected ? t("stripeViewDashboardBtn") : t("stripeSetUpBtn")}
       </button>
     </div>
   );

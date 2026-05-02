@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 export function BackgroundCheckStep({
   status,
@@ -11,14 +12,15 @@ export function BackgroundCheckStep({
   status: string;
   verified: boolean;
 }) {
+  const t = useTranslations("proVerify");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   let pill: { tone: "good" | "sol" | "bad"; label: string };
-  if (verified || status === "verified") pill = { tone: "good", label: "Verified" };
-  else if (status === "denied") pill = { tone: "bad", label: "Denied" };
-  else if (status === "pending") pill = { tone: "sol", label: "In review" };
-  else pill = { tone: "sol", label: "Todo" };
+  if (verified || status === "verified") pill = { tone: "good", label: t("bgVerified") };
+  else if (status === "denied") pill = { tone: "bad", label: t("bgDenied") };
+  else if (status === "pending") pill = { tone: "sol", label: t("bgInReview") };
+  else pill = { tone: "sol", label: t("bgTodo") };
 
   async function submit() {
     setBusy(true);
@@ -26,12 +28,12 @@ export function BackgroundCheckStep({
       const r = await fetch("/api/pro/background-check", { method: "POST" });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || "Could not submit");
+        throw new Error(d.error || t("bgSubmitFailed"));
       }
-      toast("Submitted · we'll review in 24–48h", "success");
+      toast(t("bgSubmittedToast"), "success");
       router.refresh();
     } catch (e: any) {
-      toast(e.message || "Could not submit", "error");
+      toast(e.message || t("bgSubmitFailed"), "error");
     } finally {
       setBusy(false);
     }
@@ -52,17 +54,17 @@ export function BackgroundCheckStep({
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="font-mono text-[10px] uppercase tracking-wider opacity-60">
-            Step 03 · Background check
+            {t("bgStepLabel")}
           </div>
           <div className="text-sm font-bold mt-1">
             {pill.tone === "good"
-              ? "Background check verified"
+              ? t("bgCheckVerifiedTitle")
               : status === "pending"
-              ? "Under review"
-              : "Submit for background check"}
+              ? t("bgUnderReviewTitle")
+              : t("bgSubmitTitle")}
           </div>
           <p className="text-[12px] text-bone/65 mt-1.5 leading-relaxed">
-            We screen for driving record + criminal history. Results in 24–48h.
+            {t("bgDesc")}
           </p>
         </div>
         <span
@@ -83,11 +85,11 @@ export function BackgroundCheckStep({
           disabled={busy}
           className="mt-4 w-full py-3 text-xs font-bold uppercase tracking-wide bg-sol text-ink hover:bg-bone disabled:opacity-50"
         >
-          {busy ? "Submitting…" : status === "denied" ? "Resubmit →" : "Submit for review →"}
+          {busy ? t("bgSubmitting") : status === "denied" ? t("bgResubmitBtn") : t("bgSubmitBtn")}
         </button>
       ) : status === "pending" ? (
         <div className="mt-4 bg-bone/5 px-3 py-2 text-[11px] text-bone/60 font-mono">
-          Submitted · 24–48h SLA
+          {t("bgPendingSla")}
         </div>
       ) : null}
     </div>

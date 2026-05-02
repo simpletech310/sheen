@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/Toast";
+import { useTranslations } from "next-intl";
 
 type Item = {
   id: string;
@@ -23,6 +24,7 @@ export function ChecklistClient({
   items: Item[];
   initialProgress: Progress;
 }) {
+  const t = useTranslations("proJobs");
   const router = useRouter();
   const [progress, setProgress] = useState<Progress>(initialProgress);
   const [finalPhotos, setFinalPhotos] = useState<{
@@ -51,10 +53,10 @@ export function ChecklistClient({
     [items, progress]
   );
   const checklistDone = total > 0 && done === total;
-  const finalPhotosDone = 
-    !!finalPhotos.front && 
-    !!finalPhotos.back && 
-    !!finalPhotos.left && 
+  const finalPhotosDone =
+    !!finalPhotos.front &&
+    !!finalPhotos.back &&
+    !!finalPhotos.left &&
     !!finalPhotos.right;
   const allDone = checklistDone && finalPhotosDone;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -85,7 +87,7 @@ export function ChecklistClient({
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || "Could not save");
+        throw new Error(d.error || t("couldNotSave"));
       }
     } catch (e: any) {
       // Roll back the optimistic update.
@@ -95,7 +97,7 @@ export function ChecklistClient({
         else delete back[item.id];
         return back;
       });
-      toast(e.message || "Could not save", "error");
+      toast(e.message || t("couldNotSave"), "error");
     }
   }
 
@@ -115,7 +117,7 @@ export function ChecklistClient({
           ext: ext.slice(0, 6) || "jpg",
         }),
       });
-      if (!sig.ok) throw new Error("Upload setup failed");
+      if (!sig.ok) throw new Error(t("uploadSetupFailed"));
       const { signed_url, path } = await sig.json();
 
       // 2. PUT the file.
@@ -124,13 +126,13 @@ export function ChecklistClient({
         headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
-      if (!put.ok) throw new Error("Photo upload failed");
+      if (!put.ok) throw new Error(t("photoUploadFailed"));
 
       // 3. Mark done with the new path.
       await setItem(item, true, path);
-      toast("Photo saved", "success");
+      toast(t("photoSaved"), "success");
     } catch (e: any) {
-      toast(e.message || "Could not upload", "error");
+      toast(e.message || t("couldNotUpload"), "error");
     } finally {
       setUploading(null);
     }
@@ -145,7 +147,7 @@ export function ChecklistClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bucket: "booking-photos", scope: jobId, ext: ext.slice(0, 6) || "jpg" }),
       });
-      if (!sig.ok) throw new Error("Upload setup failed");
+      if (!sig.ok) throw new Error(t("uploadSetupFailed"));
       const { signed_url, path } = await sig.json();
 
       const put = await fetch(signed_url, {
@@ -153,12 +155,12 @@ export function ChecklistClient({
         headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
-      if (!put.ok) throw new Error("Photo upload failed");
+      if (!put.ok) throw new Error(t("photoUploadFailed"));
 
       setFinalPhotos((prev) => ({ ...prev, [key]: path }));
-      toast("Photo saved", "success");
+      toast(t("photoSaved"), "success");
     } catch (e: any) {
-      toast(e.message || "Could not upload", "error");
+      toast(e.message || t("couldNotUpload"), "error");
     } finally {
       setUploading(null);
     }
@@ -172,7 +174,7 @@ export function ChecklistClient({
     }
     if (item.requires_photo) {
       // Don't toggle here — photo upload handles it.
-      toast("Add a photo to mark this item done", "info");
+      toast(t("addPhotoToComplete"), "info");
       return;
     }
     setItem(item, true);
@@ -193,17 +195,24 @@ export function ChecklistClient({
         const detail =
           Array.isArray(d.missing) && d.missing.length > 0
             ? `${d.error}: ${d.missing.join(", ")}`
-            : d.error || "Could not complete";
+            : d.error || t("couldNotComplete");
         throw new Error(detail);
       }
-      toast("Job complete · waiting for customer approval", "success");
+      toast(t("jobCompleteSuccess"), "success");
       router.push("/pro/queue");
       router.refresh();
     } catch (e: any) {
-      toast(e.message || "Could not complete", "error");
+      toast(e.message || t("couldNotComplete"), "error");
       setCompleting(false);
     }
   }
+
+  const finalPhotoLabels: Record<string, string> = {
+    front: t("photoFront"),
+    back: t("photoBack"),
+    left: t("photoDriverSide"),
+    right: t("photoPassengerSide"),
+  };
 
   return (
     <>
@@ -216,7 +225,7 @@ export function ChecklistClient({
         <div className="flex items-baseline justify-between">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-bone/60">
-              Progress
+              {t("progress")}
             </div>
             <div className="display tabular text-3xl mt-1">
               {done}
@@ -224,7 +233,7 @@ export function ChecklistClient({
             </div>
           </div>
           <div className="font-mono text-[10px] uppercase tracking-wider text-sol tabular">
-            {pct}% done
+            {t("percentDone", { pct })}
           </div>
         </div>
       </div>
@@ -296,7 +305,7 @@ export function ChecklistClient({
                           <circle cx="8" cy="8.5" r="2.5" />
                           <path d="M5 3.5l1.5-2h3L11 3.5" />
                         </svg>
-                        Photo
+                        {t("photoLabel")}
                       </span>
                     )}
                   </div>
@@ -316,14 +325,14 @@ export function ChecklistClient({
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-bone/80 truncate">
-                              Photo on file
+                              {t("photoOnFile")}
                             </div>
                             <div className="text-[10px] text-bone/40 truncate font-mono">
                               {entry.photo_path.split("/").pop()}
                             </div>
                           </div>
                           <label className="text-[10px] uppercase tracking-wider text-sol cursor-pointer hover:text-bone">
-                            Replace
+                            {t("replacePhoto")}
                             <input
                               type="file"
                               accept="image/*,video/*"
@@ -346,8 +355,8 @@ export function ChecklistClient({
                           }`}
                         >
                           {uploading === item.id
-                            ? "Uploading…"
-                            : "+ Add photo or video"}
+                            ? t("uploading")
+                            : t("addPhotoOrVideo")}
                           <input
                             type="file"
                             accept="image/*,video/*"
@@ -373,33 +382,27 @@ export function ChecklistClient({
 
       {/* Mandatory Final Photos */}
       <div className="mt-8 mb-6">
-        <h2 className="text-sm font-bold uppercase tracking-wide mb-1">Final Results</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wide mb-1">{t("finalResultsHeading")}</h2>
         <p className="text-xs text-bone/60 mb-4">
-          Upload 4 photos of the finished job before completing.
+          {t("finalPhotosInstructions")}
         </p>
         <div className="grid grid-cols-2 gap-3">
           {(["front", "back", "left", "right"] as const).map((key) => {
             const path = finalPhotos[key];
             const isUploading = uploading === key;
-            const labels: Record<string, string> = {
-              front: "Front",
-              back: "Back",
-              left: "Driver Side",
-              right: "Passenger Side",
-            };
             return (
               <div key={key} className={`border p-3 transition ${path ? "bg-good/10 border-good" : "bg-white/5 border-bone/20"}`}>
                 <div className="text-xs font-bold uppercase mb-2">
-                  {labels[key]}
+                  {finalPhotoLabels[key]}
                 </div>
                 {path ? (
                   <div className="text-xs font-mono text-good flex items-center gap-1.5">
                     <span className="shrink-0 w-4 h-4 rounded-full bg-good text-ink flex items-center justify-center">✓</span>
-                    Uploaded
+                    {t("uploaded")}
                   </div>
                 ) : (
                   <label className={`block w-full text-center py-2 text-[10px] font-bold uppercase tracking-wide cursor-pointer transition ${isUploading ? "bg-bone/10 text-bone/50" : "bg-sol text-ink hover:bg-bone"}`}>
-                    {isUploading ? "Uploading…" : "+ Photo or video"}
+                    {isUploading ? t("uploading") : t("addPhotoOrVideoShort")}
                     <input
                       type="file"
                       accept="image/*,video/*"
@@ -427,16 +430,15 @@ export function ChecklistClient({
         className="w-full bg-sol text-ink py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
         {completing
-          ? "Completing…"
+          ? t("completing")
           : allDone
-          ? "Mark job complete →"
+          ? t("markJobComplete")
           : !checklistDone
-          ? `Finish ${total - done} more to complete`
-          : "Upload final photos"}
+          ? t("finishMoreSteps", { remaining: total - done })
+          : t("uploadFinalPhotos")}
       </button>
       <p className="text-[11px] text-bone/45 mt-3 text-center leading-relaxed">
-        Once you mark complete, the customer gets a notification to approve the
-        work. You get paid as soon as they approve.
+        {t("completeNote")}
       </p>
     </>
   );

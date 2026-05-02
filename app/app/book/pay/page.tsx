@@ -8,10 +8,12 @@ import { computeFees } from "@/lib/stripe/fees";
 import { fmtUSD } from "@/lib/pricing";
 import { StripePaymentElement } from "@/components/customer/StripePaymentElement";
 import { readDraft, clearDraft } from "@/lib/booking-draft";
+import { useTranslations } from "next-intl";
 
 function PayInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const t = useTranslations("appBook");
   const tier = params.get("tier") ?? "Premium Detail";
   const basePrice = Number(params.get("price") ?? "18500");
   const count = Math.max(1, Number(params.get("count") ?? "1"));
@@ -51,14 +53,14 @@ function PayInner() {
 
   useEffect(() => {
     if (!street || !zip) {
-      setErr("Missing address — go back and pick one.");
+      setErr(t("errMissingAddress"));
       setLoading(false);
       return;
     }
     // Auto + Big Rig bookings carry vehicles in the draft; home bookings don't.
     const draft = readDraft();
     if (usesVehicles && (!draft || draft.vehicleIds.length === 0)) {
-      setErr("No vehicles selected — go back and pick at least one.");
+      setErr(t("errNoVehicles"));
       setLoading(false);
       return;
     }
@@ -144,13 +146,13 @@ function PayInner() {
     <div className="px-5 pt-10 pb-8">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/app/book/address" className="text-smoke text-sm">
-          ← Back
+          {t("back")}
         </Link>
       </div>
       <Eyebrow>
-        Step {category === "home" ? "3 / 3" : "4 / 4"} · Pay &amp; confirm
+        {category === "home" ? t("payStepHome") : t("payStepAuto")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">Confirm &amp; pay</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("payHeadline")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
 
       <div className="bg-mist/40 p-5 mb-5">
@@ -162,12 +164,12 @@ function PayInner() {
         <div className="text-xs text-smoke mt-1">{win.replace(/_/g, " ")}</div>
         {usesVehicles && (
           <div className="text-xs text-smoke mt-1">
-            {count} {category === "big_rig" ? "rig" : "vehicle"}{count === 1 ? "" : "s"}
+            {count} {category === "big_rig" ? t(count === 1 ? "rigSingular" : "rigPlural") : t(count === 1 ? "vehicleSingular" : "vehiclePlural")}
           </div>
         )}
         {requestedHandle && (
           <div className="text-xs mt-2 font-mono uppercase tracking-wider text-royal">
-            Requesting pro · {requestedHandle}
+            {t("requestingPro")} · {requestedHandle}
           </div>
         )}
       </div>
@@ -179,10 +181,13 @@ function PayInner() {
           <div className="flex justify-between items-center">
             <div>
               <div className="font-mono text-[10px] uppercase tracking-wider opacity-80">
-                Achievement freebie
+                {t("achievementFreebie")}
               </div>
               <div className="text-sm mt-1">
-                Use your free <strong>{tier}</strong> from <strong>{matchingCredit.source.replace(/_/g, " ")}</strong> — covers the wash entirely.
+                {t("freebieDescription", {
+                  tier,
+                  source: matchingCredit.source.replace(/_/g, " "),
+                })}
               </div>
             </div>
             <button
@@ -194,7 +199,7 @@ function PayInner() {
               }}
               className="bg-ink text-bone px-3 py-2 text-xs font-bold uppercase tracking-wide hover:bg-royal"
             >
-              {useCredit ? "Don't use" : "Apply &amp; refresh"}
+              {useCredit ? t("dontUseCredit") : t("applyAndRefresh")}
             </button>
           </div>
         </div>
@@ -205,10 +210,10 @@ function PayInner() {
           <div className="flex justify-between items-center">
             <div>
               <div className="font-mono text-[10px] uppercase tracking-wider opacity-80">
-                Redeem loyalty
+                {t("redeemLoyalty")}
               </div>
               <div className="text-sm mt-1">
-                {pointsBalance.toLocaleString()} pts available · 100 pts = $1
+                {t("pointsAvailable", { count: pointsBalance.toLocaleString() })}
               </div>
             </div>
             <button
@@ -219,7 +224,7 @@ function PayInner() {
               }}
               className="bg-sol text-ink px-3 py-2 text-xs font-bold uppercase tracking-wide hover:bg-bone"
             >
-              {redeemPoints > 0 ? "Clear" : "Apply max"}
+              {redeemPoints > 0 ? t("clearPoints") : t("applyMaxPoints")}
             </button>
           </div>
           {redeemPoints > 0 && (
@@ -248,7 +253,7 @@ function PayInner() {
                 }}
                 className="mt-3 w-full bg-ink text-bone py-2.5 text-xs font-bold uppercase tracking-wide hover:bg-bone hover:text-ink"
               >
-                Apply &amp; refresh checkout
+                {t("applyAndRefreshCheckout")}
               </button>
             </>
           )}
@@ -264,40 +269,39 @@ function PayInner() {
         </div>
         {count > 1 && (
           <div className="flex justify-between text-xs text-smoke pl-2">
-            <span>{fmtUSD(basePrice)} per vehicle</span>
+            <span>{t("perVehicle", { price: fmtUSD(basePrice) })}</span>
             <span />
           </div>
         )}
         <div className="flex justify-between">
-          <span className="text-smoke">Trust fee (10%)</span>
+          <span className="text-smoke">{t("trustFee")}</span>
           <span className="tabular">{fmtUSD(fees.trustFee)}</span>
         </div>
         {isRush && (
           <div className="flex justify-between">
-            <span className="text-royal font-bold">Rush · pro within the hour</span>
+            <span className="text-royal font-bold">{t("rushSurchargeLabel")}</span>
             <span className="tabular text-royal">+{fmtUSD(rushSurchargeCents)}</span>
           </div>
         )}
         <div className="flex justify-between text-xs text-smoke">
-          <span>Tip — added after wash</span>
+          <span>{t("tipNote")}</span>
           <span>—</span>
         </div>
         <div className="flex justify-between pt-3 border-t border-mist">
-          <span className="font-bold">Total today</span>
+          <span className="font-bold">{t("totalToday")}</span>
           <span className="display tabular text-2xl">
             {fmtUSD(fees.customerCharge + rushSurchargeCents)}
           </span>
         </div>
         {isRush && (
           <p className="text-[11px] text-smoke leading-relaxed pt-1">
-            If your pro doesn&rsquo;t make it within 60 minutes, you&rsquo;ll
-            get a partial refund automatically.
+            {t("rushRefundNote")}
           </p>
         )}
       </div>
 
       {loading && (
-        <div className="bg-mist/40 p-6 text-center text-sm text-smoke">Setting up secure payment…</div>
+        <div className="bg-mist/40 p-6 text-center text-sm text-smoke">{t("settingUpPayment")}</div>
       )}
       {err && <div className="text-sm text-bad mb-4">{err}</div>}
 
@@ -309,7 +313,7 @@ function PayInner() {
         />
       )}
 
-      <p className="text-[11px] text-smoke text-center mt-4">$2,500 damage guarantee · vetted local pros</p>
+      <p className="text-[11px] text-smoke text-center mt-4">{t("payFooter")}</p>
     </div>
   );
 }

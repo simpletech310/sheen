@@ -4,10 +4,12 @@ import Link from "next/link";
 import { distanceMiles } from "@/lib/mapbox";
 import { checkWasherEligibility } from "@/lib/job-matching";
 import { QueueRealtimeClient, type QueueJob, type WasherCaps } from "./QueueRealtimeClient";
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function QueuePage() {
+  const t = await getTranslations("proQueue");
   const supabase = createClient();
   const {
     data: { user },
@@ -135,17 +137,17 @@ export default async function QueuePage() {
         <div className="flex justify-between items-center mb-2">
           <Eyebrow className="!text-bone/75" prefix={null}>
             {serviceAreas.length > 0
-              ? `${radius} mi + ${serviceAreas.length === 1 ? serviceAreas[0] : `${serviceAreas.length} cities`} · live`
-              : `${radius} mi radius · live`}
+              ? `${radius} mi + ${serviceAreas.length === 1 ? serviceAreas[0] : `${serviceAreas.length} ${t("cities")}`} · live`
+              : `${radius} mi ${t("radiusLive")}`}
           </Eyebrow>
           <Link
             href="/pro/availability"
             className="text-[10px] text-bone/75 underline uppercase tracking-wide"
           >
-            Hours
+            {t("hours")}
           </Link>
         </div>
-        <h1 className="display text-3xl">QUEUE</h1>
+        <h1 className="display text-3xl">{t("queueTitle")}</h1>
       </div>
 
       {profile?.status !== "active" && (
@@ -154,10 +156,9 @@ export default async function QueuePage() {
             href="/pro/onboard"
             className="block bg-sol text-ink p-4 mb-5 hover:bg-bone"
           >
-            <div className="font-bold uppercase text-sm">Finish onboarding</div>
+            <div className="font-bold uppercase text-sm">{t("finishOnboarding")}</div>
             <div className="text-xs mt-1">
-              Status: {profile?.status ?? "pending"} — finish payouts + insurance to
-              start receiving jobs.
+              {t("onboardingStatus", { status: profile?.status ?? "pending" })}
             </div>
           </Link>
         </div>

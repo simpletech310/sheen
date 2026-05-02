@@ -9,14 +9,7 @@ import { WasherHandleInput } from "@/components/customer/WasherHandleInput";
 import { SiteAccessForm, EMPTY_SITE_ACCESS, type SiteAccessValue } from "@/components/customer/SiteAccessForm";
 import { readDraft, writeDraft } from "@/lib/booking-draft";
 import type { GeocodeResult } from "@/lib/mapbox";
-
-const windows = [
-  { label: "Today · 2–4 PM", value: "today_14_16" },
-  { label: "Today · 4–6 PM", value: "today_16_18" },
-  { label: "Tomorrow · 10 AM–12 PM", value: "tomorrow_10_12" },
-  { label: "Tomorrow · 2–4 PM", value: "tomorrow_14_16" },
-  { label: "Tomorrow · 4–6 PM", value: "tomorrow_16_18" },
-];
+import { useTranslations } from "next-intl";
 
 type SavedPlace = {
   id: string;
@@ -35,6 +28,7 @@ type SavedPlace = {
 function AddressFormInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const t = useTranslations("appBook");
   const tier = params.get("tier") ?? "Premium Detail";
   const price = params.get("price") ?? "18500";
   const count = params.get("count") ?? "1";
@@ -48,7 +42,7 @@ function AddressFormInner() {
   const [picked, setPicked] = useState<GeocodeResult | null>(null);
   const [unit, setUnit] = useState("");
   const [notes, setNotes] = useState("");
-  const [w, setW] = useState(windows[2].value);
+  const [w, setW] = useState("tomorrow_10_12");
   const [isRush, setIsRush] = useState(false);
   // Re-hydrate site access from any prior step in this booking flow so the
   // customer doesn't lose their water/power answers when bouncing back.
@@ -68,6 +62,14 @@ function AddressFormInner() {
   const [washHandle, setWashHandle] = useState(
     (params.get("handle") ?? "").replace(/^@/, "").toUpperCase()
   );
+
+  const windows = [
+    { label: t("windowToday14"), value: "today_14_16" },
+    { label: t("windowToday16"), value: "today_16_18" },
+    { label: t("windowTomorrow10"), value: "tomorrow_10_12" },
+    { label: t("windowTomorrow14"), value: "tomorrow_14_16" },
+    { label: t("windowTomorrow16"), value: "tomorrow_16_18" },
+  ];
 
   // Load saved places.
   useEffect(() => {
@@ -191,36 +193,35 @@ function AddressFormInner() {
           }
           className="text-smoke text-sm"
         >
-          ← Back
+          {t("back")}
         </Link>
       </div>
       <Eyebrow>
-        Step {category === "home" ? "2 / 3" : "3 / 4"} ·{" "}
-        {category === "big_rig" ? "Where & when (rig)" : "Where & when"}
+        {category === "home" ? t("addressStepHome") : category === "big_rig" ? t("addressStepBigRig") : t("addressStepAuto")}
       </Eyebrow>
-      <h1 className="display text-3xl mt-3 mb-2">Where &amp; when</h1>
+      <h1 className="display text-3xl mt-3 mb-2">{t("whereAndWhen")}</h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
 
       {/* Quick frame: what your pro brings vs what we ask. Keeps the booking
           flow honest without making them read a wall of text. */}
       <div className="grid grid-cols-2 gap-2 mb-5 text-xs">
         <div className="bg-bone border-l-2 border-royal p-3">
-          <div className="font-mono text-[9px] uppercase tracking-wider text-royal">Your pro brings</div>
+          <div className="font-mono text-[9px] uppercase tracking-wider text-royal">{t("proBringsLabel")}</div>
           <div className="text-ink/85 mt-1.5 leading-snug">
-            Self-contained rig · soaps & wax · two-bucket method · $1M insurance · $2,500 damage guarantee
+            {t("proBringsBody")}
           </div>
         </div>
         <div className="bg-mist/40 border-l-2 border-smoke p-3">
-          <div className="font-mono text-[9px] uppercase tracking-wider text-smoke">What we ask from you</div>
+          <div className="font-mono text-[9px] uppercase tracking-wider text-smoke">{t("weAskLabel")}</div>
           <div className="text-ink/85 mt-1.5 leading-snug">
-            Address · whether there&rsquo;s water/power on-site · gate code if any · approve when done
+            {t("weAskBody")}
           </div>
         </div>
       </div>
 
       {!loadingPlaces && places.length > 0 && (
         <div className="mb-5">
-          <Eyebrow>Saved places</Eyebrow>
+          <Eyebrow>{t("savedPlaces")}</Eyebrow>
           <div className="mt-3 space-y-2">
             {places.map((p) => {
               const isOn = pickedPlaceId === p.id;
@@ -237,11 +238,11 @@ function AddressFormInner() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[10px] uppercase tracking-wider text-smoke">
-                          {p.tag ?? "PLACE"}
+                          {p.tag ?? t("placeTagFallback")}
                         </span>
                         {p.is_default && (
                           <span className="font-mono text-[9px] uppercase tracking-wider bg-royal text-bone px-1.5 py-0.5">
-                            Default
+                            {t("defaultBadge")}
                           </span>
                         )}
                       </div>
@@ -271,20 +272,20 @@ function AddressFormInner() {
             }}
             className="mt-3 text-xs text-smoke underline"
           >
-            {showAutocomplete ? "Use a saved place" : "+ Use a different address"}
+            {showAutocomplete ? t("useSavedPlace") : t("useDifferentAddress")}
           </button>
         </div>
       )}
 
       {showAutocomplete && (
         <div className="space-y-3 mb-5">
-          <Eyebrow>New address</Eyebrow>
+          <Eyebrow>{t("newAddress")}</Eyebrow>
           <AddressAutocomplete
             onSelect={(r) => {
               setPicked(r);
               setPickedPlaceId(null);
             }}
-            placeholder="Start typing your street address…"
+            placeholder={t("addressPlaceholder")}
           />
           {picked && (
             <div className="bg-mist/40 px-4 py-3 text-sm">
@@ -298,14 +299,14 @@ function AddressFormInner() {
           <input
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
-            placeholder="Apt / unit (optional)"
+            placeholder={t("placeholderUnit")}
             className="w-full px-4 py-3.5 bg-bone border border-mist text-sm"
           />
         </div>
       )}
 
       <div className="mt-6">
-        <Eyebrow>Site access · helps your pro arrive prepared</Eyebrow>
+        <Eyebrow>{t("siteAccessEyebrow")}</Eyebrow>
         <div className="mt-3">
           <SiteAccessForm value={site} onChange={setSite} />
         </div>
@@ -314,13 +315,13 @@ function AddressFormInner() {
       <textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        placeholder="Anything else? (parking spot, dog in yard, package on porch…)"
+        placeholder={t("placeholderAddressNotes")}
         rows={2}
         className="w-full mt-5 px-4 py-3 bg-bone border border-mist text-sm"
       />
 
       <div className="mt-6">
-        <Eyebrow>Request a specific pro · optional</Eyebrow>
+        <Eyebrow>{t("requestProEyebrow")}</Eyebrow>
         <div className="mt-3">
           <WasherHandleInput value={washHandle} onChange={setWashHandle} />
         </div>
@@ -329,7 +330,7 @@ function AddressFormInner() {
       {/* Rush — promise of a pro within the hour. Customer pays a small
           surcharge; window picker disappears when this is on. */}
       <div className="mt-6">
-        <Eyebrow>Need it now?</Eyebrow>
+        <Eyebrow>{t("rushEyebrow")}</Eyebrow>
         <button
           type="button"
           onClick={() => setIsRush((v) => !v)}
@@ -347,19 +348,17 @@ function AddressFormInner() {
                   isRush ? "text-ink/70" : "text-royal"
                 }`}
               >
-                {isRush ? "Rush · ON" : "Rush"}
+                {isRush ? t("rushOn") : t("rushLabel")}
               </div>
               <div className="text-sm font-bold mt-1 uppercase tracking-wide">
-                Pro within the hour
+                {t("rushTitle")}
               </div>
               <p
                 className={`text-xs mt-1 leading-relaxed ${
                   isRush ? "text-ink/80" : "text-smoke"
                 }`}
               >
-                Skip the window. We&rsquo;ll route the closest pro to you in
-                under 60 minutes. +15% on the wash. If the pro&rsquo;s late,
-                you get money back.
+                {t("rushBody")}
               </p>
             </div>
             <span
@@ -376,7 +375,7 @@ function AddressFormInner() {
 
       {!isRush && (
         <div className="mt-6">
-          <Eyebrow>Pick a window</Eyebrow>
+          <Eyebrow>{t("pickWindowEyebrow")}</Eyebrow>
           <div className="mt-3 grid grid-cols-1 gap-2">
             {windows.map((opt) => (
               <button
@@ -398,7 +397,7 @@ function AddressFormInner() {
         disabled={!canContinue}
         className="mt-7 w-full bg-royal text-bone py-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50 hover:bg-ink"
       >
-        Continue · Pay →
+        {t("continuePay")}
       </button>
     </div>
   );
