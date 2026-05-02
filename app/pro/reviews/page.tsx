@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { createClient } from "@/lib/supabase/server";
+import { publicCustomerName } from "@/lib/display-name";
 
 export const dynamic = "force-dynamic";
 
@@ -29,15 +30,22 @@ export default async function ReviewsPage() {
   for (const r of reviews ?? []) dist[(r as any).rating_int] = (dist[(r as any).rating_int] ?? 0) + 1;
   const max = Math.max(1, ...Object.values(dist));
 
-  // Look up reviewer first names in a single query.
+  // Look up reviewer names — display_name preferred, full_name fallback,
+  // then masked to "First L." via publicCustomerName for privacy.
   const reviewerIds = Array.from(
     new Set((reviews ?? []).map((r: any) => r.reviewer_id))
   );
   const { data: reviewers } = reviewerIds.length
-    ? await supabase.from("users").select("id, full_name").in("id", reviewerIds)
+    ? await supabase
+        .from("users")
+        .select("id, full_name, display_name")
+        .in("id", reviewerIds)
     : { data: [] as any[] };
   const nameById = new Map<string, string>(
-    (reviewers ?? []).map((u: any) => [u.id, u.full_name ?? "Customer"])
+    (reviewers ?? []).map((u: any) => [
+      u.id,
+      publicCustomerName({ display_name: u.display_name, full_name: u.full_name }),
+    ])
   );
 
   return (
@@ -96,8 +104,8 @@ export default async function ReviewsPage() {
       ) : (
         <div className="space-y-2">
           {(reviews ?? []).map((r: any, i) => {
-            const name = nameById.get(r.reviewer_id) ?? "Customer";
-            const first = name.split(" ")[0];
+            const name = nameById.get(r.reviewer_id) ?? "Sheen customer";
+            const hasComment = !!(r.comment && r.comment.trim());
             return (
               <div key={i} className="bg-white/5 p-4">
                 <div className="flex justify-between items-baseline">
@@ -115,9 +123,11 @@ export default async function ReviewsPage() {
                     })}
                   </div>
                 </div>
-                <div className="text-xs text-bone/55 mt-1">— {first}</div>
-                {r.comment && (
+                <div className="text-xs text-bone/65 mt-1.5 font-bold">{name}</div>
+                {hasComment ? (
                   <p className="text-sm text-bone/85 mt-2 leading-relaxed">{r.comment}</p>
+                ) : (
+                  <p className="text-xs text-bone/40 mt-2 italic">No written feedback.</p>
                 )}
               </div>
             );
