@@ -10,8 +10,8 @@ function BookIcon({ active }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="22"
-      height="22"
+      width="26"
+      height="26"
       fill="none"
       stroke="currentColor"
       strokeWidth={active ? 2 : 1.6}
@@ -31,8 +31,8 @@ function WashesIcon({ active }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="22"
-      height="22"
+      width="26"
+      height="26"
       fill="none"
       stroke="currentColor"
       strokeWidth={active ? 2 : 1.6}
@@ -53,8 +53,8 @@ function WalletIcon({ active }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="22"
-      height="22"
+      width="26"
+      height="26"
       fill="none"
       stroke="currentColor"
       strokeWidth={active ? 2 : 1.6}
@@ -73,8 +73,8 @@ function MeIcon({ active }: IconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="22"
-      height="22"
+      width="26"
+      height="26"
       fill="none"
       stroke="currentColor"
       strokeWidth={active ? 2 : 1.6}
@@ -116,7 +116,10 @@ export function BottomNav() {
               href={t.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex flex-col items-center justify-center pt-3 pb-2 text-[11px] tracking-wide transition",
+                // Bigger tap target — min 64px tall + safe-area aware. The
+                // pb-3 plus the env(safe-area-inset-bottom) cushion below
+                // keeps the icons off the iPhone home indicator.
+                "relative flex flex-col items-center justify-center min-h-[64px] pt-3.5 pb-3 text-[12px] tracking-wide transition active:bg-mist/40",
                 active ? "text-ink" : "text-smoke hover:text-ink"
               )}
             >
@@ -138,8 +141,13 @@ export function BottomNav() {
           );
         })}
       </div>
-      {/* Safe-area cushion for iOS home indicator */}
-      <div className="h-[env(safe-area-inset-bottom)]" aria-hidden />
+      {/* Safe-area cushion for iOS home indicator (always min 8px so the
+          PWA standalone view still has breathing room when the inset is 0). */}
+      <div
+        className="bg-bone/95"
+        style={{ height: "max(8px, env(safe-area-inset-bottom))" }}
+        aria-hidden
+      />
     </nav>
   );
 }

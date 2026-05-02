@@ -188,35 +188,83 @@ export function ChatPanel({
     }
   }
 
+  // Theme-aware classes — customer pages are light (bone+royal), washer
+  // pages are dark (ink+sol). Keeps the chat native to the surrounding
+  // surface instead of bone-popping out of an ink page.
+  const isPro = variant === "pro";
+  const t = isPro
+    ? {
+        container:    "bg-white/5 border border-bone/10",
+        header:       "hover:bg-bone/5",
+        headerName:   "text-bone",
+        headerSub:    "text-bone/55",
+        toggle:       "text-bone/55",
+        avatarBg:     "bg-bone/10",
+        avatarFallbg: "bg-sol text-ink",
+        scroller:     "bg-bone/[0.03] border-bone/10",
+        skel:         "bg-bone/10",
+        empty:        "text-bone/55",
+        bubbleMine:   "bg-sol text-ink",
+        bubbleTheirs: "bg-bone/10 text-bone",
+        bubbleMineMeta:   "text-ink/65",
+        bubbleTheirsMeta: "text-bone/55",
+        composer:     "border-bone/10",
+        attachBtn:    "bg-bone/10 text-bone hover:bg-bone/20",
+        input:        "bg-bone/5 border-bone/15 text-bone placeholder:text-bone/40 focus:border-sol",
+        sendBtn:      "bg-sol text-ink hover:bg-bone",
+        accent:       "bg-sol",
+      }
+    : {
+        container:    "bg-bone border border-mist",
+        header:       "hover:bg-mist/40",
+        headerName:   "text-ink",
+        headerSub:    "text-smoke",
+        toggle:       "text-smoke",
+        avatarBg:     "bg-mist",
+        avatarFallbg: "bg-royal text-bone",
+        scroller:     "bg-mist/20 border-mist",
+        skel:         "bg-mist/70",
+        empty:        "text-smoke",
+        bubbleMine:   "bg-royal text-bone",
+        bubbleTheirs: "bg-mist text-ink",
+        bubbleMineMeta:   "text-bone/70",
+        bubbleTheirsMeta: "text-smoke",
+        composer:     "border-mist",
+        attachBtn:    "bg-mist text-ink hover:bg-mist/70",
+        input:        "bg-bone border-mist text-ink placeholder:text-smoke focus:border-royal",
+        sendBtn:      "bg-ink text-bone hover:bg-royal",
+        accent:       "bg-royal",
+      };
+
   return (
-    <div className="bg-bone border border-mist mt-5">
+    <div className={`relative ${t.container} mt-5`}>
+      {/* Brand stripe across the top, matches the rest of the surface. */}
+      <span className={`absolute top-0 left-0 right-0 h-[2px] ${t.accent}`} aria-hidden />
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Collapse chat" : "Expand chat"}
         aria-expanded={open}
-        className="w-full flex justify-between items-center px-4 py-3 hover:bg-mist/40 transition"
+        className={`w-full flex justify-between items-center px-4 py-3 transition ${t.header}`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          {/* Avatar — public URL for the other party. Falls back to a
-              bone-on-royal initial circle when there's no photo. */}
           {otherAvatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={otherAvatarUrl}
               alt=""
-              className="w-7 h-7 rounded-full object-cover bg-mist shrink-0"
+              className={`w-8 h-8 rounded-full object-cover ${t.avatarBg} shrink-0`}
             />
           ) : (
-            <div className="w-7 h-7 rounded-full bg-royal text-bone display text-xs flex items-center justify-center shrink-0">
+            <div className={`w-8 h-8 rounded-full ${t.avatarFallbg} display text-xs flex items-center justify-center shrink-0`}>
               {otherInitial}
             </div>
           )}
           <div className="text-left min-w-0">
-            <div className="text-sm font-bold text-ink truncate">
+            <div className={`text-sm font-bold truncate ${t.headerName}`}>
               {otherName || (variant === "customer" ? "Your pro" : "Customer")}
             </div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-smoke">
+            <div className={`font-mono text-[9px] uppercase tracking-wider ${t.headerSub}`}>
               Chat
             </div>
           </div>
@@ -224,23 +272,23 @@ export function ChatPanel({
             <span className="bg-bad text-bone text-[10px] font-mono px-1.5 py-0.5 ml-1">{unread}</span>
           )}
         </div>
-        <span className="text-smoke">{open ? "−" : "+"}</span>
+        <span className={t.toggle}>{open ? "−" : "+"}</span>
       </button>
 
       {open && (
         <>
           <div
             ref={scrollerRef}
-            className="max-h-72 overflow-y-auto px-4 py-3 border-t border-mist space-y-2 bg-mist/20"
+            className={`max-h-72 overflow-y-auto px-4 py-3 border-t space-y-2 ${t.scroller}`}
           >
             {loading ? (
               <div className="space-y-2">
-                <div className="h-8 w-2/3 bg-mist/70 animate-pulse" />
-                <div className="h-8 w-1/2 ml-auto bg-mist/70 animate-pulse" />
-                <div className="h-8 w-3/5 bg-mist/70 animate-pulse" />
+                <div className={`h-8 w-2/3 ${t.skel} animate-pulse`} />
+                <div className={`h-8 w-1/2 ml-auto ${t.skel} animate-pulse`} />
+                <div className={`h-8 w-3/5 ${t.skel} animate-pulse`} />
               </div>
             ) : messages.length === 0 ? (
-              <div className="text-xs text-smoke text-center py-6">
+              <div className={`text-xs text-center py-6 ${t.empty}`}>
                 No messages yet. Say hi.
               </div>
             ) : (
@@ -254,7 +302,7 @@ export function ChatPanel({
                   >
                     <div
                       className={`max-w-[75%] px-3 py-2 text-sm ${
-                        mine ? "bg-royal text-bone" : "bg-mist text-ink"
+                        mine ? t.bubbleMine : t.bubbleTheirs
                       }`}
                     >
                       {imgUrl && (
@@ -271,7 +319,7 @@ export function ChatPanel({
                       {m.body && (
                         <div className="whitespace-pre-wrap break-words">{m.body}</div>
                       )}
-                      <div className={`text-[10px] mt-1 ${mine ? "text-bone/70" : "text-smoke"}`}>
+                      <div className={`text-[10px] mt-1 ${mine ? t.bubbleMineMeta : t.bubbleTheirsMeta}`}>
                         {new Date(m.created_at).toLocaleTimeString([], {
                           hour: "numeric",
                           minute: "2-digit",
@@ -284,7 +332,7 @@ export function ChatPanel({
             )}
           </div>
 
-          <div className="flex gap-2 px-4 py-3 border-t border-mist">
+          <div className={`flex gap-2 px-4 py-3 border-t ${t.composer}`}>
             <input
               ref={fileRef}
               type="file"
@@ -302,7 +350,7 @@ export function ChatPanel({
               onClick={() => fileRef.current?.click()}
               disabled={uploading || sending}
               aria-label="Attach photo"
-              className="px-3 bg-mist text-ink text-base hover:bg-mist/70 disabled:opacity-50"
+              className={`px-3 text-base disabled:opacity-50 ${t.attachBtn}`}
             >
               {uploading ? "…" : "📷"}
             </button>
@@ -317,13 +365,13 @@ export function ChatPanel({
               }}
               placeholder="Type a message"
               maxLength={2000}
-              className="flex-1 px-3 py-2.5 bg-bone border border-mist text-sm focus:outline-none focus:border-royal"
+              className={`flex-1 px-3 py-2.5 border text-sm focus:outline-none ${t.input}`}
             />
             <button
               type="button"
               onClick={send}
               disabled={sending || !draft.trim()}
-              className="px-4 bg-ink text-bone text-sm font-bold uppercase tracking-wide hover:bg-royal disabled:opacity-50"
+              className={`px-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50 ${t.sendBtn}`}
             >
               {sending ? "…" : "Send"}
             </button>

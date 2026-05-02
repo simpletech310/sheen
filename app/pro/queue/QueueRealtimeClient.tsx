@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 import { fmtUSD } from "@/lib/pricing";
 import { computeFees } from "@/lib/stripe/fees";
@@ -52,6 +53,8 @@ export type QueueJob = {
   addresses: {
     street: string;
     city: string;
+    state?: string | null;
+    zip?: string | null;
     lat: number | null;
     lng: number | null;
     has_water?: boolean | null;
@@ -91,10 +94,22 @@ export function QueueRealtimeClient({
   radius: number;
   washerCaps: WasherCaps;
 }) {
+  const router = useRouter();
   const [jobs, setJobs] = useState<QueueJob[]>(initialJobs);
   const [directRequests, setDirectRequests] = useState<QueueJob[]>(initialDirectRequests);
   // Track which IDs are direct requests so we don't show them in the general list
   const directIds = useRef(new Set(initialDirectRequests.map((j) => j.id)));
+  // Coalesced refresh — inserts and most updates fire a router.refresh()
+  // because the realtime payload doesn't include the joined services /
+  // addresses rows, and we'd render "undefined, undefined" otherwise.
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function queueRefresh() {
+    if (refreshTimer.current) return;
+    refreshTimer.current = setTimeout(() => {
+      refreshTimer.current = null;
+      router.refresh();
+    }, 300);
+  }
 
   // Flash animation: IDs of newly arrived jobs
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
@@ -190,9 +205,16 @@ export function QueueRealtimeClient({
             return;
           }
 
-          // Capability gate — same logic the server uses, applied to live
-          // INSERT/UPDATE events so newly-arrived jobs that we can't take
-          // never flicker into view.
+          // INSERT for a new pending job — realtime payload doesn't include
+          // joined services/addresses, so we re-fetch via router.refresh()
+          // instead of rendering an undefined card. This is what makes
+          // "client books → washer queue updates" actually work end-to-end.
+          if (payload.eventType === "INSERT") {
+            queueRefresh();
+            return;
+          }
+
+          // Capability gate for UPDATEs — same logic the server uses.
           const elig = checkWasherEligibility(row.services, row.addresses, washerCaps);
           if (!elig.ok) return;
 
@@ -306,7 +328,7 @@ export function QueueRealtimeClient({
                           )}
                         </div>
                         <div className="text-xs text-bone/90 mt-1">
-                          {j.addresses?.street}, {j.addresses?.city}
+                          {j.addresses?.street}, {j.addresses?.city}{j.addresses?.state ? `, ${j.addresses.state}` : ""}
                         </div>
                       </div>
                       <div className="text-right">
@@ -462,7 +484,7 @@ export function QueueRealtimeClient({
                       {j.services?.tier_name ?? "Service"}
                     </div>
                     <div className="text-xs text-bone/90 mt-1">
-                      {j.addresses?.street}, {j.addresses?.city}
+                      {j.addresses?.street}, {j.addresses?.city}{j.addresses?.state ? `, ${j.addresses.state}` : ""}
                       {dist ? ` · ${dist} mi` : ""}
                     </div>
                     <div className="font-mono text-[10px] text-bone/75 uppercase mt-1.5 tabular">

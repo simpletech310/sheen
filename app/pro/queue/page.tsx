@@ -40,7 +40,7 @@ export default async function QueuePage() {
   const { data: jobsRaw } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, scheduled_window_start, service_cents, vehicle_count, requested_washer_id, request_expires_at, request_declined_at, is_rush, rush_deadline, rush_bonus_cents, services(tier_name, category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(street, city, lat, lng, has_water, has_power)"
+      "id, status, assigned_washer_id, scheduled_window_start, service_cents, vehicle_count, requested_washer_id, request_expires_at, request_declined_at, is_rush, rush_deadline, rush_bonus_cents, services(tier_name, category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(street, city, state, zip, lat, lng, has_water, has_power)"
     )
     .eq("status", "pending")
     .is("assigned_washer_id", null)
