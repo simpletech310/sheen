@@ -25,7 +25,7 @@ export default async function ProMePage() {
       .maybeSingle(),
     supabase
       .from("users")
-      .select("full_name, email")
+      .select("full_name, display_name, avatar_url, email")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -98,12 +98,28 @@ export default async function ProMePage() {
       <div className="relative bg-royal text-bone p-6 mb-6 overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
         <div className="flex items-center gap-4 mb-5">
-          <div className="w-14 h-14 rounded-full bg-bone text-royal flex items-center justify-center display text-xl flex-shrink-0">
-            {(me?.full_name ?? me?.email ?? "P")[0]?.toUpperCase()}
-          </div>
+          {(() => {
+            const avatarUrl = (me as any)?.avatar_url
+              ? `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/avatars/${(me as any).avatar_url}`
+              : null;
+            const displayedName =
+              (me as any)?.display_name || me?.full_name || me?.email || "Pro";
+            return avatarUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={avatarUrl}
+                alt={displayedName}
+                className="w-14 h-14 rounded-full object-cover bg-bone flex-shrink-0"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-bone text-royal flex items-center justify-center display text-xl flex-shrink-0">
+                {displayedName[0]?.toUpperCase()}
+              </div>
+            );
+          })()}
           <div className="flex-1 min-w-0">
             <div className="display text-2xl truncate">
-              {me?.full_name ?? "Pro"}
+              {(me as any)?.display_name || me?.full_name || "Pro"}
             </div>
             <div className="text-xs opacity-75 truncate">{me?.email}</div>
           </div>

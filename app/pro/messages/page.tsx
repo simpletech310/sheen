@@ -10,6 +10,7 @@ type Conversation = {
   scheduled_window_start: string | null;
   tier_name: string | null;
   customer_name: string;
+  customer_avatar_url: string | null;
   last_message: string;
   last_message_at: string | null;
   unread: number;
@@ -55,22 +56,26 @@ export default async function MessagesPage() {
     );
     const { data: customers } = await supabase
       .from("users")
-      .select("id, full_name")
+      .select("id, full_name, display_name, avatar_url")
       .in("id", customerIds);
-    const nameById = new Map<string, string>(
-      (customers ?? []).map((c: any) => [c.id, c.full_name ?? "Customer"])
+    const customerById = new Map<string, any>(
+      (customers ?? []).map((c: any) => [c.id, c])
     );
 
     conversations = (bookings ?? [])
       .filter((b: any) => byBooking.has(b.id))
       .map((b: any): Conversation => {
         const entry = byBooking.get(b.id)!;
+        const c = customerById.get(b.customer_id);
         return {
           booking_id: b.id,
           booking_status: b.status,
           scheduled_window_start: b.scheduled_window_start,
           tier_name: b.services?.tier_name ?? null,
-          customer_name: nameById.get(b.customer_id) ?? "Customer",
+          customer_name: c?.display_name || c?.full_name || "Customer",
+          customer_avatar_url: c?.avatar_url
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/avatars/${c.avatar_url}`
+            : null,
           last_message: entry.latest?.body ?? "",
           last_message_at: entry.latest?.created_at ?? null,
           unread: entry.unread,
@@ -109,9 +114,18 @@ export default async function MessagesPage() {
                 className="block bg-white/5 hover:bg-white/10 p-4 transition relative"
               >
                 <div className="flex items-start gap-3">
-                  <div className="shrink-0 w-10 h-10 rounded-full bg-royal text-bone flex items-center justify-center font-bold">
-                    {initial}
-                  </div>
+                  {c.customer_avatar_url ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={c.customer_avatar_url}
+                      alt={c.customer_name}
+                      className="shrink-0 w-10 h-10 rounded-full object-cover bg-royal"
+                    />
+                  ) : (
+                    <div className="shrink-0 w-10 h-10 rounded-full bg-royal text-bone flex items-center justify-center font-bold">
+                      {initial}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline">
                       <div className="text-sm font-bold truncate">

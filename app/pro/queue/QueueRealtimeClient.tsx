@@ -208,25 +208,20 @@ export function QueueRealtimeClient({
       const elig = checkWasherEligibility(row.services, row.addresses, washerCaps);
       if (!elig.ok) return false;
 
-      // City override mirrors the SSR filter — when set, the booking's
-      // address city must match one of the listed cities (case-insens).
-      if (serviceAreas.length > 0) {
-        const jobCity = (row.addresses?.city ?? "").toLowerCase().trim();
-        if (!jobCity || !serviceAreas.includes(jobCity)) return false;
-      }
-
-      if (
-        myLat &&
-        myLng &&
-        row.addresses?.lat &&
-        row.addresses?.lng
-      ) {
-        const d = distanceMilesSimple(
-          { lat: myLat, lng: myLng },
-          { lat: Number(row.addresses.lat), lng: Number(row.addresses.lng) }
-        );
-        if (d > radius) return false;
-      }
+      // Mirrors the SSR reach gate — radius OR city match (additive).
+      const jobLat = row.addresses?.lat ? Number(row.addresses.lat) : null;
+      const jobLng = row.addresses?.lng ? Number(row.addresses.lng) : null;
+      const jobCity = (row.addresses?.city ?? "").toLowerCase().trim();
+      const inRadius =
+        myLat && myLng && jobLat && jobLng
+          ? distanceMilesSimple(
+              { lat: myLat, lng: myLng },
+              { lat: jobLat, lng: jobLng }
+            ) <= radius
+          : !myLat || !myLng;
+      const inCity =
+        serviceAreas.length > 0 && !!jobCity && serviceAreas.includes(jobCity);
+      if (!inRadius && !inCity) return false;
 
       const isDirectForMe =
         row.requested_washer_id === userId &&

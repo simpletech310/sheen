@@ -174,21 +174,32 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
 
       {/* Service area */}
       <section>
-        <div className="font-mono text-[10px] uppercase tracking-wider text-bone/60 mb-2">
-          Service area
+        <div className="flex justify-between items-baseline mb-2">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-bone/60">
+            Service area · base location
+          </span>
+          <span className="font-mono text-[10px] text-bone/40">
+            default search center
+          </span>
         </div>
         <AddressAutocomplete
           onSelect={(r) =>
             setBase({ lat: r.lat, lng: r.lng, label: r.name })
           }
-          placeholder="Where do you start your day?"
+          placeholder="e.g. Long Beach, CA"
         />
         {base && (
-          <div className="mt-2 bg-white/5 px-3 py-2 text-xs text-bone/70 font-mono">
-            ✓ {base.label}
+          <div className="mt-2 bg-sol text-ink px-3 py-2 text-xs font-mono uppercase tracking-wide">
+            ✓ Starting from {base.label}
           </div>
         )}
-        <label className="block mt-4">
+        <p className="text-[11px] text-bone/50 mt-2 leading-relaxed">
+          Where you start your day. The queue searches for jobs around
+          this location, out to your radius below. Type a city or
+          address and pick from the dropdown.
+        </p>
+
+        <label className="block mt-5">
           <div className="flex justify-between text-xs">
             <span className="font-mono uppercase tracking-wider text-bone/60">
               Service radius
@@ -220,17 +231,16 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
           </div>
         )}
 
-        {/* City override — when set, the queue only shows jobs whose
-            address city matches one of these. Empty list falls back to
-            the radius-from-base behaviour above. Lets a pro toggle
-            "Riverside today, LA tomorrow" without touching their base. */}
+        {/* Extra cities the pro is willing to drive to even though they
+            sit outside the radius above. Additive — a job qualifies if
+            it's either in-radius OR its city matches one of these. */}
         <div className="mt-5">
           <div className="flex justify-between items-baseline mb-2">
             <span className="font-mono text-[10px] uppercase tracking-wider text-bone/60">
               Cities you'll take jobs in
             </span>
             <span className="font-mono text-[10px] text-bone/40">
-              optional · overrides radius
+              optional · adds to radius
             </span>
           </div>
           {form.service_areas.length > 0 && (
@@ -272,12 +282,13 @@ export function ProfileEditor({ userId, initial }: { userId: string; initial: In
               }
             }}
             onBlur={() => commitCity(cityDraft)}
-            placeholder="Riverside, Los Angeles, San Bernardino…"
+            placeholder="e.g. Riverside, Los Angeles, San Bernardino"
             className="w-full px-4 py-3.5 bg-bone border border-mist text-ink placeholder:text-smoke text-sm focus:outline-none focus:border-royal"
           />
           <p className="text-[11px] text-bone/50 mt-2 leading-relaxed">
-            Type a city, hit Enter or comma to add. Leave empty to use
-            your radius above. Match is case-insensitive.
+            Cities outside your radius that you'll still take jobs in.
+            Type a city, hit Enter or comma to add. Match is
+            case-insensitive.
           </p>
         </div>
       </section>

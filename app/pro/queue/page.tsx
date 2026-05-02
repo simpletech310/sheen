@@ -90,21 +90,25 @@ export default async function QueuePage() {
       const blockedToday = avail.some((a) => a.specific_date === dateStr && a.blocked);
       if (blockedToday) return false;
     }
-    // City override: if the pro listed cities they'll work in today,
-    // a job's address city must match one of them. Empty list falls
-    // back to the radius-from-base check below. Both gates can apply
-    // (city match AND in-radius) — the more restrictive wins.
-    if (serviceAreas.length > 0) {
-      const jobCity = (j.addresses?.city ?? "").toLowerCase().trim();
-      if (!jobCity || !serviceAreas.includes(jobCity)) return false;
-    }
-    if (myLat && myLng && j.addresses?.lat && j.addresses?.lng) {
-      const d = distanceMiles(
-        { lat: myLat, lng: myLng },
-        { lat: Number(j.addresses.lat), lng: Number(j.addresses.lng) }
-      );
-      if (d > radius) return false;
-    }
+    // Reach gate: a job qualifies if EITHER it sits within the
+    // radius from the pro's base, OR its city matches one of the
+    // explicitly opted-in cities (additive — those override the
+    // radius outwards, never inwards). A pro with base in Long Beach
+    // and "Riverside" in their cities list sees both LB-area jobs
+    // (via radius) AND Riverside jobs (via city), but not jobs in
+    // San Diego unless they add it.
+    const jobLat = j.addresses?.lat ? Number(j.addresses.lat) : null;
+    const jobLng = j.addresses?.lng ? Number(j.addresses.lng) : null;
+    const jobCity = (j.addresses?.city ?? "").toLowerCase().trim();
+    const inRadius =
+      myLat && myLng && jobLat && jobLng
+        ? distanceMiles(
+            { lat: myLat, lng: myLng },
+            { lat: jobLat, lng: jobLng }
+          ) <= radius
+        : !myLat || !myLng; // no base set → don't gate on distance
+    const inCity = serviceAreas.length > 0 && !!jobCity && serviceAreas.includes(jobCity);
+    if (!inRadius && !inCity) return false;
     return true;
   }) as unknown as QueueJob[];
 
@@ -114,9 +118,8 @@ export default async function QueuePage() {
       <div className="sticky top-0 z-20 bg-ink/95 backdrop-blur supports-[backdrop-filter]:bg-ink/80 px-5 pt-6 pb-4 -mt-px border-b border-bone/10">
         <div className="flex justify-between items-center mb-2">
           <Eyebrow className="!text-bone/75" prefix={null}>
-            Available ·{" "}
             {serviceAreas.length > 0
-              ? `${serviceAreas.length === 1 ? serviceAreas[0] : `${serviceAreas.length} cities`} · live`
+              ? `${radius} mi + ${serviceAreas.length === 1 ? serviceAreas[0] : `${serviceAreas.length} cities`} · live`
               : `${radius} mi radius · live`}
           </Eyebrow>
           <Link
