@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/server";
 import { checkStripeReadiness } from "@/lib/stripe/readiness";
 import { z } from "zod";
@@ -53,16 +53,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No pro assigned to this booking" }, { status: 400 });
   }
 
+  // Use the service-role client for the Stripe-account lookup. RLS on
+  // `washer_profiles` only allows `auth.uid() = user_id` to read, so a
+  // customer running this request can't see the washer's row and the
+  // lookup would return null even when the pro has finished onboarding.
+  // (`partner_profiles` has a public-read policy, but we use the service
+  // client there too for consistency.)
+  const admin = createServiceClient();
+
   let stripeAccountId: string | null = null;
   if (booking.assigned_washer_id) {
-    const { data: wp } = await supabase
+    const { data: wp } = await admin
       .from("washer_profiles")
       .select("stripe_account_id")
       .eq("user_id", booking.assigned_washer_id)
       .maybeSingle();
     stripeAccountId = wp?.stripe_account_id ?? null;
   } else if (booking.assigned_partner_id) {
-    const { data: pp } = await supabase
+    const { data: pp } = await admin
       .from("partner_profiles")
       .select("stripe_account_id")
       .eq("user_id", booking.assigned_partner_id)

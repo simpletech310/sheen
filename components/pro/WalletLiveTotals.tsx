@@ -112,6 +112,14 @@ export function WalletLiveTotals({
 
   const subline = (() => {
     if (!connected) return "Setup payouts to start earning";
+    // Edge case: Stripe is holding pending money but our local payouts
+    // table doesn't know about any of it (lifetime + escrow both zero).
+    // This happens when an old transfer fired without a corresponding
+    // local payout row — rare after the upsert fix in release.ts, but
+    // the existing balance still wants a clear label.
+    if (lifetime === 0 && escrowPending === 0 && stripePending > 0) {
+      return `${fmtUSD(stripePending)} in Stripe payout queue`;
+    }
     const parts: string[] = [];
     if (stripePending > 0) parts.push(`${fmtUSD(stripePending)} settling`);
     if (escrowPending > 0) parts.push(`${fmtUSD(escrowPending)} in escrow`);

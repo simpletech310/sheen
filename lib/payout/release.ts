@@ -204,11 +204,25 @@ export async function releaseFundsForBooking(
             : "unknown",
       },
     });
+    // Upsert (not update-only) so a release-without-prior-complete-insert
+    // doesn't silently transfer funds without a DB record. Migration 0006
+    // gives us a unique index on (booking_id, kind) so this is a clean
+    // conflict target. Without this, the wallet permanently forgets any
+    // payout where the /complete insert was skipped or RLS-blocked.
     await supabase
       .from("payouts")
-      .update({ stripe_transfer_id: transfer.id, status: "paid", amount_cents: washerNet })
-      .eq("booking_id", booking.id)
-      .eq("kind", "wash");
+      .upsert(
+        {
+          booking_id: booking.id,
+          washer_id: booking.assigned_washer_id ?? null,
+          partner_id: booking.assigned_partner_id ?? null,
+          kind: "wash",
+          amount_cents: washerNet,
+          status: "paid",
+          stripe_transfer_id: transfer.id,
+        },
+        { onConflict: "booking_id,kind" }
+      );
     await supabase
       .from("bookings")
       .update({ funds_released_at: new Date().toISOString(), status: "funded" })
