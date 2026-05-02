@@ -44,9 +44,11 @@ Output ONLY the translated JSON, no preamble, no markdown fences, no commentary.
 Source JSON:
 ${JSON.stringify(json, null, 2)}`;
 
+  // 500 keys → ~12K output tokens. 16K leaves slack for languages that
+  // expand longer than English (Spanish, French, Russian Cyrillic).
   const res = await client.messages.create({
     model: "claude-sonnet-4-5",
-    max_tokens: 8000,
+    max_tokens: 16000,
     messages: [{ role: "user", content: prompt }],
   });
 
