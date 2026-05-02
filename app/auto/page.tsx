@@ -1,51 +1,9 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { MNav } from "@/components/marketing/MNav";
 import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { Placeholder } from "@/components/marketing/Placeholder";
-
-const why = [
-  {
-    h: "Two-bucket method, always",
-    d: "Wash bucket + rinse bucket on every car. Microfiber per panel — never the same towel on the wheels and the paint.",
-  },
-  {
-    h: "Approve before you pay",
-    d: "Your money sits in escrow until you tap Approve. Your pro sends 4 finished-work photos and you compare against your booking-time photos. If something's off, file an objection with a photo or video right from the app.",
-  },
-  {
-    h: "We bring the rig",
-    d: "Self-contained water + power. No hose hookup, no power cord through your window. Zero footprint on your driveway.",
-  },
-  {
-    h: "Damage covered",
-    d: "$2,500 guarantee on every wash + $1M general liability on the platform. File from the app within 24 hours. Paid out from a platform reserve, not the pro's pocket.",
-  },
-];
-
-const tiers = [
-  { tag: "01", name: "Express",       price: "$24",  was: "$29",  time: "30 min", items: ["Foam pre-soak", "Hand wash", "Dressed wheels & tires", "Streak-free glass"] },
-  { tag: "02", name: "Full Detail",   price: "$49",  was: "$59",  time: "60 min", items: ["Everything in Express", "Interior vacuum", "Dash + console wipe", "Mats lifted & cleaned"] },
-  { tag: "03", name: "Premium",       price: "$89",  was: "$109", time: "90 min", items: ["Everything in Full", "Clay-bar decontamination", "Hand-applied wax", "Leather conditioning"], featured: true },
-  { tag: "04", name: "Showroom",      price: "$159", was: "$189", time: "3 hr",   items: ["Everything in Premium", "Paint correction", "Ceramic top-up", "Engine bay detail"] },
-];
-
-const gallery: [string, string, string][] = [
-  ["GT-R · pressure wash", "Beverly Hills", "/img/washer.jpg"],
-  ["Mustang · showroom", "Pasadena", "/img/showroom.jpg"],
-  ["Panamera · premium", "Long Beach", "/img/og-default.jpg"],
-  ["4Runner · full detail", "Compton", "/img/auto-detail.jpg"],
-];
-
-const faq: [string, string][] = [
-  ["Do you bring water and power?", "Yes. Every Sheen pro carries a self-contained rig — water tank, power, eco-friendly soaps. No hose hookup needed. If your driveway has water/power, the pro uses it; if not, they bring it."],
-  ["When do I pay?", "We hold your card on file but only charge when you Approve the wash. Your pro sends 4 finished-work photos so you can review before paying. If something's wrong, you can file an objection with a photo or video and the funds stay on hold while we review."],
-  ["What if it rains?", "Reschedule free up to one hour before. We monitor radar and reach out first if it looks bad."],
-  ["Are my products safe?", "Ceramic-safe wax, pH-balanced shampoo, microfiber per panel. We won't touch your paint with anything we wouldn't use on our own."],
-  ["Can I request a specific pro?", "Yes. Every washer has a personal @handle. Type it at booking and the wash is sent ONLY to them for 10 minutes — locked, no other pro can take it. If they pass, it falls to the open queue so you're still covered."],
-  ["How does the damage guarantee work?", "Every wash is covered up to $2,500. File from the app within 24 hours of completion."],
-  ["Do tips go to the pro?", "100%, no platform cut. Default prompts at 18 / 22 / 25%, custom amounts allowed."],
-];
 
 export const metadata = {
   title: "Mobile car wash & auto detail in LA",
@@ -66,7 +24,41 @@ export const metadata = {
   },
 };
 
-export default function AutoPage() {
+export default async function AutoPage() {
+  const t = await getTranslations("auto");
+  const tc = await getTranslations("common");
+
+  const why = [
+    { h: t("why1Title"), d: t("why1Desc") },
+    { h: t("why2Title"), d: t("why2Desc") },
+    { h: t("why3Title"), d: t("why3Desc") },
+    { h: t("why4Title"), d: t("why4Desc") },
+  ];
+
+  const tiers = [
+    { tag: "01", name: t("tier1Name"), price: "$24",  was: "$29",  time: t("tier1Time"), items: ["Foam pre-soak", "Hand wash", "Dressed wheels & tires", "Streak-free glass"] },
+    { tag: "02", name: t("tier2Name"), price: "$49",  was: "$59",  time: t("tier2Time"), items: ["Everything in Express", "Interior vacuum", "Dash + console wipe", "Mats lifted & cleaned"] },
+    { tag: "03", name: t("tier3Name"), price: "$89",  was: "$109", time: t("tier3Time"), items: ["Everything in Full", "Clay-bar decontamination", "Hand-applied wax", "Leather conditioning"], featured: true },
+    { tag: "04", name: t("tier4Name"), price: "$159", was: "$189", time: t("tier4Time"), items: ["Everything in Premium", "Paint correction", "Ceramic top-up", "Engine bay detail"] },
+  ];
+
+  const gallery: [string, string, string][] = [
+    ["GT-R · pressure wash", "Beverly Hills", "/img/washer.jpg"],
+    ["Mustang · showroom", "Pasadena", "/img/showroom.jpg"],
+    ["Panamera · premium", "Long Beach", "/img/og-default.jpg"],
+    ["4Runner · full detail", "Compton", "/img/auto-detail.jpg"],
+  ];
+
+  const faq: [string, string][] = [
+    [t("faq1Q"), t("faq1A")],
+    [t("faq2Q"), t("faq2A")],
+    [t("faq3Q"), t("faq3A")],
+    [t("faq4Q"), t("faq4A")],
+    [t("faq5Q"), t("faq5A")],
+    [t("faq6Q"), t("faq6A")],
+    [t("faq7Q"), t("faq7A")],
+  ];
+
   return (
     <>
       <MNav />
@@ -79,20 +71,17 @@ export default function AutoPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/70 to-ink/30" />
         </div>
         <div className="relative z-10 px-6 md:px-14 pt-16 md:pt-20 pb-14">
-          <Eyebrow className="!text-sol">Service · Auto</Eyebrow>
+          <Eyebrow className="!text-sol">{t("eyebrow")}</Eyebrow>
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-8 mt-7">
             <h1 className="display text-[64px] md:text-[112px] leading-[0.92] max-w-[800px]">
-              FOUR TIERS.
+              {t("headlineLine1")}
               <br />
-              TWO-BUCKET
+              {t("headlineLine2")}
               <br />
-              METHOD.
-              <br />
-              <span className="text-sol">ALWAYS.</span>
+              <span className="text-sol">{t("headlineLine3")}</span>
             </h1>
             <p className="max-w-[360px] text-base md:text-lg leading-relaxed text-bone/75">
-              Foam pre-soak. Microfiber per panel. Ceramic-safe wax. Every wash, every pro. We don&rsquo;t cut corners —
-              we round them.
+              {t("subhead")}
             </p>
           </div>
         </div>
@@ -101,7 +90,7 @@ export default function AutoPage() {
       {/* Why band */}
       <section className="px-6 md:px-14 py-16">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[36px] md:text-[56px] leading-none">WHY US.</h2>
+          <h2 className="display text-[36px] md:text-[56px] leading-none">{t("whyHeadline")}</h2>
           <Eyebrow>The standard</Eyebrow>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -169,7 +158,7 @@ export default function AutoPage() {
                     tier.featured ? "bg-sol text-ink hover:bg-bone" : "bg-ink text-bone hover:bg-royal"
                   }`}
                 >
-                  Book {tier.name} →
+                  {tc("book")} {tier.name} →
                 </Link>
               </div>
             </div>
@@ -225,7 +214,7 @@ export default function AutoPage() {
       {/* Gallery */}
       <section className="px-6 md:px-14 py-20 bg-mist/40">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[44px] md:text-[64px] leading-none">THE WORK.</h2>
+          <h2 className="display text-[44px] md:text-[64px] leading-none">{t("galleryHeadline")}</h2>
           <Eyebrow>Recent jobs · LA</Eyebrow>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -243,7 +232,7 @@ export default function AutoPage() {
 
       {/* FAQ */}
       <section className="px-6 md:px-14 py-24">
-        <h2 className="display text-[44px] md:text-[64px] leading-none mb-12">QUESTIONS, ANSWERED.</h2>
+        <h2 className="display text-[44px] md:text-[64px] leading-none mb-12">{t("faqHeadline")}</h2>
         <div>
           {faq.map(([q, a], i) => (
             <div

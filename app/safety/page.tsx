@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { MNav } from "@/components/marketing/MNav";
 import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
@@ -22,61 +23,33 @@ export const metadata = {
   },
 };
 
-const items: { h: string; d: string }[] = [
-  {
-    h: "$2,500 damage guarantee",
-    d: "Every wash is covered. File from the app within 24 hours of completion. Paid out from a platform-funded reserve — no fight with the pro's insurance.",
-  },
-  {
-    h: "$1M GL insurance",
-    d: "Required from every pro at onboarding. Document verified by ops, re-checked at expiry, auto-suspended if it lapses.",
-  },
-  {
-    h: "Background checks",
-    d: "Checkr-verified at onboarding. Two-strike auto-suspension at ≤2★ ratings within a 30-day window.",
-  },
-  {
-    h: "QR check-in",
-    d: "When the pro arrives they show a QR code — you scan with your phone camera or read off the 8-character code. Timer doesn't start until you confirm.",
-  },
-  {
-    h: "Payment held until you approve",
-    d: "Your card is charged at booking, but funds sit in escrow until the pro finishes AND you approve the work. One tap to release. We hold the line for you.",
-  },
-  {
-    h: "4 finished-work photos, every wash",
-    d: "Front, back, driver side, passenger side. Your pro can't mark a job complete without uploading all four. You compare them with the photos you took at booking before approving.",
-  },
-  {
-    h: "Object with a photo or video",
-    d: "If something's off, file an objection right from the approval card. Attach photos or a short video; funds stay on hold while we review. Resolved in 48 hours, paid out from a platform reserve.",
-  },
-  {
-    h: "Live arrival tracking",
-    d: "See your pro's photo, name, vehicle, and live location on the way. We let you know the moment they pull up to your address.",
-  },
-  {
-    h: "Tips stay private",
-    d: "Pros don't see what you tipped until after you've rated them. No retaliation, no awkwardness. 100% goes to the pro.",
-  },
-  {
-    h: "Reviews stay anonymous",
-    d: "Public reviews byline the vehicle washed (e.g. \"2014 Dodge Dart\"), not the customer's name. Honest feedback without sharing your identity.",
-  },
-  {
-    h: "Fair on both sides",
-    d: "Late cancels, no-shows, and on-site issues are charged the same way to customers and pros. Disputes are reviewed within 48 hours.",
-  },
-];
+const itemKeys = [
+  "damage",
+  "gl",
+  "bg",
+  "qr",
+  "approve",
+  "fourPhotos",
+  "object",
+  "track",
+  "tips",
+  "anon",
+  "fair",
+] as const;
 
-const trust = [
-  { k: "$2,500", v: "Damage guarantee" },
-  { k: "$1M", v: "GL · every pro" },
-  { k: "100%", v: "Tips to the pro" },
-  { k: "Held", v: "Payment until you approve" },
-];
-
-export default function SafetyPage() {
+export default async function SafetyPage() {
+  const t = await getTranslations("safety");
+  const headlineLines = t("headline").split("\n");
+  const items = itemKeys.map((k) => ({
+    h: t(`items.${k}Title` as const),
+    d: t(`items.${k}Desc` as const),
+  }));
+  const trust = [
+    { k: t("trust2500"), v: t("trust2500Label") },
+    { k: t("trust1M"), v: t("trust1MLabel") },
+    { k: t("trust100"), v: t("trust100Label") },
+    { k: t("trustHeld"), v: t("trustHeldLabel") },
+  ];
   return (
     <>
       <MNav />
@@ -84,16 +57,20 @@ export default function SafetyPage() {
       {/* Hero */}
       <section className="relative bg-ink text-bone px-6 md:px-14 pt-16 md:pt-20 pb-12">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
-        <Eyebrow className="!text-sol">Trust &amp; safety</Eyebrow>
+        <Eyebrow className="!text-sol">{t("eyebrow")}</Eyebrow>
         <h1 className="display text-[48px] md:text-[88px] leading-tight mt-6 max-w-[900px]">
-          VETTED PROS. INSURED WORK.
-          <br />
-          <span className="text-sol">NO SURPRISES.</span>
+          {headlineLines.map((line, i) => {
+            const isLast = i === headlineLines.length - 1;
+            return (
+              <span key={i}>
+                {isLast ? <span className="text-sol">{line}</span> : line}
+                {!isLast && <br />}
+              </span>
+            );
+          })}
         </h1>
         <p className="mt-6 max-w-[600px] text-base md:text-lg leading-relaxed text-bone/80">
-          We built Sheen the way we wished the rest of the gig economy worked.
-          Your money is held until you approve. Your pro is screened. Your
-          driveway is covered.
+          {t("subhead")}
         </p>
       </section>
 
@@ -123,8 +100,8 @@ export default function SafetyPage() {
       {/* Safeguards grid */}
       <section className="px-6 md:px-14 py-20">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[36px] md:text-[56px] leading-none">SAFEGUARDS.</h2>
-          <Eyebrow>What's behind every wash</Eyebrow>
+          <h2 className="display text-[36px] md:text-[56px] leading-none">{t("safeguardsHeadline")}</h2>
+          <Eyebrow>{t("safeguardsEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {items.map((it, i) => (
@@ -145,17 +122,16 @@ export default function SafetyPage() {
       <section className="bg-ink text-bone px-6 md:px-14 py-16 text-center relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
         <h2 className="display text-[36px] md:text-[56px] leading-tight mb-6">
-          QUESTIONS ABOUT SAFETY?
+          {t("closingHeadline")}
         </h2>
         <p className="text-sm text-bone/70 max-w-md mx-auto mb-7">
-          We answer in plain English, fast. Trust pages shouldn&rsquo;t need a
-          decoder ring.
+          {t("closingBody")}
         </p>
         <Link
           href="mailto:hello@sheen.co"
           className="inline-block bg-sol text-ink px-9 py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone transition"
         >
-          Email hello@sheen.co →
+          {t("closingCta")}
         </Link>
       </section>
 

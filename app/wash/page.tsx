@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { MNav } from "@/components/marketing/MNav";
 import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
@@ -23,87 +24,63 @@ export const metadata = {
   },
 };
 
-const split = [
-  { side: "You bring", items: ["Your rig (water, power, tools)", "$1M GL insurance", "Reliable transport", "Pride in the work"] },
-  { side: "We bring", items: ["Customers in your radius", "Same-day or instant payouts", "Background check + verification", "Repeat-customer routing"] },
-];
+export default async function WashPage() {
+  const t = await getTranslations("wash");
+  const tc = await getTranslations("common");
 
-const equipment = [
-  { t: "Pressure washer", d: "Min 1.6 GPM. Foam cannon a plus." },
-  { t: "Two-bucket setup", d: "Wash + rinse buckets, microfiber towels, drying towels." },
-  { t: "Water + power", d: "BYO tank/generator if the site doesn't have it. Customers tell us up front." },
-  { t: "Detail kit", d: "Clay bar, wax, leather conditioner, tire shine, glass cleaner." },
-  { t: "Big rig (optional)", d: "Long hose, ladder, telescoping brushes — unlocks 2–6× pay." },
-  { t: "Insurance", d: "$1M GL. Upload PDF or photo at /pro/verify." },
-];
+  const split = [
+    {
+      side: t("splitYouBring"),
+      items: [t("splitYou1"), t("splitYou2"), t("splitYou3"), t("splitYou4")],
+    },
+    {
+      side: t("splitWeBring"),
+      items: [t("splitWe1"), t("splitWe2"), t("splitWe3"), t("splitWe4")],
+    },
+  ];
 
-const steps = [
-  { n: "01", t: "Apply", d: "2-minute form. Tell us your equipment + service area." },
-  { n: "02", t: "Verify", d: "Set up payouts, upload insurance, submit for background check. 24–48h." },
-  { n: "03", t: "Start", d: "Jobs hit your queue. Accept, navigate, wash, get paid." },
-];
+  const equipment = [
+    { t: t("kit1Title"), d: t("kit1Desc") },
+    { t: t("kit2Title"), d: t("kit2Desc") },
+    { t: t("kit3Title"), d: t("kit3Desc") },
+    { t: t("kit4Title"), d: t("kit4Desc") },
+    { t: t("kit5Title"), d: t("kit5Desc") },
+    { t: t("kit6Title"), d: t("kit6Desc") },
+  ];
 
-// The doc's full 5-tier ladder ships in a follow-up. Today we honour the
-// current rates (22%/18%) and preview the climb so applicants see the runway.
-const ladder = [
-  { name: "Rookie",   commission: "22%", keep: "78%", req: "Onboarded · COI on file" },
-  { name: "Verified", commission: "20%", keep: "80%", req: "25 jobs · 4.5★ · zero complaints" },
-  { name: "Pro",      commission: "18%", keep: "82%", req: "75 jobs · 4.7★ · <2% cancellations" },
-  { name: "Elite",    commission: "15%", keep: "85%", req: "200 jobs · 4.8★ · zero damage claims", soon: true },
-  { name: "Legend",   commission: "12%", keep: "88%", req: "500 jobs · 4.9★ · 1+ year tenure",     soon: true },
-];
+  const steps = [
+    { n: "01", t: t("step1Title"), d: t("step1Desc") },
+    { n: "02", t: t("step2Title"), d: t("step2Desc") },
+    { n: "03", t: t("step3Title"), d: t("step3Desc") },
+  ];
 
-const promote = [
-  {
-    t: "Run your own book of business",
-    d: "Sheen is the platform; the customers are yours. Every pro gets a personal @handle and shareable link. Customers book you by name — Sheen handles the payments, insurance, and disputes; you keep the relationship.",
-  },
-  {
-    t: "10-minute exclusivity on every direct request",
-    d: "When a customer books with your @handle, that wash is sent ONLY to you for 10 minutes — no queue race, no other pro can see or claim it. Accept on your terms. If you pass, it falls to the open queue so the customer's still covered.",
-  },
-  {
-    t: "Repeat customers, lower take",
-    d: "Once a customer is yours, the platform commission drops to 18% on every repeat job they book with you. Build a regular route and the math works in your favour.",
-  },
-  {
-    t: "Tips, instantly, in full",
-    d: "100% of tips route directly to your Stripe balance — no skim, no hold. Cash out same-day or instant.",
-  },
-];
+  // The doc's full 5-tier ladder ships in a follow-up. Today we honour the
+  // current rates (22%/18%) and preview the climb so applicants see the runway.
+  const ladder = [
+    { name: "Rookie",   commission: "22%", keep: "78%", req: "Onboarded · COI on file" },
+    { name: "Verified", commission: "20%", keep: "80%", req: "25 jobs · 4.5★ · zero complaints" },
+    { name: "Pro",      commission: "18%", keep: "82%", req: "75 jobs · 4.7★ · <2% cancellations" },
+    { name: "Elite",    commission: "15%", keep: "85%", req: "200 jobs · 4.8★ · zero damage claims", soon: true },
+    { name: "Legend",   commission: "12%", keep: "88%", req: "500 jobs · 4.9★ · 1+ year tenure",     soon: true },
+  ];
 
-const faq = [
-  {
-    q: "When do I get paid?",
-    a: "Job pay lands in your Stripe balance the moment the customer approves the wash (or 24h auto-approve). Cash out instantly to your debit card any time you have a balance — Sheen draws on Stripe's instant_available balance, so a freshly funded wash is withdrawable in minutes, not 1–2 business days.",
-  },
-  {
-    q: "What does Sheen take?",
-    a: "22% on a customer's first job with you. 18% on every repeat. Tips are 100% yours, period. As you climb the tier ladder, your platform take drops further — Legend pros keep 88%.",
-  },
-  {
-    q: "How does the @handle work?",
-    a: "Pick a handle (@YOURNAME) once. Share your link, hand out a card, drop it in your bio. When a customer books with it, the booking is sent ONLY to you for 10 minutes — locked, no queue race. If you accept it's yours; if you pass it falls to the open queue so the customer is still covered.",
-  },
-  {
-    q: "Do I need a truck?",
-    a: "Reliable transport that can carry your gear. Plenty of our pros use a sedan + foldable kit.",
-  },
-  {
-    q: "What if the site has no water or power?",
-    a: "Customers answer those questions up front when booking — water, power, gate code, the works. If you don't BYO water/power, those specific jobs just don't show in your queue. No surprises on arrival.",
-  },
-  {
-    q: "What if a customer is a no-show?",
-    a: "Flag the job from the navigation page. The customer is auto-charged a no-show fee. You get paid for showing up.",
-  },
-  {
-    q: "What about damage?",
-    a: "Sheen carries $1M general liability on every wash and a $2,500 damage guarantee that covers small mishaps without you reaching for your own policy. We mediate every claim.",
-  },
-];
+  const promote = [
+    { t: t("promote1Title"), d: t("promote1Desc") },
+    { t: t("promote2Title"), d: t("promote2Desc") },
+    { t: t("promote3Title"), d: t("promote3Desc") },
+    { t: t("promote4Title"), d: t("promote4Desc") },
+  ];
 
-export default function WashPage() {
+  const faq = [
+    { q: t("faq1Q"), a: t("faq1A") },
+    { q: t("faq2Q"), a: t("faq2A") },
+    { q: t("faq3Q"), a: t("faq3A") },
+    { q: t("faq4Q"), a: t("faq4A") },
+    { q: t("faq5Q"), a: t("faq5A") },
+    { q: t("faq6Q"), a: t("faq6A") },
+    { q: t("faq7Q"), a: t("faq7A") },
+  ];
+
   return (
     <>
       <MNav />
@@ -116,26 +93,23 @@ export default function WashPage() {
         <div className="relative z-10 px-6 md:px-14 pt-16 md:pt-20 pb-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-end">
             <div>
-              <Eyebrow className="!text-sol">For washers</Eyebrow>
+              <Eyebrow className="!text-sol">{t("eyebrow")}</Eyebrow>
               <h1 className="display text-[64px] md:text-[104px] leading-[0.92] mt-7">
-                SHOW UP.
+                {t("headlineLine1")}
                 <br />
-                WASH.
+                {t("headlineLine2")}
                 <br />
-                <span className="text-sol">GET PAID.</span>
+                <span className="text-sol">{t("headlineLine3")}</span>
               </h1>
               <p className="mt-7 max-w-[460px] text-base md:text-lg leading-relaxed text-bone/75">
-                Run your own book of business on Sheen&rsquo;s platform.
-                Direct customers are <strong>locked to you for 10 minutes</strong> —
-                no queue race. Keep 78% day one, up to 88% as you climb.
-                100% of tips, instant. Cash out same-day.
+                {t("subhead")}
               </p>
               <div className="mt-8 flex gap-3">
                 <Link
                   href="/sign-up?role=washer"
                   className="bg-sol text-ink px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone transition-colors"
                 >
-                  Apply in 2 minutes →
+                  {t("applyCta")}
                 </Link>
               </div>
             </div>
@@ -145,7 +119,7 @@ export default function WashPage() {
       </section>
 
       <section id="earnings" className="px-6 md:px-14 py-16 bg-mist/40">
-        <h2 className="display text-[40px] md:text-[56px] leading-tight mb-8">THE SPLIT.</h2>
+        <h2 className="display text-[40px] md:text-[56px] leading-tight mb-8">{t("splitHeadline")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {split.map((c) => (
             <div key={c.side} className="bg-bone p-7 border border-mist">
@@ -165,8 +139,8 @@ export default function WashPage() {
 
       <section className="px-6 md:px-14 py-20 bg-bone">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[40px] md:text-[56px] leading-tight">YOUR KIT.</h2>
-          <Eyebrow>Bring this</Eyebrow>
+          <h2 className="display text-[40px] md:text-[56px] leading-tight">{t("kitHeadline")}</h2>
+          <Eyebrow>{t("kitEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {equipment.map((e) => (
@@ -184,33 +158,32 @@ export default function WashPage() {
       <section className="px-6 md:px-14 py-20 bg-bone">
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-10">
           <h2 className="display text-[40px] md:text-[56px] leading-tight max-w-[600px]">
-            CLIMB THE
+            {t("ladderHeadlineA")}
             <br />
-            <span className="text-royal">LADDER.</span>
+            <span className="text-royal">{t("ladderHeadlineB")}</span>
           </h2>
-          <Eyebrow>Earn down · keep more</Eyebrow>
+          <Eyebrow>{t("ladderEyebrow")}</Eyebrow>
         </div>
         <p className="text-sm text-smoke max-w-[640px] leading-relaxed mb-8">
-          Quality is the engine. Hit the milestones, keep more of every wash. Rookie and Verified are live today —
-          Pro/Elite/Legend roll out as the network scales.
+          {t("ladderBody")}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-          {ladder.map((t, i) => (
+          {ladder.map((tier, i) => (
             <div
-              key={t.name}
-              className={`p-5 border-l-2 ${t.soon ? "bg-mist/30 border-mist" : "bg-bone border-royal"}`}
+              key={tier.name}
+              className={`p-5 border-l-2 ${tier.soon ? "bg-mist/30 border-mist" : "bg-bone border-royal"}`}
             >
               <div className="font-mono text-[10px] uppercase tracking-wider text-smoke">
-                Tier {i + 1}{t.soon ? " · soon" : ""}
+                {t("ladderTier")} {i + 1}{tier.soon ? ` · ${t("ladderSoon")}` : ""}
               </div>
-              <div className={`display text-[22px] mt-1 ${t.soon ? "text-smoke" : "text-ink"}`}>{t.name}</div>
+              <div className={`display text-[22px] mt-1 ${tier.soon ? "text-smoke" : "text-ink"}`}>{tier.name}</div>
               <div className="display tabular text-3xl mt-3">
-                <span className={t.soon ? "text-smoke" : "text-royal"}>{t.keep}</span>
+                <span className={tier.soon ? "text-smoke" : "text-royal"}>{tier.keep}</span>
               </div>
               <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mt-1">
-                You keep · {t.commission} take
+                {t("ladderYouKeep", { commission: tier.commission })}
               </div>
-              <div className="text-xs text-smoke mt-3 leading-snug">{t.req}</div>
+              <div className="text-xs text-smoke mt-3 leading-snug">{tier.req}</div>
             </div>
           ))}
         </div>
@@ -220,11 +193,11 @@ export default function WashPage() {
       <section id="promote" className="px-6 md:px-14 py-20 bg-mist/40">
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-10">
           <h2 className="display text-[40px] md:text-[56px] leading-tight max-w-[640px]">
-            BRING YOUR
+            {t("promoteHeadlineA")}
             <br />
-            OWN <span className="text-royal">CUSTOMERS.</span>
+            <span className="text-royal">{t("promoteHeadlineB")}</span>
           </h2>
-          <Eyebrow>Your book of business</Eyebrow>
+          <Eyebrow>{t("promoteEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {promote.map((p) => (
@@ -239,11 +212,11 @@ export default function WashPage() {
       <section className="px-6 md:px-14 py-20 bg-ink text-bone">
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-12">
           <h2 className="display text-[40px] md:text-[56px] leading-none max-w-[600px]">
-            APPLY → VERIFY
+            {t("stepsHeadlineA")}
             <br />
-            → <span className="text-sol">START.</span>
+            <span className="text-sol">{t("stepsHeadlineB")}</span>
           </h2>
-          <Eyebrow className="!text-sol" prefix={null}>How it works</Eyebrow>
+          <Eyebrow className="!text-sol" prefix={null}>{tc("howItWorks")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {steps.map((s) => (
@@ -258,8 +231,8 @@ export default function WashPage() {
 
       <section className="px-6 md:px-14 py-20 bg-mist/30">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[40px] md:text-[56px] leading-tight">QUESTIONS.</h2>
-          <Eyebrow>Pros ask</Eyebrow>
+          <h2 className="display text-[40px] md:text-[56px] leading-tight">{t("faqHeadline")}</h2>
+          <Eyebrow>{t("faqEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {faq.map((f) => (
@@ -276,22 +249,22 @@ export default function WashPage() {
 
       <section className="bg-royal text-bone px-6 md:px-14 py-20 text-center relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
-        <h2 className="display text-[44px] md:text-[72px] leading-tight">JOIN THE FLEET.</h2>
+        <h2 className="display text-[44px] md:text-[72px] leading-tight">{t("joinHeadline")}</h2>
         <p className="mt-4 max-w-md mx-auto opacity-80 text-sm">
-          $1M GL required. Background check via Checkr. Onboarding in ~2 minutes.
+          {t("joinSubhead")}
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
             href="/sign-up?role=washer"
             className="inline-block bg-sol text-ink px-9 py-5 text-base font-bold uppercase tracking-wide hover:bg-bone transition-colors"
           >
-            Apply now →
+            {t("applyNow")}
           </Link>
           <Link
             href="/sign-in?role=washer"
             className="inline-block border border-bone text-bone px-9 py-5 text-base font-bold uppercase tracking-wide hover:bg-bone hover:text-ink transition-colors"
           >
-            Pro sign-in
+            {t("proSignIn")}
           </Link>
         </div>
       </section>

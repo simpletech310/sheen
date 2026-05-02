@@ -1,36 +1,53 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { MNav } from "@/components/marketing/MNav";
 import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
 import { Placeholder } from "@/components/marketing/Placeholder";
 
-const categories = [
-  { tag: "01", label: "Auto",       tiers: "4 tiers", from: "$24",  was: "$29",  desc: "Express hand-wash → concours-grade paint correction.",  href: "/auto",     img: "/img/auto.jpg" },
-  { tag: "02", label: "Big Rig",    tiers: "4 tiers", from: "$115", was: "$135", desc: "Tractors, trailers, sleepers — at the rest stop or yard.", href: "/big-rig",  tone: "ink"   as const, img: "/img/big-rig-card.jpg" },
-  { tag: "03", label: "Home",       tiers: "4 tiers", from: "$79",  was: "$95",  desc: "Driveways, siding, decks, solar — soft-wash where it matters.", href: "/home", tone: "royal" as const, img: "/img/home.jpg" },
-  { tag: "04", label: "Commercial", tiers: "Quoted",  from: "Custom",            desc: "Storefronts, fleets, post-construction.", href: "/business", tone: "sol"   as const, img: "/img/commercial.jpg" },
-];
+export default async function Home() {
+  // Server-side translations — `getTranslations` reads the locale from the
+  // request (cookie-driven via i18n/request.ts), so the whole page rerenders
+  // in the active language on each navigation. Common copy lives under
+  // `common.*`; page-specific copy under `landing.*`.
+  const t = await getTranslations("landing");
+  const tc = await getTranslations("common");
 
-const memberships = [
-  { name: "Sheen+ Basic", price: "$39/mo", was: "$49/mo", desc: "4 Express OR 2 Full Detail per month. 2× points.", href: "/app/membership", category: "Auto" },
-  { name: "Sheen+ Pro",   price: "$79/mo", was: "$99/mo", desc: "4 Full Detail + 1 Premium per month. 3× points.", href: "/app/membership", category: "Auto", featured: true },
-];
+  // Categories, memberships, steps, and trust stats are data — built from the
+  // catalog so the labels localize without forking the layout.
+  const categories = [
+    { tag: "01", tiers: t("tiersFour"), from: "$24",  was: "$29",  label: t("category.autoLabel"),       desc: t("category.autoDesc"),       href: "/auto",     img: "/img/auto.jpg" },
+    { tag: "02", tiers: t("tiersFour"), from: "$115", was: "$135", label: t("category.bigRigLabel"),     desc: t("category.bigRigDesc"),     href: "/big-rig",  tone: "ink"   as const, img: "/img/big-rig-card.jpg" },
+    { tag: "03", tiers: t("tiersFour"), from: "$79",  was: "$95",  label: t("category.homeLabel"),       desc: t("category.homeDesc"),       href: "/home",     tone: "royal" as const, img: "/img/home.jpg" },
+    { tag: "04", tiers: t("tiersQuoted"), from: "Custom",          label: t("category.commercialLabel"), desc: t("category.commercialDesc"), href: "/business", tone: "sol"   as const, img: "/img/commercial.jpg" },
+  ];
 
-const steps = [
-  { n: "01", t: "Pick your service", d: "Express, full detail, premium, showroom. Or home power-wash. Or your fleet." },
-  { n: "02", t: "Drop a pin", d: "Confirm address. Same-day, tomorrow, this week — pick the window. Rush in 60 minutes if you need it now." },
-  { n: "03", t: "A pro shows up", d: "Vetted, insured, background-checked. Live arrival tracking. Real photo, not just a name." },
-  { n: "04", t: "Approve, then pay", d: "We hold the payment. The pro sends 4 finished-work photos. You approve, then they get paid. No surprises." },
-];
+  const memberships = [
+    { name: t("membershipBasic"), price: "$39/mo", was: "$49/mo", desc: t("membershipBasicDesc"), href: "/app/membership", category: t("category.autoLabel") },
+    { name: t("membershipPro"),   price: "$79/mo", was: "$99/mo", desc: t("membershipProDesc"),   href: "/app/membership", category: t("category.autoLabel"), featured: true },
+  ];
 
-const trust = [
-  { k: "Held", v: "Payment until you approve" },
-  { k: "4 photos", v: "Of the finished work, every time" },
-  { k: "$2,500", v: "Damage guarantee" },
-  { k: "$1M", v: "GL insurance · every wash" },
-];
+  const steps = [
+    { n: "01", title: t("step1Title"), desc: t("step1Desc") },
+    { n: "02", title: t("step2Title"), desc: t("step2Desc") },
+    { n: "03", title: t("step3Title"), desc: t("step3Desc") },
+    { n: "04", title: t("step4Title"), desc: t("step4Desc") },
+  ];
 
-export default function Home() {
+  const trust = [
+    { k: t("trustHeld"),       v: t("trustHeldLabel") },
+    { k: t("trustPhotos"),     v: t("trustPhotosLabel") },
+    { k: t("trustGuarantee"),  v: t("trustGuaranteeLabel") },
+    { k: t("trustInsurance"), v: t("trustInsuranceLabel") },
+  ];
+
+  const recruitStats = [
+    { k: t("recruitStat1"), v: t("recruitStat1Label") },
+    { k: t("recruitStat2"), v: t("recruitStat2Label") },
+    { k: t("recruitStat3"), v: t("recruitStat3Label") },
+    { k: t("recruitStat4"), v: t("recruitStat4Label") },
+  ];
+
   return (
     <>
       <MNav />
@@ -46,31 +63,29 @@ export default function Home() {
 
         <div className="relative z-10 px-6 md:px-14 pt-20 pb-32 md:pt-28 md:pb-40 text-bone">
           <Eyebrow className="!text-sol" prefix="──">
-            On-demand wash & detail · Los Angeles
+            {t("eyebrow")}
           </Eyebrow>
           <h1 className="display mt-6 text-[64px] md:text-[128px] leading-[0.92] max-w-[1100px]">
-            MAKE IT
+            {t("headlineLine1")}
             <br />
-            <span className="royal-strike">LOOK SHARP.</span>
+            <span className="royal-strike">{t("headlineLine2")}</span>
           </h1>
           <div className="mt-10 md:mt-12 flex flex-col md:flex-row md:justify-between md:items-end gap-6 md:gap-14">
             <p className="text-base md:text-lg leading-relaxed max-w-[460px] text-bone/85">
-              Book a vetted local pro in 60 seconds. Your car, your home,
-              your storefront — professionally cleaned, payment held until
-              you approve, no awkward driveway negotiations.
+              {t("subhead")}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/app/book"
                 className="bg-sol text-ink rounded-none px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone transition-colors"
               >
-                Book in 60 seconds →
+                {tc("bookCta")}
               </Link>
               <Link
                 href="#how-it-works"
                 className="border border-bone text-bone rounded-none px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone hover:text-ink transition-colors"
               >
-                How it works
+                {tc("howItWorks")}
               </Link>
             </div>
           </div>
@@ -80,8 +95,8 @@ export default function Home() {
       {/* Category picker — 4 services */}
       <section className="px-6 md:px-14 py-16 md:py-20">
         <div className="flex justify-between items-end mb-8">
-          <h2 className="display text-[36px] md:text-[56px] leading-tight">PICK YOUR LANE.</h2>
-          <Eyebrow>4 services · LA</Eyebrow>
+          <h2 className="display text-[36px] md:text-[56px] leading-tight">{t("pickLane")}</h2>
+          <Eyebrow>{t("fourServices")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {categories.map((c) => (
@@ -110,12 +125,12 @@ export default function Home() {
                 <p className="text-sm text-smoke mb-4 min-h-[36px] leading-relaxed">{c.desc}</p>
                 <div className="flex justify-between items-center pt-4 border-t border-mist">
                   <span className="font-mono text-xs tabular">
-                    FROM {c.from}
+                    {tc("from").toUpperCase()} {c.from}
                     {(c as any).was && (
                       <span className="ml-1.5 text-smoke line-through">{(c as any).was}</span>
                     )}
                   </span>
-                  <span className="text-sm font-bold uppercase group-hover:text-royal">Book →</span>
+                  <span className="text-sm font-bold uppercase group-hover:text-royal">{tc("book")} →</span>
                 </div>
               </div>
             </Link>
@@ -123,26 +138,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Membership band — separate Auto / Big Rig / Combined plans
-          so customers see at a glance there's a plan for what they
-          actually drive. Royal Blue panel with sol-gold "Popular" pill. */}
+      {/* Membership band */}
       <section className="px-6 md:px-14 py-20 bg-mist/30">
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-10">
           <div>
-            <Eyebrow className="!text-royal" prefix={null}>SHEEN+ Membership</Eyebrow>
+            <Eyebrow className="!text-royal" prefix={null}>{t("membershipEyebrow")}</Eyebrow>
             <h2 className="display text-[44px] md:text-[56px] leading-tight mt-3">
-              SAVE EVERY <span className="text-royal">MONTH.</span>
+              {t("membershipHeadlineA")} <span className="text-royal">{t("membershipHeadlineB")}</span>
             </h2>
             <p className="text-sm text-smoke mt-3 max-w-md leading-relaxed">
-              Auto, Big Rig, or both. Plans include guaranteed washes, priority
-              scheduling, and 100% loyalty-point earn rate.
+              {t("membershipBody")}
             </p>
           </div>
           <Link
             href="/app/membership"
             className="bg-ink text-bone px-6 py-4 text-sm font-bold uppercase tracking-wide hover:bg-royal transition self-start md:self-end"
           >
-            Compare all plans →
+            {t("membershipCompare")}
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -164,7 +176,7 @@ export default function Home() {
                 {m.category}
                 {m.featured && (
                   <span className="ml-2 px-1.5 py-0.5 border border-sol text-sol">
-                    Popular
+                    {t("membershipPopular")}
                   </span>
                 )}
               </div>
@@ -200,27 +212,23 @@ export default function Home() {
       {/* How it works */}
       <section id="how-it-works" className="px-6 md:px-14 py-20 bg-ink text-bone">
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-12">
-          <h2 className="display text-[44px] md:text-[64px] leading-none max-w-[600px]">
-            BOOK IN SIXTY
-            <br />
-            SECONDS. DONE
-            <br />
-            BEFORE LUNCH.
+          <h2 className="display text-[44px] md:text-[64px] leading-none max-w-[600px] whitespace-pre-line">
+            {t("stepsHeadline")}
           </h2>
-          <Eyebrow className="!text-sol" prefix={null}>How it works</Eyebrow>
+          <Eyebrow className="!text-sol" prefix={null}>{tc("howItWorks")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {steps.map((s) => (
             <div key={s.n} className="pt-6 border-t border-bone">
               <span className="font-mono text-xs text-sol">{s.n}</span>
-              <div className="display text-[24px] leading-tight mt-3 mb-2">{s.t.toUpperCase()}</div>
-              <p className="text-sm text-bone/70 leading-relaxed">{s.d}</p>
+              <div className="display text-[24px] leading-tight mt-3 mb-2">{s.title.toUpperCase()}</div>
+              <p className="text-sm text-bone/70 leading-relaxed">{s.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Trust strip — Rams horn stripe */}
+      {/* Trust strip */}
       <section className="bg-royal text-bone">
         <div className="px-6 md:px-14 py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6 md:gap-x-8 items-center">
@@ -232,15 +240,14 @@ export default function Home() {
             ))}
           </div>
         </div>
-        {/* Gold horn stripe at bottom */}
         <div className="h-2 bg-sol" />
       </section>
 
-      {/* Featured image grid — proof of work */}
+      {/* Featured image grid */}
       <section className="px-6 md:px-14 py-20">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[44px] md:text-[56px] leading-none">THE WORK.</h2>
-          <Eyebrow>Recent jobs · LA</Eyebrow>
+          <h2 className="display text-[44px] md:text-[56px] leading-none">{t("workHeadline")}</h2>
+          <Eyebrow>{t("workEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Placeholder label="GT-R · pressure wash" src="/img/work-gtr.jpg" height={260} />
@@ -250,47 +257,36 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Wash-for-Sheen recruit band — every customer is a potential
-          referrer, every potential washer lands here first. Keeps the
-          recruit pitch in the conversion funnel without nagging. */}
+      {/* Wash-for-Sheen recruit band */}
       <section className="px-6 md:px-14 py-20 bg-bone border-t border-mist">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
           <div>
-            <Eyebrow className="!text-royal">Wash for Sheen</Eyebrow>
+            <Eyebrow className="!text-royal">{t("recruitEyebrow")}</Eyebrow>
             <h2 className="display text-[40px] md:text-[56px] leading-[0.95] mt-3">
-              RUN YOUR OWN
+              {t("recruitHeadlineA")}
               <br />
-              <span className="text-royal">BOOK OF BUSINESS.</span>
+              <span className="text-royal">{t("recruitHeadlineB")}</span>
             </h2>
             <p className="text-sm md:text-base text-smoke mt-4 leading-relaxed max-w-md">
-              Sheen is the platform; the customers are yours. Get a
-              personal @handle, share it, and direct bookings come to you
-              first — locked to you for 10 minutes, no queue race.
-              Payments, insurance, and disputes — we handle. Keep up to
-              88% + 100% of tips. Cash out same-day.
+              {t("recruitBody")}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/wash"
                 className="bg-ink text-bone px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-royal transition-colors"
               >
-                Apply to wash →
+                {t("recruitApply")}
               </Link>
               <Link
                 href="/wash#earnings"
                 className="border border-ink text-ink px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-ink hover:text-bone transition-colors"
               >
-                See the math
+                {t("recruitMath")}
               </Link>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {[
-              { k: "78–88%", v: "Of every wash, kept" },
-              { k: "100%", v: "Of every tip, instant" },
-              { k: "10 min", v: "Exclusive on direct requests" },
-              { k: "Same-day", v: "Standard payouts to your bank" },
-            ].map((s) => (
+            {recruitStats.map((s) => (
               <div key={s.k} className="bg-ink text-bone p-5">
                 <div className="display tabular text-3xl text-sol">{s.k}</div>
                 <div className="font-mono text-[10px] uppercase tracking-wider text-bone/70 mt-2">
@@ -302,20 +298,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA strip — royal block, gold strike */}
+      {/* CTA strip */}
       <section className="px-6 md:px-14 py-24 md:py-32 bg-ink text-bone text-center relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-2 bg-sol" />
         <Eyebrow className="!text-sol" prefix={null}>
-          Ready when you are
+          {tc("ready")}
         </Eyebrow>
         <h2 className="display mt-6 mb-8 text-[64px] md:text-[112px] leading-[0.95]">
-          GET IT <span className="text-sol">SHEENED.</span>
+          {t("finalHeadlineA")} <span className="text-sol">{t("finalHeadlineB")}</span>
         </h2>
         <Link
           href="/app/book"
           className="inline-block bg-sol text-ink px-9 py-5 text-base font-bold uppercase tracking-wide hover:bg-bone transition-colors"
         >
-          Book in 60 seconds →
+          {tc("bookCta")}
         </Link>
       </section>
 

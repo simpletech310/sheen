@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { MNav } from "@/components/marketing/MNav";
 import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
@@ -23,62 +24,59 @@ export const metadata = {
   },
 };
 
-const tiers = [
-  {
-    tag: "01",
-    name: "Driveway & Walkway",
-    desc: "Up to 800 sq ft of concrete or pavers. Oil-spot pre-treat, concrete-safe rinse.",
-    price: "$129",
-    was: "$159",
-    time: "90 min",
-  },
-  {
-    tag: "02",
-    name: "Full Exterior",
-    desc: "Siding + drive + walks. Soft-wash on siding, pressure on hardscape — biodegradable cleaners.",
-    price: "$249",
-    was: "$299",
-    time: "4 hr",
-    featured: true,
-  },
-  {
-    tag: "03",
-    name: "Deck / Patio Add-on",
-    desc: "Wood-safe pH soft-wash. Furniture moved & replaced. Pairs with any tier above.",
-    price: "$79",
-    was: "$95",
-    time: "60 min",
-  },
-  {
-    tag: "04",
-    name: "Solar Panel Wash",
-    desc: "Deionised water rinse, soft-touch finish. No chemicals near the panels — recovers real watts.",
-    price: "$99",
-    was: "$129",
-    time: "60 min",
-  },
-];
+export default async function HomePage() {
+  // Server-side translations — `getTranslations` reads the locale from the
+  // request (cookie-driven via i18n/request.ts), so the whole page rerenders
+  // in the active language on each navigation. Common copy lives under
+  // `common.*`; page-specific copy under `home.*`.
+  const t = await getTranslations("home");
+  const tc = await getTranslations("common");
 
-const why = [
-  {
-    h: "Soft-wash certified",
-    d: "Siding gets a low-pressure soft-wash with biodegradable cleaner — never blasted. No paint damage, no water intrusion.",
-  },
-  {
-    h: "Deck-safe pH",
-    d: "We pH-balance for wood, composite, and stone. Your deck doesn't get bleached out.",
-  },
-  {
-    h: "Eco-runoff",
-    d: "Cleaners break down within 24 hours. Storm-drain compliant in every LA county.",
-  },
-  {
-    h: "Move the needle on solar",
-    d: "Dust + bird droppings cost real watts. Our deionized rinse leaves zero residue.",
-  },
-];
+  // Tiers + why-blocks are data — built from the catalog so labels localize
+  // without forking the layout. Prices, times, and image paths stay constant.
+  const tiers = [
+    {
+      tag: "01",
+      name: t("tier1Name"),
+      desc: t("tier1Desc"),
+      price: "$129",
+      was: "$159",
+      time: t("tier1Time"),
+    },
+    {
+      tag: "02",
+      name: t("tier2Name"),
+      desc: t("tier2Desc"),
+      price: "$249",
+      was: "$299",
+      time: t("tier2Time"),
+      featured: true,
+    },
+    {
+      tag: "03",
+      name: t("tier3Name"),
+      desc: t("tier3Desc"),
+      price: "$79",
+      was: "$95",
+      time: t("tier3Time"),
+    },
+    {
+      tag: "04",
+      name: t("tier4Name"),
+      desc: t("tier4Desc"),
+      price: "$99",
+      was: "$129",
+      time: t("tier4Time"),
+    },
+  ];
 
-export default function HomePage() {
+  const why = [
+    { h: t("why1Title"), d: t("why1Desc") },
+    { h: t("why2Title"), d: t("why2Desc") },
+    { h: t("why3Title"), d: t("why3Desc") },
+    { h: t("why4Title"), d: t("why4Desc") },
+  ];
+
   return (
     <>
       <MNav />
@@ -92,22 +90,19 @@ export default function HomePage() {
         </div>
         <div className="relative z-10 px-6 md:px-14 pt-16 md:pt-20 pb-14">
           <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
-          <Eyebrow className="!text-sol">Service · Home</Eyebrow>
+          <Eyebrow className="!text-sol">{t("eyebrow")}</Eyebrow>
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-8 mt-7">
             <h1 className="display text-[64px] md:text-[112px] leading-[0.92] max-w-[800px]">
-              DRIVEWAYS,
+              {t("headlineLine1")}
               <br />
-              SIDING,
+              {t("headlineLine2")}
               <br />
-              SOLAR.
+              {t("headlineLine3")}
               <br />
-              <span className="text-sol">CLEANED RIGHT.</span>
+              <span className="text-sol">{t("headlineLine4")}</span>
             </h1>
             <p className="max-w-[420px] text-base md:text-lg leading-relaxed text-bone/80">
-              Soft-wash certified pros for siding. Pressure-washed concrete.
-              Deck-safe pH. Solar-panel cleanings that move output.
-              Transparent pricing, no deposit — and you only pay once you
-              approve the finished work.
+              {t("subhead")}
             </p>
           </div>
           <div className="mt-10 flex flex-wrap gap-3">
@@ -115,13 +110,13 @@ export default function HomePage() {
               href="/app/book?category=home"
               className="bg-sol text-ink px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone transition"
             >
-              Book a wash →
+              {t("bookCta")}
             </Link>
             <Link
               href="#tiers"
               className="border border-bone text-bone px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone hover:text-ink transition"
             >
-              See tiers
+              {t("seeTiers")}
             </Link>
           </div>
         </div>
@@ -130,8 +125,8 @@ export default function HomePage() {
       {/* Why band */}
       <section className="px-6 md:px-14 py-16">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[36px] md:text-[56px] leading-none">WHY US.</h2>
-          <Eyebrow>The standard</Eyebrow>
+          <h2 className="display text-[36px] md:text-[56px] leading-none">{t("whyHeadline")}</h2>
+          <Eyebrow>{t("whyEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {why.map((w, i) => (
@@ -148,8 +143,8 @@ export default function HomePage() {
       {/* Tier matrix — same shape as /auto and /big-rig */}
       <section id="tiers" className="px-6 md:px-14 py-16 bg-mist/30">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[36px] md:text-[56px] leading-none">FOUR OPTIONS.</h2>
-          <Eyebrow>Pick yours</Eyebrow>
+          <h2 className="display text-[36px] md:text-[56px] leading-none">{t("tiersHeadline")}</h2>
+          <Eyebrow>{t("tiersEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border border-mist">
           {tiers.map((tier, i) => (
@@ -171,7 +166,7 @@ export default function HomePage() {
                   </span>
                   {tier.featured && (
                     <span className="font-mono text-[10px] text-sol px-2 py-1 border border-sol uppercase">
-                      Most-booked
+                      {t("mostBooked")}
                     </span>
                   )}
                 </div>
@@ -205,7 +200,7 @@ export default function HomePage() {
                   )}
                 </div>
                 <div className={`font-mono text-[10px] uppercase tracking-wider mb-4 ${tier.featured ? "text-sol/80" : "text-royal"}`}>
-                  Launch promo · 90 days
+                  {t("launchPromo")}
                 </div>
                 <Link
                   href={`/app/book?category=home&tier=${encodeURIComponent(tier.name)}`}
@@ -215,7 +210,7 @@ export default function HomePage() {
                       : "bg-ink text-bone hover:bg-royal"
                   }`}
                 >
-                  Book →
+                  {tc("book")} →
                 </Link>
               </div>
             </div>
@@ -226,8 +221,8 @@ export default function HomePage() {
       {/* Before/after gallery */}
       <section className="px-6 md:px-14 py-16 bg-ink text-bone">
         <div className="flex justify-between items-end mb-8">
-          <h2 className="display text-[36px] md:text-[56px] leading-none">BEFORE / AFTER.</h2>
-          <Eyebrow className="!text-sol" prefix={null}>The difference</Eyebrow>
+          <h2 className="display text-[36px] md:text-[56px] leading-none">{t("beforeAfterHeadline")}</h2>
+          <Eyebrow className="!text-sol" prefix={null}>{t("beforeAfterEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Placeholder label="driveway · before" tone="ink" height={220} src="/img/driveway_before.jpg" />
@@ -241,16 +236,16 @@ export default function HomePage() {
       <section className="bg-royal text-bone px-6 md:px-14 py-20 text-center relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
         <h2 className="display text-[44px] md:text-[72px] leading-tight">
-          BOOK YOUR <span className="text-sol">PROPERTY.</span>
+          {t("ctaHeadlineA")} <span className="text-sol">{t("ctaHeadlineB")}</span>
         </h2>
         <p className="mt-4 max-w-md mx-auto opacity-80 text-sm">
-          Same-week windows in LA. Eco-friendly. $1M GL on every pro.
+          {t("ctaSubhead")}
         </p>
         <Link
           href="/app/book?category=home"
           className="mt-8 inline-block bg-sol text-ink px-9 py-5 text-base font-bold uppercase tracking-wide hover:bg-bone transition"
         >
-          Book a wash →
+          {t("bookCta")}
         </Link>
       </section>
 

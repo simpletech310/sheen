@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { MNav } from "@/components/marketing/MNav";
 import { MFooter } from "@/components/marketing/MFooter";
 import { Eyebrow } from "@/components/brand/Eyebrow";
@@ -22,118 +23,40 @@ export const metadata = {
   },
 };
 
-const tiers = [
-  {
-    tag: "01",
-    name: "Rig Rinse",
-    price: "$115",
-    was: "$135",
-    time: "1.5 hr",
-    items: ["Foam wash", "Cab + trailer rinse", "Wheels & flaps", "Windows"],
-  },
-  {
-    tag: "02",
-    name: "Trailer Wash",
-    price: "$215",
-    was: "$245",
-    time: "3 hr",
-    items: [
-      "Everything in Rinse",
-      "Chrome polish",
-      "Tire dressing",
-      "Fender detail",
-    ],
-  },
-  {
-    tag: "03",
-    name: "Full Rig Detail",
-    price: "$399",
-    was: "$499",
-    time: "5 hr",
-    items: [
-      "Everything in Trailer",
-      "Cab interior detail",
-      "Leather conditioning",
-      "Sleeper vacuum",
-    ],
-    featured: true,
-  },
-  {
-    tag: "04",
-    name: "Showroom Rig",
-    price: "$649",
-    was: "$799",
-    time: "8 hr",
-    items: [
-      "Everything in Full Rig",
-      "Paint correction",
-      "Ceramic top-up",
-      "Concours-grade",
-    ],
-  },
-];
+export default async function BigRigPage() {
+  // All visible copy comes from the `bigRig` namespace so the entire page
+  // localizes when the user switches languages. Tier names, FAQ Q&A, and
+  // membership labels are catalog-driven; only prices, times (units), and
+  // image paths stay literal.
+  const t = await getTranslations("bigRig");
 
-const memberships = [
-  {
-    name: "Rig Solo",
-    price: "$199/mo",
-    desc: "1 Trailer Wash per month — built for owner-operators.",
-    fits: ["1 wash / mo", "Up to Trailer Wash tier", "Same-day priority"],
-  },
-  {
-    name: "Rig Pro",
-    price: "$349/mo",
-    desc: "2 big-rig washes up to Full Rig Detail. For grinders.",
-    fits: ["2 washes / mo", "Up to Full Rig Detail", "Priority queue"],
-    featured: true,
-  },
-  {
-    name: "Sheen+ Combined",
-    price: "$199/mo",
-    desc: "1 auto Premium Detail + 1 Trailer Wash. For two-vehicle pros.",
-    fits: ["Auto + rig coverage", "Up to Premium auto / Trailer rig", "Same priority"],
-  },
-];
+  const tiers = [
+    { tag: "01", name: t("tier1Name"), price: "$115", was: "$135", time: t("tier1Time"), items: t.raw("tier1Items") as string[] },
+    { tag: "02", name: t("tier2Name"), price: "$215", was: "$245", time: t("tier2Time"), items: t.raw("tier2Items") as string[] },
+    { tag: "03", name: t("tier3Name"), price: "$399", was: "$499", time: t("tier3Time"), items: t.raw("tier3Items") as string[], featured: true },
+    { tag: "04", name: t("tier4Name"), price: "$649", was: "$799", time: t("tier4Time"), items: t.raw("tier4Items") as string[] },
+  ];
 
-const why: { h: string; d: string }[] = [
-  {
-    h: "We come to you",
-    d: "Rest stop, yard, drop lot, your driveway — wherever you've parked. No detour, no detailing-shop appointment.",
-  },
-  {
-    h: "Full-size kit",
-    d: "Pros confirmed for big-rig before booking: long hoses, foam cannon, ladders, high-flow pumps. No half-built rigs trying to do a 53-footer.",
-  },
-  {
-    h: "Insured for the load",
-    d: "$1M GL on every pro. $2,500 damage guarantee on every wash. File from the app within 24 hours.",
-  },
-  {
-    h: "DOT-friendly turnaround",
-    d: "Quick rinse before a CSA-anything inspection. Or full showroom-grade for a tradeshow / sale.",
-  },
-];
+  const memberships = [
+    { name: t("m1Name"), price: t("m1Price"), desc: t("m1Desc"), fits: t.raw("m1Fits") as string[] },
+    { name: t("m2Name"), price: t("m2Price"), desc: t("m2Desc"), fits: t.raw("m2Fits") as string[], featured: true },
+    { name: t("m3Name"), price: t("m3Price"), desc: t("m3Desc"), fits: t.raw("m3Fits") as string[] },
+  ];
 
-const faq: [string, string][] = [
-  [
-    "Can you wash at a truck stop?",
-    "Yes. Drop the pin, your pro confirms space + access, and they show up with their own water and power.",
-  ],
-  [
-    "What if the trailer's loaded?",
-    "Exterior wash works either way. For Full Rig Detail interiors we do the cab while the box stays sealed.",
-  ],
-  [
-    "Reefer / tanker / flatbed — all good?",
-    "All of them. Pros mark the rig types they handle when they opt in to the big-rig queue. We only route what they're set up for.",
-  ],
-  [
-    "How long does Showroom Rig take?",
-    "Plan a full 8 hours. Paint correction on a 70-foot rig isn't a quick job. We don't cheat the time.",
-  ],
-];
+  const why: { h: string; d: string }[] = [
+    { h: t("why1Title"), d: t("why1Desc") },
+    { h: t("why2Title"), d: t("why2Desc") },
+    { h: t("why3Title"), d: t("why3Desc") },
+    { h: t("why4Title"), d: t("why4Desc") },
+  ];
 
-export default function BigRigPage() {
+  const faq: [string, string][] = [
+    [t("faq1Q"), t("faq1A")],
+    [t("faq2Q"), t("faq2A")],
+    [t("faq3Q"), t("faq3A")],
+    [t("faq4Q"), t("faq4A")],
+  ];
+
   return (
     <>
       <MNav />
@@ -147,21 +70,13 @@ export default function BigRigPage() {
         </div>
         <div className="relative z-10 px-6 md:px-14 pt-16 md:pt-20 pb-14">
           <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
-          <Eyebrow className="!text-sol">Service · Big Rig</Eyebrow>
+          <Eyebrow className="!text-sol">{t("eyebrow")}</Eyebrow>
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-8 mt-7">
-            <h1 className="display text-[56px] md:text-[104px] leading-[0.92] max-w-[800px]">
-              TRACTORS,
-              <br />
-              TRAILERS,
-              <br />
-              SLEEPERS.
-              <br />
-              <span className="text-sol">SHEENED.</span>
+            <h1 className="display text-[56px] md:text-[104px] leading-[0.92] max-w-[800px] whitespace-pre-line">
+              {t("headline")}
             </h1>
             <p className="max-w-[420px] text-base md:text-lg leading-relaxed text-bone/80">
-              On-site big-rig wash &amp; detail. Foam pre-soak, chrome polish,
-              paint correction. At the rest stop, the yard, or wherever your
-              rig sleeps tonight.
+              {t("subhead")}
             </p>
           </div>
           <div className="mt-10 flex flex-wrap gap-3">
@@ -169,13 +84,13 @@ export default function BigRigPage() {
               href="/app/book?category=big_rig"
               className="bg-sol text-ink px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone transition"
             >
-              Book a wash →
+              {t("bookCta")}
             </Link>
             <Link
               href="#tiers"
               className="border border-bone text-bone px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-bone hover:text-ink transition"
             >
-              See tiers
+              {t("seeTiers")}
             </Link>
           </div>
         </div>
@@ -184,8 +99,8 @@ export default function BigRigPage() {
       {/* Why band */}
       <section className="px-6 md:px-14 py-16">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[36px] md:text-[56px] leading-none">WHY US.</h2>
-          <Eyebrow>What you get</Eyebrow>
+          <h2 className="display text-[36px] md:text-[56px] leading-none">{t("whyHeadline")}</h2>
+          <Eyebrow>{t("whyEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {why.map((w, i) => (
@@ -202,8 +117,8 @@ export default function BigRigPage() {
       {/* Tiers */}
       <section id="tiers" className="px-6 md:px-14 py-16 bg-mist/30">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[36px] md:text-[56px] leading-none">FOUR TIERS.</h2>
-          <Eyebrow>Pick your level</Eyebrow>
+          <h2 className="display text-[36px] md:text-[56px] leading-none">{t("tiersHeadline")}</h2>
+          <Eyebrow>{t("tiersEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border border-mist">
           {tiers.map((tier, i) => (
@@ -225,7 +140,7 @@ export default function BigRigPage() {
                   </span>
                   {tier.featured && (
                     <span className="font-mono text-[10px] text-sol px-2 py-1 border border-sol uppercase">
-                      Most-booked
+                      {t("mostBooked")}
                     </span>
                   )}
                 </div>
@@ -257,14 +172,14 @@ export default function BigRigPage() {
                   >
                     {tier.price}
                   </span>
-                  {(tier as any).was && (
+                  {tier.was && (
                     <span className={`font-mono text-sm tabular line-through ${tier.featured ? "text-bone/50" : "text-smoke"}`}>
-                      {(tier as any).was}
+                      {tier.was}
                     </span>
                   )}
                 </div>
                 <div className={`font-mono text-[10px] uppercase tracking-wider mb-4 ${tier.featured ? "text-sol/80" : "text-royal"}`}>
-                  Launch promo · 90 days
+                  {t("launchPromo")}
                 </div>
                 <Link
                   href={`/app/book?category=big_rig&tier=${encodeURIComponent(tier.name)}`}
@@ -274,7 +189,7 @@ export default function BigRigPage() {
                       : "bg-ink text-bone hover:bg-royal"
                   }`}
                 >
-                  Book {tier.name} →
+                  {t("bookTier", { name: tier.name })}
                 </Link>
               </div>
             </div>
@@ -287,23 +202,22 @@ export default function BigRigPage() {
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-10">
           <div>
             <Eyebrow className="!text-royal" prefix={null}>
-              SHEEN+ for rigs
+              {t("membershipsEyebrow")}
             </Eyebrow>
             <h2 className="display text-[36px] md:text-[56px] leading-tight mt-3">
-              MEMBERSHIPS THAT
+              {t("membershipsHeadlineA")}
               <br />
-              <span className="text-royal">PAY THEMSELVES.</span>
+              <span className="text-royal">{t("membershipsHeadlineB")}</span>
             </h2>
             <p className="text-sm text-smoke mt-3 max-w-md leading-relaxed">
-              Built for owner-operators and small fleets. Guaranteed washes
-              every month, priority routing, 100% loyalty-point earn rate.
+              {t("membershipsBody")}
             </p>
           </div>
           <Link
             href="/app/membership"
             className="bg-ink text-bone px-6 py-4 text-sm font-bold uppercase tracking-wide hover:bg-royal transition self-start md:self-end"
           >
-            Subscribe →
+            {t("membershipsSubscribe")}
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -325,7 +239,7 @@ export default function BigRigPage() {
                 </div>
                 {m.featured && (
                   <span className="font-mono text-[10px] text-sol px-2 py-1 border border-sol uppercase">
-                    Popular
+                    {t("membershipsPopular")}
                   </span>
                 )}
               </div>
@@ -363,7 +277,7 @@ export default function BigRigPage() {
                     : "bg-ink text-bone hover:bg-royal"
                 }`}
               >
-                Choose {m.name} →
+                {t("chooseMembership", { name: m.name })}
               </Link>
             </div>
           ))}
@@ -373,8 +287,8 @@ export default function BigRigPage() {
       {/* FAQ */}
       <section className="px-6 md:px-14 py-20 bg-ink text-bone">
         <div className="flex justify-between items-end mb-10">
-          <h2 className="display text-[36px] md:text-[56px] leading-none">QUESTIONS.</h2>
-          <Eyebrow className="!text-sol" prefix={null}>FAQ</Eyebrow>
+          <h2 className="display text-[36px] md:text-[56px] leading-none">{t("faqHeadline")}</h2>
+          <Eyebrow className="!text-sol" prefix={null}>{t("faqEyebrow")}</Eyebrow>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {faq.map(([q, a], i) => (
@@ -399,23 +313,23 @@ export default function BigRigPage() {
       <section className="bg-royal text-bone px-6 md:px-14 py-20 text-center relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />
         <h2 className="display text-[44px] md:text-[72px] leading-tight">
-          BOOK YOUR <span className="text-sol">RIG.</span>
+          {t("closingHeadlineA")} <span className="text-sol">{t("closingHeadlineB")}</span>
         </h2>
         <p className="mt-4 max-w-md mx-auto opacity-80 text-sm">
-          Same-day windows in LA. Insured pros. 100% of tips to your driver.
+          {t("closingSubhead")}
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
             href="/app/book?category=big_rig"
             className="bg-sol text-ink px-9 py-5 text-base font-bold uppercase tracking-wide hover:bg-bone transition"
           >
-            Book a wash →
+            {t("bookCta")}
           </Link>
           <Link
             href="/app/membership"
             className="border border-bone text-bone px-9 py-5 text-base font-bold uppercase tracking-wide hover:bg-bone hover:text-ink transition"
           >
-            See plans
+            {t("closingSeePlans")}
           </Link>
         </div>
       </section>

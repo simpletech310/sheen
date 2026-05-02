@@ -1,6 +1,8 @@
 {{- /*
-  Sheen — Magic-link sign-in template.
+  Sheen — Magic-link sign-in template (bilingual EN / ES).
   Role-aware palette: customer royal+gold+bone (light), washer ink+gold+bone (dark).
+  CSS :target toggle for live language switching; both panes render in clients
+  that strip <style> as a graceful fallback.
 */ -}}
 {{- $isWasher := eq .Data.role "washer" -}}
 {{- $headerBg := "#003594" -}}{{- if $isWasher -}}{{- $headerBg = "#0A0A0A" -}}{{- end -}}
@@ -17,6 +19,10 @@
 {{- $trustText := "#5A5A56" -}}{{- if $isWasher -}}{{- $trustText = "#8E8E8B" -}}{{- end -}}
 {{- $proBadgeBg := "#FFA300" -}}{{- if $isWasher -}}{{- $proBadgeBg = "#FAFAF7" -}}{{- end -}}
 {{- $proBadgeText := "#0A0A0A" -}}
+{{- $tabBg := "#FFFFFF" -}}{{- if $isWasher -}}{{- $tabBg = "#1A1A18" -}}{{- end -}}
+{{- $tabBorder := "#E8E6E0" -}}{{- if $isWasher -}}{{- $tabBorder = "#1A1A18" -}}{{- end -}}
+{{- $tabActive := "#003594" -}}{{- if $isWasher -}}{{- $tabActive = "#FFA300" -}}{{- end -}}
+{{- $tabIdle := "#5A5A56" -}}{{- if $isWasher -}}{{- $tabIdle = "#8E8E8B" -}}{{- end -}}
 {{- $dividerStart := $headerBg -}}
 {{- $dividerEnd := "#FFA300" -}}
 {{- $pageBg := "#FAFAF7" -}}{{- if $isWasher -}}{{- $pageBg = "#0A0A0A" -}}{{- end -}}
@@ -32,10 +38,28 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    .sh-pane-es { display: none; }
+    .sh-pane-en { display: block; }
+    .sh-tab { text-decoration: none; }
+    .sh-tab-en { color: {{ $tabActive }}; font-weight: 700; }
+    .sh-tab-es { color: {{ $tabIdle }}; font-weight: 500; }
+    #sh-es:target ~ * .sh-pane-en,
+    #sh-es:target ~ .sh-pane-en { display: none; }
+    #sh-es:target ~ * .sh-pane-es,
+    #sh-es:target ~ .sh-pane-es { display: block; }
+    #sh-es:target ~ * .sh-tab-en,
+    #sh-es:target ~ .sh-tab-en { color: {{ $tabIdle }}; font-weight: 500; }
+    #sh-es:target ~ * .sh-tab-es,
+    #sh-es:target ~ .sh-tab-es { color: {{ $tabActive }}; font-weight: 700; }
+  </style>
 </head>
 <body style="margin:0;padding:0;background:{{ $pageBg }};font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:{{ $bodyText }};-webkit-font-smoothing:antialiased;">
+  <a id="sh-en" name="sh-en" style="display:block;height:0;width:0;line-height:0;font-size:0;text-decoration:none;color:transparent;">.</a>
+  <a id="sh-es" name="sh-es" style="display:block;height:0;width:0;line-height:0;font-size:0;text-decoration:none;color:transparent;">.</a>
+
   <div style="display:none;font-size:1px;color:{{ $pageBg }};line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
-    Tap once to sign in. The link works for 60 minutes.
+    Tap once to sign in. The link works for 60 minutes. · Inicia sesi&oacute;n con un toque. El enlace dura 60 minutos.
   </div>
 
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:{{ $pageBg }};">
@@ -63,35 +87,62 @@
           <tr><td style="height:3px;background:{{ $stripe }};font-size:0;line-height:0;">&nbsp;</td></tr>
 
           <tr>
-            <td style="background:{{ $bodyBg }};padding:40px 32px 32px 32px;">
-              <h1 style="margin:0 0 8px 0;font-family:'Anton','Impact','Helvetica Neue Condensed Bold','Arial Narrow Bold',Helvetica,Arial,sans-serif;font-size:44px;line-height:1.05;letter-spacing:1px;text-transform:uppercase;color:{{ $bodyText }};font-weight:400;">
-                Tap once to sign in.
-              </h1>
-              <div style="height:3px;width:48px;background:linear-gradient(to right,{{ $dividerStart }},{{ $dividerEnd }});margin:0 0 18px 0;font-size:0;line-height:0;">&nbsp;</div>
+            <td style="background:{{ $tabBg }};padding:12px 32px;border-bottom:1px solid {{ $tabBorder }};">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">
+                    <a href="#sh-en" class="sh-tab sh-tab-en" style="text-decoration:none;color:{{ $tabActive }};font-weight:700;margin-right:14px;">English</a>
+                    <a href="#sh-es" class="sh-tab sh-tab-es" style="text-decoration:none;color:{{ $tabIdle }};font-weight:500;">Español</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-              <p style="margin:0 0 20px 0;font-size:15px;line-height:1.55;color:{{ $bodyText }};">
-                No password required &mdash; just tap below from the device you want to sign in on.
-              </p>
+          <tr>
+            <td style="background:{{ $bodyBg }};padding:40px 32px 32px 32px;">
+              <div class="sh-pane-en">
+                <h1 style="margin:0 0 8px 0;font-family:'Anton','Impact','Helvetica Neue Condensed Bold','Arial Narrow Bold',Helvetica,Arial,sans-serif;font-size:44px;line-height:1.05;letter-spacing:1px;text-transform:uppercase;color:{{ $bodyText }};font-weight:400;">
+                  Tap once to sign in.
+                </h1>
+                <div style="height:3px;width:48px;background:linear-gradient(to right,{{ $dividerStart }},{{ $dividerEnd }});margin:0 0 18px 0;font-size:0;line-height:0;">&nbsp;</div>
+                <p style="margin:0 0 20px 0;font-size:15px;line-height:1.55;color:{{ $bodyText }};">
+                  No password required &mdash; just tap below from the device you want to sign in on.
+                </p>
+              </div>
+
+              <div class="sh-pane-es">
+                <h1 style="margin:0 0 8px 0;font-family:'Anton','Impact','Helvetica Neue Condensed Bold','Arial Narrow Bold',Helvetica,Arial,sans-serif;font-size:44px;line-height:1.05;letter-spacing:1px;text-transform:uppercase;color:{{ $bodyText }};font-weight:400;">
+                  Inicia sesi&oacute;n con un toque.
+                </h1>
+                <div style="height:3px;width:48px;background:linear-gradient(to right,{{ $dividerStart }},{{ $dividerEnd }});margin:0 0 18px 0;font-size:0;line-height:0;">&nbsp;</div>
+                <p style="margin:0 0 20px 0;font-size:15px;line-height:1.55;color:{{ $bodyText }};">
+                  Sin contrase&ntilde;a &mdash; solo toca abajo desde el dispositivo donde quieres iniciar sesi&oacute;n.
+                </p>
+              </div>
 
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td style="background:{{ $ctaBg }};">
                     <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:16px 36px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:{{ $ctaText }};text-decoration:none;">
-                      Sign me in &rarr;
+                      Sign me in &middot; Iniciar sesi&oacute;n &rarr;
                     </a>
                   </td>
                 </tr>
               </table>
 
               <p style="margin:24px 0 6px 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;color:{{ $bodySub }};letter-spacing:1.5px;text-transform:uppercase;">
-                Or paste this link
+                Or paste this link &middot; O copia este enlace
               </p>
               <p style="margin:0 0 24px 0;font-size:13px;line-height:1.5;color:{{ $bodySub }};word-break:break-all;">
                 <a href="{{ .ConfirmationURL }}" style="color:{{ $linkColor }};text-decoration:underline;">{{ .ConfirmationURL }}</a>
               </p>
 
-              <p style="margin:0;font-size:12px;line-height:1.55;color:{{ $bodySub }};">
+              <p style="margin:0 0 6px 0;font-size:12px;line-height:1.55;color:{{ $bodySub }};">
                 The link works once and expires in 60 minutes. If you didn&rsquo;t request this, ignore this email &mdash; your account stays locked.
+              </p>
+              <p style="margin:0;font-size:12px;line-height:1.55;color:{{ $bodySub }};font-style:italic;">
+                El enlace funciona una sola vez y caduca en 60 minutos. Si no lo solicitaste, ignora este correo &mdash; tu cuenta sigue bloqueada.
               </p>
             </td>
           </tr>
