@@ -26,6 +26,7 @@ export default async function WalletPage() {
   // and is updated live by WalletLiveTotals.
   let stripeAvailable = 0;
   let stripePending = 0;
+  let stripeInstantAvailable = 0;
   let connected = false;
 
   const { data: wp } = await supabase
@@ -42,6 +43,11 @@ export default async function WalletPage() {
       );
       stripeAvailable = balance.available.reduce((a, b) => a + b.amount, 0);
       stripePending = balance.pending.reduce((a, b) => a + b.amount, 0);
+      stripeInstantAvailable =
+        (balance as any).instant_available?.reduce(
+          (a: number, b: any) => a + b.amount,
+          0
+        ) ?? 0;
       connected = true;
     } catch (e) {
       console.error("Error fetching stripe balance", e);
@@ -59,6 +65,7 @@ export default async function WalletPage() {
         initialPayouts={(payouts ?? []) as unknown as WalletPayout[]}
         stripeAvailable={stripeAvailable}
         stripePending={stripePending}
+        stripeInstantAvailable={stripeInstantAvailable}
         connected={connected}
         cashOutSlot={<WalletActions />}
       />

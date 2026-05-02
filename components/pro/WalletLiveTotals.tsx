@@ -31,6 +31,7 @@ export function WalletLiveTotals({
   initialPayouts,
   stripeAvailable,
   stripePending,
+  stripeInstantAvailable,
   connected,
   cashOutSlot,
 }: {
@@ -38,6 +39,11 @@ export function WalletLiveTotals({
   initialPayouts: WalletPayout[];
   stripeAvailable: number;
   stripePending: number;
+  // Stripe's "what an instant payout could draw on right now" — typically
+  // covers funds tied to charges that haven't fully settled but are
+  // eligible for the instant network. This is the number that drives
+  // whether the Cash Out button is enabled.
+  stripeInstantAvailable: number;
   connected: boolean;
   // The "Cash out / Tax & 1099" buttons are passed in as a slot so the
   // server component can keep owning anything that needs server-only deps.
@@ -139,13 +145,20 @@ export function WalletLiveTotals({
     return parts.join(" · ");
   })();
 
+  // Headline number is what the Cash Out button can actually withdraw —
+  // instant_available covers funds tied to recently funded washes that
+  // haven't fully settled yet but are eligible for the instant network.
+  // Falls back to `available` when instant isn't enabled (no debit card
+  // on the connected account).
+  const cashable = Math.max(stripeAvailable, stripeInstantAvailable);
+
   return (
     <>
       <div className="mt-3 bg-sol p-6 text-ink rounded-none">
         <div className="font-mono text-[10px] uppercase opacity-80">
           Available to Cash Out
         </div>
-        <div className="display tabular text-5xl mt-1">{fmtUSD(stripeAvailable)}</div>
+        <div className="display tabular text-5xl mt-1">{fmtUSD(cashable)}</div>
         <div className="text-xs opacity-70 mt-2">{subline}</div>
         {cashOutSlot}
       </div>

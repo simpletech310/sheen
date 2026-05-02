@@ -67,13 +67,16 @@ export default async function ProDashboard() {
     .select("amount_cents, kind, created_at")
     .eq("washer_id", userId)
     .gte("created_at", weekStart.toISOString());
-  const weekTotal = (weekPayouts ?? []).reduce(
-    (a, p: any) => a + (p.amount_cents ?? 0),
-    0
-  );
+  // Earned = washes only (the "Tips" tile next to it owns the tip total
+  // separately so a pro can see what they actually got paid for the work
+  // vs what came from the customer's gratitude). Sum of washes + tips
+  // shows on the wallet's Lifetime total instead.
+  const weekWash = (weekPayouts ?? [])
+    .filter((p: any) => p.kind !== "tip")
+    .reduce((a: number, p: any) => a + (p.amount_cents ?? 0), 0);
   const weekTips = (weekPayouts ?? [])
     .filter((p: any) => p.kind === "tip")
-    .reduce((a, p: any) => a + (p.amount_cents ?? 0), 0);
+    .reduce((a: number, p: any) => a + (p.amount_cents ?? 0), 0);
   const weekJobs = (weekPayouts ?? []).filter((p: any) => p.kind !== "tip").length;
 
   // Action items
@@ -248,16 +251,16 @@ export default async function ProDashboard() {
           <div className="bg-white/5 p-4">
             <div className="font-mono text-[10px] uppercase opacity-60">Earned</div>
             <div className="display tabular text-2xl mt-1 text-sol">
-              {fmtUSD(weekTotal)}
+              {fmtUSD(weekWash)}
             </div>
           </div>
           <div className="bg-white/5 p-4">
             <div className="font-mono text-[10px] uppercase opacity-60">Jobs</div>
             <div className="display tabular text-2xl mt-1">{weekJobs}</div>
           </div>
-          <div className="bg-white/5 p-4">
+          <div className="bg-white/5 p-4 border-l-2 border-good/30">
             <div className="font-mono text-[10px] uppercase opacity-60">Tips</div>
-            <div className="display tabular text-2xl mt-1">{fmtUSD(weekTips)}</div>
+            <div className="display tabular text-2xl mt-1 text-good">{fmtUSD(weekTips)}</div>
           </div>
         </div>
 

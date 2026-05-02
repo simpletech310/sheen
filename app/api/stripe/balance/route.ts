@@ -31,7 +31,12 @@ export async function GET() {
   }
 
   if (!stripeAccountId) {
-    return NextResponse.json({ available_cents: 0, pending_cents: 0, connected: false });
+    return NextResponse.json({
+      available_cents: 0,
+      pending_cents: 0,
+      instant_available_cents: 0,
+      connected: false,
+    });
   }
 
   const cached = getCachedBalance(stripeAccountId);
@@ -43,12 +48,26 @@ export async function GET() {
     const balance = await stripe.balance.retrieve(undefined, { stripeAccount: stripeAccountId });
     const av = balance.available.find((b) => b.currency === "usd")?.amount ?? 0;
     const pe = balance.pending.find((b) => b.currency === "usd")?.amount ?? 0;
-    const value = { available_cents: av, pending_cents: pe };
+    // `instant_available` is Stripe's "what an instant payout could draw on
+    // right now" — typically funds tied to charges that haven't fully
+    // settled but are still eligible for the instant network. This is what
+    // gates the Cash Out button: in test mode (and for any account with
+    // debit-card payouts in prod) it's well above zero while `available`
+    // is still zero, so a pro can withdraw the moment a wash funds.
+    const ia =
+      (balance as any).instant_available?.find((b: any) => b.currency === "usd")?.amount ?? 0;
+    const value = { available_cents: av, pending_cents: pe, instant_available_cents: ia };
     setCachedBalance(stripeAccountId, value);
     return NextResponse.json({ ...value, connected: true });
   } catch (e: any) {
     return NextResponse.json(
-      { error: e.message, available_cents: 0, pending_cents: 0, connected: true },
+      {
+        error: e.message,
+        available_cents: 0,
+        pending_cents: 0,
+        instant_available_cents: 0,
+        connected: true,
+      },
       { status: 200 }
     );
   }

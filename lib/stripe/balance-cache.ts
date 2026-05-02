@@ -8,7 +8,11 @@
 const TTL_MS = 30_000;
 
 type Entry = {
-  value: { available_cents: number; pending_cents: number };
+  value: {
+    available_cents: number;
+    pending_cents: number;
+    instant_available_cents: number;
+  };
   expires: number;
 };
 
