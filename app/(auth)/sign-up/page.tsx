@@ -2,8 +2,10 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Wordmark } from "@/components/brand/Wordmark";
+import { LanguagePicker } from "@/components/i18n/LanguagePicker";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/ui/Toast";
 import { getDefaultLandingForRole } from "@/lib/auth-redirect";
@@ -11,6 +13,8 @@ import { getDefaultLandingForRole } from "@/lib/auth-redirect";
 function SignUpInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const role = params.get("role") || "customer";
   const isWasher = role === "washer";
   const isPartner = role === "partner_owner";
@@ -51,7 +55,7 @@ function SignUpInner() {
     if (data.session) {
       // Update role on public.users immediately so getDefaultLandingForRole works.
       await supabase.from("users").update({ full_name: name, role }).eq("id", data.user!.id);
-      toast("Account created — welcome to Sheen", "success");
+      toast(t("welcome"), "success");
       // Tag the destination with ?welcome=1 so the install + push welcome
       // flow fires once on first paint. Mirrors /auth/callback's behaviour.
       const withWelcome = (path: string) =>
@@ -61,8 +65,8 @@ function SignUpInner() {
       else router.push(withWelcome(getDefaultLandingForRole(role)));
       router.refresh();
     } else {
-      setErr("Check your email to confirm.");
-      toast("Check your email to confirm your account", "info");
+      setErr(t("checkEmail"));
+      toast(t("checkEmail"), "info");
     }
   }
 
@@ -77,26 +81,30 @@ function SignUpInner() {
     ? "bg-gradient-to-b from-ink/85 via-ink/75 to-ink"
     : "bg-gradient-to-br from-royal/85 via-ink/85 to-ink";
   const eyebrow = isWasher
-    ? "Apply to wash"
+    ? t("applyToWash")
     : isPartner
-    ? "Partner sign-up"
-    : "Create your account";
-  const headlineTop = isWasher ? "JOIN THE" : isPartner ? "SCALE YOUR" : "GET";
+    ? t("partnerSignUp")
+    : t("createAccount");
+  const headlineTop = isWasher
+    ? t("headlineWasherA")
+    : isPartner
+    ? t("headlinePartnerA")
+    : t("headlineCustomerA");
   const headlineAccent = isWasher
-    ? "FLEET."
+    ? t("headlineWasherB")
     : isPartner
-    ? "WASH BUSINESS."
-    : "SHEENED.";
+    ? t("headlinePartnerB")
+    : t("headlineCustomerB");
   const subline = isWasher
-    ? "2 minutes to apply. We verify ID + insurance before activation. Approved in 24-48h."
+    ? t("sublineWasher")
     : isPartner
-    ? "Add your shop, your team, your inventory. We send vetted jobs your way."
-    : "Save your garage, your places, and your wallet. Book in 60 seconds, every time.";
+    ? t("sublinePartner")
+    : t("sublineCustomer");
   const ctaLabel = isWasher
-    ? "Apply →"
+    ? t("ctaWasher")
     : isPartner
-    ? "Set up business →"
-    : "Create account →";
+    ? t("ctaPartner")
+    : t("ctaCustomer");
 
   const inputCls =
     "w-full px-4 py-3.5 bg-white/5 border border-bone/15 text-bone placeholder:text-bone/40 text-sm focus:outline-none focus:border-sol transition";
@@ -119,9 +127,12 @@ function SignUpInner() {
       <div className={`absolute inset-0 z-0 ${overlay}`} />
 
       <div className="w-full max-w-md relative z-10">
-        <Link href="/" className="inline-block mb-10">
-          <Wordmark size={30} invert />
-        </Link>
+        <div className="flex items-center justify-between mb-10">
+          <Link href="/" className="inline-block">
+            <Wordmark size={30} invert />
+          </Link>
+          <LanguagePicker variant="dark" />
+        </div>
 
         <div className="font-mono text-[11px] uppercase tracking-wider mb-3 text-sol">
           ── {eyebrow}
@@ -137,7 +148,7 @@ function SignUpInner() {
         <form onSubmit={submit} className="space-y-3">
           <input
             type="text"
-            placeholder="Full name"
+            placeholder={t("fullName")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -146,7 +157,7 @@ function SignUpInner() {
           />
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -155,7 +166,7 @@ function SignUpInner() {
           />
           <input
             type="password"
-            placeholder="Password (8+ characters)"
+            placeholder={t("password")}
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -169,33 +180,32 @@ function SignUpInner() {
             </div>
           )}
           <button type="submit" disabled={loading} className={buttonCls}>
-            {loading ? "Creating account…" : ctaLabel}
+            {loading ? t("creating") : ctaLabel}
           </button>
         </form>
 
         <div className="mt-7 space-y-2.5 text-sm">
           <p className="text-bone/70">
-            Have an account?{" "}
+            {t("haveAccount")}{" "}
             <Link
               href={isWasher ? "/sign-in?role=washer" : "/sign-in"}
               className="text-sol underline font-bold"
             >
-              Sign in
+              {tc("signIn")}
             </Link>
           </p>
           {!isWasher && !isPartner && (
             <p className="text-xs text-bone/50">
               Want to wash for Sheen?{" "}
               <Link href="/sign-up?role=washer" className="text-bone/80 underline">
-                Apply as a pro
+                {t("applyAsPro")}
               </Link>
             </p>
           )}
           {isWasher && (
             <p className="text-xs text-bone/50">
-              Customer?{" "}
               <Link href="/sign-up" className="text-bone/80 underline">
-                Customer sign-up
+                {t("customerSignUp")}
               </Link>
             </p>
           )}
@@ -206,33 +216,33 @@ function SignUpInner() {
         <div className="mt-12 pt-6 border-t border-bone/10 grid grid-cols-3 gap-3 text-center">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-bone/50">
-              Insured
+              {t("trustInsured")}
             </div>
-            <div className="display tabular text-base text-bone mt-1">$1M GL</div>
+            <div className="display tabular text-base text-bone mt-1">{t("trust1MGL")}</div>
           </div>
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-bone/50">
-              Damage cover
+              {t("trustDamageCover")}
             </div>
-            <div className="display tabular text-base text-bone mt-1">$2,500</div>
+            <div className="display tabular text-base text-bone mt-1">{t("trust2500")}</div>
           </div>
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-bone/50">
-              Tips
+              {t("trustTips")}
             </div>
-            <div className="display tabular text-base text-bone mt-1">100%</div>
+            <div className="display tabular text-base text-bone mt-1">{t("trust100Percent")}</div>
           </div>
         </div>
 
         {/* Legal — quiet, last thing on the surface. */}
         <p className="text-[10px] text-bone/40 text-center mt-6 leading-relaxed">
-          By creating an account you agree to our{" "}
+          {t("termsPrefix")}{" "}
           <Link href="/legal/tos" className="underline hover:text-bone">
-            Terms
+            {t("termsLink")}
           </Link>{" "}
-          and{" "}
+          {t("and")}{" "}
           <Link href="/legal/privacy" className="underline hover:text-bone">
-            Privacy Policy
+            {t("privacyLink")}
           </Link>
           .
         </p>

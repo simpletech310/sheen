@@ -2,8 +2,10 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Wordmark } from "@/components/brand/Wordmark";
+import { LanguagePicker } from "@/components/i18n/LanguagePicker";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/ui/Toast";
 import { getDefaultLandingForRole } from "@/lib/auth-redirect";
@@ -11,6 +13,8 @@ import { getDefaultLandingForRole } from "@/lib/auth-redirect";
 function SignInInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const explicitNext = params.get("next");
   const role = params.get("role");
   const isWasher = role === "washer";
@@ -46,7 +50,7 @@ function SignInInner() {
       dest = getDefaultLandingForRole((row as any)?.role);
     }
     setLoading(false);
-    toast("Welcome back", "success");
+    toast(t("welcomeBack"), "success");
     router.push(dest || "/app");
     router.refresh();
   }
@@ -113,31 +117,30 @@ function SignInInner() {
       />
 
       <div className="w-full max-w-md relative z-10">
-        <Link href="/" className="inline-block mb-10">
-          <Wordmark size={30} invert />
-        </Link>
+        <div className="flex items-center justify-between mb-10">
+          <Link href="/" className="inline-block">
+            <Wordmark size={30} invert />
+          </Link>
+          <LanguagePicker variant="dark" />
+        </div>
 
         <div className={`font-mono text-[11px] uppercase tracking-wider mb-3 ${eyebrowColor}`}>
-          ── {isWasher ? "Pro sign-in" : "Customer sign-in"}
+          ── {tc("signIn")}
         </div>
         <h1 className="display text-[44px] md:text-[52px] leading-tight mb-2">
-          {isWasher ? "WELCOME BACK," : "MAKE IT"}
+          {t("signInHeadlineA")}
           <br />
-          <span className="text-sol">
-            {isWasher ? "PRO." : "LOOK SHARP."}
-          </span>
+          <span className="text-sol">{t("signInHeadlineB")}</span>
         </h1>
         <div className={`h-[3px] w-16 ${accent} mb-5`} />
         <p className="text-sm text-bone/70 mb-8 leading-relaxed">
-          {isWasher
-            ? "Sign in to your queue, schedule, and earnings."
-            : "Sign in to book a wash, track a pro, or manage your garage."}
+          {t("signInSubline")}
         </p>
 
         <form onSubmit={submit} className="space-y-3">
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -146,7 +149,7 @@ function SignInInner() {
           />
           <input
             type="password"
-            placeholder="Password"
+            placeholder={t("password").replace(" (8+ characters)", "").replace(" (8+ caracteres)", "").replace(" (8+ caractères)", "").replace(/\s*\([^)]+\)$/, "")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -159,7 +162,7 @@ function SignInInner() {
             </div>
           )}
           <button type="submit" disabled={loading} className={buttonCls}>
-            {loading ? "Signing in…" : "Sign in →"}
+            {loading ? t("signingIn") : tc("signIn") + " →"}
           </button>
         </form>
 
@@ -182,61 +185,54 @@ function SignInInner() {
             href="/forgot-password"
             className="text-bone/70 hover:text-sol underline transition"
           >
-            Forgot password?
+            {t("forgotPassword")}
           </Link>
         </div>
 
-        {isWasher ? (
-          <div className="mt-7 space-y-2.5 text-sm">
-            <p className="text-bone/70">
-              New here?{" "}
-              <Link href="/sign-up?role=washer" className="text-sol underline font-bold">
-                Apply to wash →
-              </Link>
-            </p>
+        <div className="mt-7 space-y-2.5 text-sm">
+          <p className="text-bone/70">
+            {t("needAccount")}{" "}
+            <Link
+              href={isWasher ? "/sign-up?role=washer" : "/sign-up"}
+              className="text-sol underline font-bold"
+            >
+              {isWasher ? t("applyToWash") : t("createAccount")} →
+            </Link>
+          </p>
+          {isWasher ? (
             <p className="text-xs text-bone/50">
-              Customer?{" "}
               <Link href="/sign-in" className="text-bone/80 underline">
-                Customer sign-in
+                {t("customerSignUp")}
               </Link>
             </p>
-          </div>
-        ) : (
-          <div className="mt-7 space-y-2.5 text-sm">
-            <p className="text-bone/70">
-              New to Sheen?{" "}
-              <Link href="/sign-up" className="text-sol underline font-bold">
-                Create an account →
-              </Link>
-            </p>
+          ) : (
             <p className="text-xs text-bone/50">
-              Are you a washer?{" "}
               <Link href="/sign-in?role=washer" className="text-bone/80 underline">
-                Pro sign-in
+                {t("applyToWash")}
               </Link>
             </p>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Quiet trust footer — keeps the surface anchored. */}
         <div className="mt-12 pt-6 border-t border-bone/10 grid grid-cols-3 gap-3 text-center">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-bone/50">
-              Insured
+              {t("trustInsured")}
             </div>
-            <div className="display tabular text-base text-bone mt-1">$1M GL</div>
+            <div className="display tabular text-base text-bone mt-1">{t("trust1MGL")}</div>
           </div>
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-bone/50">
-              Damage cover
+              {t("trustDamageCover")}
             </div>
-            <div className="display tabular text-base text-bone mt-1">$2,500</div>
+            <div className="display tabular text-base text-bone mt-1">{t("trust2500")}</div>
           </div>
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-bone/50">
-              Tips
+              {t("trustTips")}
             </div>
-            <div className="display tabular text-base text-bone mt-1">100%</div>
+            <div className="display tabular text-base text-bone mt-1">{t("trust100Percent")}</div>
           </div>
         </div>
       </div>

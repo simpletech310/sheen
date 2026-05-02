@@ -1,5 +1,7 @@
 import webpush from "web-push";
 import { createServiceClient } from "@/lib/supabase/server";
+import { translateText } from "@/lib/translate";
+import { isLocale, type Locale } from "@/i18n/locales";
 
 let configured = false;
 function configure() {
@@ -22,13 +24,41 @@ export async function sendPushToUser(
     return;
   }
   const supa = createServiceClient();
-  const { data: subs } = await supa
-    .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth")
-    .eq("user_id", userId);
+
+  // Look up the recipient's preferred locale + their push subscriptions
+  // in parallel. If their locale is non-English and Anthropic is wired,
+  // translate the title + body before sending so the notification on
+  // their lock screen reads in their language. Best-effort — translation
+  // failure falls back to the English source.
+  const [{ data: userRow }, { data: subs }] = await Promise.all([
+    supa.from("users").select("locale").eq("id", userId).maybeSingle(),
+    supa
+      .from("push_subscriptions")
+      .select("id, endpoint, p256dh, auth")
+      .eq("user_id", userId),
+  ]);
   if (!subs?.length) return;
 
-  const json = JSON.stringify(payload);
+  const localeRaw = (userRow?.locale ?? "en").split("-")[0].toLowerCase();
+  const targetLocale: Locale = isLocale(localeRaw) ? localeRaw : "en";
+
+  let localizedTitle = payload.title;
+  let localizedBody = payload.body;
+  if (targetLocale !== "en" && process.env.ANTHROPIC_API_KEY) {
+    try {
+      const [titleT, bodyT] = await Promise.all([
+        translateText(payload.title, "en", targetLocale).catch(() => payload.title),
+        translateText(payload.body, "en", targetLocale).catch(() => payload.body),
+      ]);
+      localizedTitle = titleT;
+      localizedBody = bodyT;
+    } catch {
+      // Soft-fail; English is fine.
+    }
+  }
+
+  const localized = { ...payload, title: localizedTitle, body: localizedBody };
+  const json = JSON.stringify(localized);
   await Promise.allSettled(
     subs.map(async (s) => {
       try {
