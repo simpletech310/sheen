@@ -18,7 +18,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, assigned_washer_id, assigned_partner_id, service_cents, stripe_payment_intent_id, status, customer_id, service_id, checklist_progress, booking_addons(addon_id, addon_name)"
+      "id, assigned_washer_id, assigned_partner_id, service_cents, stripe_payment_intent_id, status, customer_id, service_id, checklist_progress, booking_addons(addon_id, addon_name, booking_vehicle_id), booking_vehicles(id, vehicle_id, vehicles(year, make, model))"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -60,15 +60,23 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     );
   }
 
-  // Gate completion on EVERY checklist — base service + every add-on
-  // the customer ticked at booking. Each item must be marked done;
-  // items that require a photo must have one recorded. This is the QA
-  // step that proves the work was actually done before payment can
-  // release. Without the addon gate, a washer could mark complete
-  // without ever doing the ceramic seal the customer paid $129 for.
-  const addonRows: Array<{ addon_id: string; addon_name: string }> =
-    (booking as any).booking_addons ?? [];
-  const addonIds = addonRows.map((a) => a.addon_id);
+  // Gate completion on EVERY (vehicle × checklist item) pair. Each
+  // car gets its own run of the base service checklist + the addon
+  // checklists for whatever extras the customer ticked on THAT car.
+  // Without per-vehicle gating, a 3-car booking could be marked
+  // complete with one car's worth of items checked and the other
+  // two never touched.
+  const addonRows: Array<{
+    addon_id: string;
+    addon_name: string;
+    booking_vehicle_id: string | null;
+  }> = (booking as any).booking_addons ?? [];
+  const bookingVehicles: Array<{
+    id: string;
+    vehicle_id: string;
+    vehicles?: { year?: number; make?: string; model?: string } | null;
+  }> = (booking as any).booking_vehicles ?? [];
+  const addonIds = Array.from(new Set(addonRows.map((a) => a.addon_id)));
 
   const [{ data: serviceItems }, { data: addonItems }] = await Promise.all([
     supabase
@@ -86,33 +94,89 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const progress: Record<string, { done_at?: string; photo_path?: string | null }> =
     (booking.checklist_progress as any) ?? {};
 
-  // Build addon_id → name map so missing-item errors say which add-on
-  // is incomplete (e.g. "Ceramic seal: Buffed to high gloss").
+  const vehicleLabel = (bv: typeof bookingVehicles[number]) => {
+    const v = bv.vehicles ?? {};
+    return [v.year, v.make, v.model].filter(Boolean).join(" ") || "Vehicle";
+  };
+
+  // Group addon items by addon_id so we can pair them with the vehicle
+  // that ordered the addon.
+  const addonItemsByAddonId = new Map<string, any[]>();
+  for (const it of (addonItems ?? []) as any[]) {
+    const list = addonItemsByAddonId.get(it.addon_id) ?? [];
+    list.push(it);
+    addonItemsByAddonId.set(it.addon_id, list);
+  }
   const addonNameById = new Map<string, string>();
   for (const a of addonRows) addonNameById.set(a.addon_id, a.addon_name);
 
   const missing: string[] = [];
-  for (const it of serviceItems ?? []) {
-    const entry = progress[it.id];
-    if (!entry?.done_at) {
-      missing.push(it.label);
-      continue;
+
+  // Multi-vehicle bookings: each vehicle gets the full service checklist.
+  // Home-category bookings have no booking_vehicles rows; fall back to a
+  // single 'booking:' keyed run (legacy behaviour).
+  if (bookingVehicles.length > 0) {
+    for (const bv of bookingVehicles) {
+      const label = vehicleLabel(bv);
+      // Base service items, per vehicle.
+      for (const it of serviceItems ?? []) {
+        const entry = progress[`${bv.id}:${it.id}`];
+        if (!entry?.done_at) {
+          missing.push(`${label}: ${it.label}`);
+          continue;
+        }
+        if (it.requires_photo && !entry.photo_path) {
+          missing.push(`${label}: ${it.label} (photo missing)`);
+        }
+      }
+      // Addon items — but only the addons that were ticked for THIS car.
+      const addonsOnThisVehicle = addonRows.filter((a) => a.booking_vehicle_id === bv.id);
+      for (const ar of addonsOnThisVehicle) {
+        const items = addonItemsByAddonId.get(ar.addon_id) ?? [];
+        for (const it of items) {
+          const entry = progress[`${bv.id}:${it.id}`];
+          if (!entry?.done_at) {
+            missing.push(`${label} → ${ar.addon_name}: ${it.label}`);
+            continue;
+          }
+          if (it.requires_photo && !entry.photo_path) {
+            missing.push(`${label} → ${ar.addon_name}: ${it.label} (photo missing)`);
+          }
+        }
+      }
     }
-    if (it.requires_photo && !entry.photo_path) {
-      missing.push(`${it.label} (photo missing)`);
+    // Legacy addons with no booking_vehicle_id (pre-0036) — keyed at booking level.
+    const legacyAddons = addonRows.filter((a) => !a.booking_vehicle_id);
+    for (const ar of legacyAddons) {
+      const items = addonItemsByAddonId.get(ar.addon_id) ?? [];
+      for (const it of items) {
+        const entry = progress[`booking:${it.id}`];
+        if (!entry?.done_at) {
+          missing.push(`${ar.addon_name}: ${it.label}`);
+        }
+        if (it.requires_photo && !entry?.photo_path) {
+          missing.push(`${ar.addon_name}: ${it.label} (photo missing)`);
+        }
+      }
+    }
+  } else {
+    // Home / no-vehicle bookings — single run, booking-keyed.
+    for (const it of serviceItems ?? []) {
+      const entry = progress[`booking:${it.id}`];
+      if (!entry?.done_at) missing.push(it.label);
+      else if (it.requires_photo && !entry.photo_path) missing.push(`${it.label} (photo missing)`);
+    }
+    for (const ar of addonRows) {
+      const items = addonItemsByAddonId.get(ar.addon_id) ?? [];
+      for (const it of items) {
+        const entry = progress[`booking:${it.id}`];
+        if (!entry?.done_at) missing.push(`${ar.addon_name}: ${it.label}`);
+        else if (it.requires_photo && !entry.photo_path)
+          missing.push(`${ar.addon_name}: ${it.label} (photo missing)`);
+      }
     }
   }
-  for (const it of (addonItems ?? []) as any[]) {
-    const entry = progress[it.id];
-    const addonName = addonNameById.get(it.addon_id) ?? "Add-on";
-    if (!entry?.done_at) {
-      missing.push(`${addonName}: ${it.label}`);
-      continue;
-    }
-    if (it.requires_photo && !entry.photo_path) {
-      missing.push(`${addonName}: ${it.label} (photo missing)`);
-    }
-  }
+
   if (missing.length > 0) {
     return NextResponse.json(
       {

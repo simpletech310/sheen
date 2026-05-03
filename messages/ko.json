@@ -1008,7 +1008,13 @@
     "backToNavigate": "길 찾기로 돌아가기",
     "couldNotStartWork": "작업을 시작할 수 없음",
     "retry": "재시도",
-    "checklistBaseGroup": "Base wash"
+    "checklistBaseGroup": "Base wash",
+    "checklistInstructionsPerVehicle": "Each vehicle has its own checklist — base wash plus any add-ons that customer ticked for that car. Tap a vehicle card to expand. All items across every car must be checked off (with photos where required) before you can mark the job complete.",
+    "vehicleHeader": "Vehicle",
+    "checklistVehicleDone": "Done",
+    "checklistVehicleProgress": "In progress",
+    "checklistVehicleEmpty": "No checklist for this vehicle.",
+    "bookingLevelAddons": "Booking-level add-ons"
   },
   "appMe": {
     "hiName": "안녕하세요, {name}님",
@@ -1529,7 +1535,8 @@
     "timelineFunded": "Funds released",
     "bookingId": "Booking ID",
     "getHelp": "Get help",
-    "tzNote": "Times shown in your timezone ({tz})"
+    "tzNote": "Times shown in your timezone ({tz})",
+    "checklistTitle": "Service progress"
   },
   "appMembership": {
     "eyebrow": "멤버십",

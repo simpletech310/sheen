@@ -7,6 +7,10 @@ export const dynamic = "force-dynamic";
 
 const Body = z.object({
   item_id: z.string().uuid(),
+  // booking_vehicle_id — required for any item that runs per-vehicle
+  // (every base-service item, plus any addon attached to a vehicle).
+  // Null is only valid for legacy "applies to whole booking" addons.
+  booking_vehicle_id: z.string().uuid().optional().nullable(),
   // null/undefined = uncheck. A non-empty payload (with optional photo) = check.
   done: z.boolean().default(true),
   photo_path: z.string().min(1).max(512).optional().nullable(),
@@ -14,14 +18,20 @@ const Body = z.object({
 
 /**
  * PATCH /api/bookings/[id]/checklist
- * Body: { item_id, done, photo_path? }
+ * Body: { item_id, booking_vehicle_id?, done, photo_path? }
  *
- * Pro toggles a single checklist item as done / not-done. If the item
- * requires a photo, photo_path must be present. We keep state in
- * bookings.checklist_progress (jsonb map) so there's no per-item row
- * churn — every check is a single UPDATE.
+ * Pro toggles a single checklist item as done / not-done. Items can
+ * be EITHER:
+ *   - service_checklist_items (the base wash) — run once per vehicle
+ *     on the booking, so booking_vehicle_id is required and the
+ *     progress entry is keyed by ${bvId}:${itemId}.
+ *   - addon_checklist_items — each addon is attached to a specific
+ *     booking_vehicle_id (via migration 0036), so the same per-vehicle
+ *     keying applies. Legacy addons without a vehicle FK fall back to
+ *     "booking:${itemId}".
  *
- * RLS keeps the booking scoped to the assigned washer.
+ * State lives in bookings.checklist_progress (jsonb map). Every flip
+ * is a single UPDATE — no per-item row churn.
  */
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -36,7 +46,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, assigned_washer_id, status, service_id, checklist_progress"
+      "id, assigned_washer_id, status, service_id, checklist_progress, booking_addons(addon_id, booking_vehicle_id), booking_vehicles(id)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -51,22 +61,57 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     );
   }
 
-  // Confirm the item belongs to this booking's service.
-  const { data: item } = await supabase
-    .from("service_checklist_items")
-    .select("id, requires_photo, label")
-    .eq("id", body.item_id)
-    .eq("service_id", booking.service_id)
-    .maybeSingle();
+  const bvIds = new Set(((booking as any).booking_vehicles ?? []).map((b: any) => b.id));
+  const addonIdsOnBooking = new Set(
+    ((booking as any).booking_addons ?? []).map((a: any) => a.addon_id)
+  );
+
+  // Validate the item belongs to either the booking's service OR an
+  // addon the customer ordered on this booking.
+  const [{ data: serviceItem }, { data: addonItem }] = await Promise.all([
+    supabase
+      .from("service_checklist_items")
+      .select("id, requires_photo, label")
+      .eq("id", body.item_id)
+      .eq("service_id", booking.service_id)
+      .maybeSingle(),
+    supabase
+      .from("addon_checklist_items")
+      .select("id, requires_photo, label, addon_id")
+      .eq("id", body.item_id)
+      .maybeSingle(),
+  ]);
+  const item = serviceItem ?? addonItem;
   if (!item) {
     return NextResponse.json(
-      { error: "Checklist item doesn't belong to this job" },
+      { error: "Checklist item not found" },
+      { status: 400 }
+    );
+  }
+  // Addon items must belong to an addon on THIS booking.
+  if (addonItem && !addonIdsOnBooking.has((addonItem as any).addon_id)) {
+    return NextResponse.json(
+      { error: "That add-on isn't on this booking" },
       { status: 400 }
     );
   }
 
-  // If the item requires a photo, refuse to mark it done without one.
-  // Photo path is optional on uncheck.
+  // Per-vehicle keying — bvId is required when the booking has any
+  // vehicles. (Home-category bookings have none and fall back to
+  // a "booking:" prefix.)
+  let key: string;
+  if (bvIds.size > 0) {
+    if (!body.booking_vehicle_id || !bvIds.has(body.booking_vehicle_id)) {
+      return NextResponse.json(
+        { error: "Pick which vehicle this item is for" },
+        { status: 400 }
+      );
+    }
+    key = `${body.booking_vehicle_id}:${body.item_id}`;
+  } else {
+    key = `booking:${body.item_id}`;
+  }
+
   if (body.done && item.requires_photo && !body.photo_path) {
     return NextResponse.json(
       { error: `"${item.label}" needs a photo to count as done` },
@@ -76,12 +121,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const progress: Record<string, any> = (booking.checklist_progress as any) ?? {};
   if (body.done) {
-    progress[body.item_id] = {
+    progress[key] = {
       done_at: new Date().toISOString(),
-      photo_path: body.photo_path ?? progress[body.item_id]?.photo_path ?? null,
+      photo_path: body.photo_path ?? progress[key]?.photo_path ?? null,
     };
   } else {
-    delete progress[body.item_id];
+    delete progress[key];
   }
 
   const { error } = await supabase

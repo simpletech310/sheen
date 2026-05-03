@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/brand/Eyebrow";
-import { ChecklistClient } from "./ChecklistClient";
+import { ChecklistClient, type VehicleGroup, type ChecklistItem } from "./ChecklistClient";
 import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export default async function JobChecklistPage({
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, service_id, checklist_progress, services(tier_name, category), booking_addons(addon_id, addon_name)"
+      "id, status, assigned_washer_id, service_id, checklist_progress, services(tier_name, category), booking_addons(addon_id, addon_name, booking_vehicle_id), booking_vehicles(id, vehicle_id, vehicles(year, make, model, color, plate))"
     )
     .eq("id", params.jobId)
     .maybeSingle();
@@ -30,17 +30,25 @@ export default async function JobChecklistPage({
   if (booking.assigned_washer_id !== user.id) {
     return (
       <div className="px-5 pt-10 pb-8">
-        <p className="text-sm text-bone/65">
-          {t("notAssigned")}
-        </p>
+        <p className="text-sm text-bone/65">{t("notAssigned")}</p>
       </div>
     );
   }
 
-  const addonRows: Array<{ addon_id: string; addon_name: string }> =
-    (booking as any).booking_addons ?? [];
-  const addonIds = addonRows.map((a) => a.addon_id);
-  const addonNameById = new Map(addonRows.map((a) => [a.addon_id, a.addon_name]));
+  // Pull EVERY checklist source up-front so the per-vehicle groups can
+  // be assembled server-side and shipped to the client as a single
+  // structure.
+  const addonRows: Array<{
+    addon_id: string;
+    addon_name: string;
+    booking_vehicle_id: string | null;
+  }> = (booking as any).booking_addons ?? [];
+  const bookingVehicles: Array<{
+    id: string;
+    vehicle_id: string;
+    vehicles?: { year?: number; make?: string; model?: string; color?: string; plate?: string } | null;
+  }> = (booking as any).booking_vehicles ?? [];
+  const addonIds = Array.from(new Set(addonRows.map((a) => a.addon_id)));
 
   const [{ data: serviceItems }, { data: addonItems }] = await Promise.all([
     supabase
@@ -57,43 +65,63 @@ export default async function JobChecklistPage({
       : Promise.resolve({ data: [] as any[] } as any),
   ]);
 
-  // Flatten into one list with `group` set per addon. Base service
-  // items keep group=null so the ChecklistClient renders a "service"
-  // header for them; addon items get the addon name as the header,
-  // grouped together so the pro works through one add-on at a time.
-  type ChecklistItem = {
-    id: string;
-    label: string;
-    hint: string | null;
-    requires_photo: boolean;
-    sort_order: number;
-    group: string | null;
-  };
-  const baseList: ChecklistItem[] = (serviceItems ?? []).map((i: any) => ({
+  const baseItems: ChecklistItem[] = (serviceItems ?? []).map((i: any) => ({
     id: i.id,
     label: i.label,
     hint: i.hint,
     requires_photo: i.requires_photo,
-    sort_order: i.sort_order,
-    group: null,
   }));
-  const addonsByGroup = new Map<string, ChecklistItem[]>();
+
+  // Group addon checklist items by addon_id so we can attach them to
+  // whichever vehicle ordered the addon.
+  const addonItemsByAddon = new Map<string, ChecklistItem[]>();
   for (const i of (addonItems ?? []) as any[]) {
-    const name = addonNameById.get(i.addon_id) ?? "Add-on";
-    if (!addonsByGroup.has(name)) addonsByGroup.set(name, []);
-    addonsByGroup.get(name)!.push({
+    const list = addonItemsByAddon.get(i.addon_id) ?? [];
+    list.push({
       id: i.id,
       label: i.label,
       hint: i.hint,
       requires_photo: i.requires_photo,
-      sort_order: i.sort_order,
-      group: name,
+    });
+    addonItemsByAddon.set(i.addon_id, list);
+  }
+
+  // Build the per-vehicle structure. Each vehicle gets:
+  //   - the full base service checklist
+  //   - one section per addon attached to THIS vehicle, with its items
+  const vehicles: VehicleGroup[] = bookingVehicles.map((bv) => {
+    const v = bv.vehicles ?? {};
+    const label = [v.year, v.color, v.make, v.model].filter(Boolean).join(" ") || "Vehicle";
+    const addonsOnThisVehicle = addonRows.filter((a) => a.booking_vehicle_id === bv.id);
+    return {
+      bookingVehicleId: bv.id,
+      label,
+      plate: v.plate ?? null,
+      baseItems,
+      addons: addonsOnThisVehicle.map((a) => ({
+        addonId: a.addon_id,
+        addonName: a.addon_name,
+        items: addonItemsByAddon.get(a.addon_id) ?? [],
+      })),
+    };
+  });
+
+  // Legacy addons with no vehicle FK — render under a "booking-level"
+  // pseudo-vehicle so they still show up. Should be empty for new bookings.
+  const orphanAddons = addonRows.filter((a) => !a.booking_vehicle_id);
+  if (orphanAddons.length > 0) {
+    vehicles.push({
+      bookingVehicleId: null,
+      label: t("bookingLevelAddons"),
+      plate: null,
+      baseItems: [],
+      addons: orphanAddons.map((a) => ({
+        addonId: a.addon_id,
+        addonName: a.addon_name,
+        items: addonItemsByAddon.get(a.addon_id) ?? [],
+      })),
     });
   }
-  const items: ChecklistItem[] = [
-    ...baseList,
-    ...Array.from(addonsByGroup.values()).flat(),
-  ];
 
   const progress = (booking.checklist_progress as Record<
     string,
@@ -115,18 +143,12 @@ export default async function JobChecklistPage({
       </h1>
       <div className="h-[3px] w-16 bg-gradient-to-r from-royal to-sol mb-5" />
       <p className="text-sm text-bone/60 mb-6 leading-relaxed">
-        {t("checklistInstructions")}
+        {t("checklistInstructionsPerVehicle")}
       </p>
 
       <ChecklistClient
         jobId={params.jobId}
-        items={items.map((i) => ({
-          id: i.id,
-          label: i.label,
-          hint: i.hint,
-          requires_photo: i.requires_photo,
-          group: i.group,
-        }))}
+        vehicles={vehicles}
         initialProgress={progress}
       />
     </div>

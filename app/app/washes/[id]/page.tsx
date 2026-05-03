@@ -21,7 +21,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, completed_at, customer_approved_at, funds_released_at, scheduled_window_start, total_cents, service_cents, fees_cents, tip_cents, points_earned, vehicle_count, customer_id, service_id, address_id, recurring_template_id, checklist_progress, work_photo_paths, services(tier_name, category), addresses(street, city, state, zip)"
+      "id, status, completed_at, customer_approved_at, funds_released_at, scheduled_window_start, total_cents, service_cents, fees_cents, tip_cents, points_earned, vehicle_count, customer_id, service_id, address_id, recurring_template_id, checklist_progress, work_photo_paths, services(tier_name, category), addresses(street, city, state, zip), booking_addons(addon_id, addon_name, booking_vehicle_id)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -40,7 +40,7 @@ export default async function WashDetailPage({ params }: { params: { id: string 
   const { data: bvRows } = await supabase
     .from("booking_vehicles")
     .select(
-      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes, photo_paths)"
+      "id, vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes, photo_paths)"
     )
     .eq("booking_id", params.id);
   const allPhotoPaths = (bvRows ?? []).flatMap((r: any) => [
@@ -48,14 +48,63 @@ export default async function WashDetailPage({ params }: { params: { id: string 
     ...(r.vehicles?.photo_paths ?? []),
   ]);
 
-  // Pull the service's checklist + the pro's progress so the customer can see
-  // exactly what was done. Photos referenced by the checklist live in the
-  // same `booking-photos` bucket, so we batch-sign with the vehicle photos.
-  const { data: checklistItems } = await supabase
-    .from("service_checklist_items")
-    .select("id, label, hint, requires_photo, sort_order")
-    .eq("service_id", (booking as any).service_id)
-    .order("sort_order");
+  // Per-vehicle checklist for the customer's view. Same shape the
+  // tracking page builds: each vehicle gets the base wash checklist
+  // plus addons attached to that car.
+  const wAllAddons: Array<{
+    addon_id: string;
+    addon_name: string;
+    booking_vehicle_id: string | null;
+  }> = (booking as any).booking_addons ?? [];
+  const wAddonIds = Array.from(new Set(wAllAddons.map((a) => a.addon_id)));
+  const [{ data: wServiceItems }, { data: wAddonItems }] = await Promise.all([
+    supabase
+      .from("service_checklist_items")
+      .select("id, label, hint, requires_photo, sort_order")
+      .eq("service_id", (booking as any).service_id)
+      .order("sort_order"),
+    wAddonIds.length > 0
+      ? supabase
+          .from("addon_checklist_items")
+          .select("id, label, hint, requires_photo, sort_order, addon_id")
+          .in("addon_id", wAddonIds)
+          .order("sort_order")
+      : Promise.resolve({ data: [] as any[] } as any),
+  ]);
+  const wBaseItems = ((wServiceItems ?? []) as any[]).map((i) => ({
+    id: i.id,
+    label: i.label,
+    hint: i.hint,
+    requires_photo: i.requires_photo,
+  }));
+  const wAddonItemsByAddon = new Map<string, typeof wBaseItems>();
+  for (const i of (wAddonItems ?? []) as any[]) {
+    const list = wAddonItemsByAddon.get(i.addon_id) ?? [];
+    list.push({
+      id: i.id,
+      label: i.label,
+      hint: i.hint,
+      requires_photo: i.requires_photo,
+    });
+    wAddonItemsByAddon.set(i.addon_id, list);
+  }
+  const checklistVehicles = (bvRows ?? []).map((r: any) => {
+    const v = r.vehicles ?? {};
+    const label = [v.year, v.color, v.make, v.model].filter(Boolean).join(" ") || "Vehicle";
+    return {
+      bookingVehicleId: r.id as string,
+      label,
+      plate: (v.plate as string | null) ?? null,
+      baseItems: wBaseItems,
+      addons: wAllAddons
+        .filter((a) => a.booking_vehicle_id === r.id)
+        .map((a) => ({
+          addonId: a.addon_id,
+          addonName: a.addon_name,
+          items: wAddonItemsByAddon.get(a.addon_id) ?? [],
+        })),
+    };
+  });
   const checklistProgress = ((booking as any).checklist_progress ?? {}) as Record<
     string,
     { done_at?: string; photo_path?: string | null }
@@ -147,9 +196,9 @@ export default async function WashDetailPage({ params }: { params: { id: string 
         </div>
       )}
 
-      {(checklistItems ?? []).length > 0 && (
+      {checklistVehicles.length > 0 && (
         <CustomerChecklist
-          items={(checklistItems ?? []) as any}
+          vehicles={checklistVehicles as any}
           progress={checklistProgress}
           signedPhotoUrls={photoUrls}
         />

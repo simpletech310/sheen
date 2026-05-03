@@ -78,25 +78,54 @@ export default async function TrackingPage({ params }: { params: { id: string } 
         : Promise.resolve({ data: [] as any[] } as any),
     ]);
 
-  // Flatten with `group` per item — null = base wash, addon name otherwise.
-  const checklistItems = [
-    ...((serviceChecklistItems ?? []) as any[]).map((i) => ({
+  // Build the per-vehicle checklist structure that mirrors what the
+  // pro is working through. Each car gets the full base service
+  // checklist plus the addon checklists for whatever extras WERE
+  // ticked for THAT car. CustomerChecklist renders one collapsible
+  // card per vehicle so a 3-car booking doesn't drown the page.
+  const baseChecklistItems = ((serviceChecklistItems ?? []) as any[]).map(
+    (i) => ({
       id: i.id,
       label: i.label,
       hint: i.hint,
       requires_photo: i.requires_photo,
-      sort_order: i.sort_order,
-      group: null as string | null,
-    })),
-    ...((addonChecklistItems ?? []) as any[]).map((i) => ({
+    })
+  );
+  const addonItemsByAddonId = new Map<string, typeof baseChecklistItems>();
+  for (const i of (addonChecklistItems ?? []) as any[]) {
+    const list = addonItemsByAddonId.get(i.addon_id) ?? [];
+    list.push({
       id: i.id,
       label: i.label,
       hint: i.hint,
       requires_photo: i.requires_photo,
-      sort_order: i.sort_order,
-      group: trackedAddonNameById.get(i.addon_id) ?? "Add-on",
-    })),
-  ];
+    });
+    addonItemsByAddonId.set(i.addon_id, list);
+  }
+  const allBookingAddons: Array<{
+    addon_id: string;
+    addon_name: string;
+    booking_vehicle_id: string | null;
+  }> = (booking as any).booking_addons ?? [];
+
+  const checklistVehicles = (bvRows ?? []).map((r: any) => {
+    const v = r.vehicles ?? {};
+    const label = [v.year, v.color, v.make, v.model].filter(Boolean).join(" ") || "Vehicle";
+    const addonsOnThisVehicle = allBookingAddons.filter(
+      (a) => a.booking_vehicle_id === r.id
+    );
+    return {
+      bookingVehicleId: r.id as string,
+      label,
+      plate: (v.plate as string | null) ?? null,
+      baseItems: baseChecklistItems,
+      addons: addonsOnThisVehicle.map((a) => ({
+        addonId: a.addon_id,
+        addonName: a.addon_name,
+        items: addonItemsByAddonId.get(a.addon_id) ?? [],
+      })),
+    };
+  });
   const checklistProgress = ((booking as any).checklist_progress ?? {}) as Record<
     string,
     { done_at?: string; photo_path?: string | null }
@@ -324,11 +353,12 @@ export default async function TrackingPage({ params }: { params: { id: string } 
         </div>
       )}
 
-      {(checklistItems ?? []).length > 0 && (
+      {checklistVehicles.length > 0 && (
         <CustomerChecklist
-          items={(checklistItems ?? []) as any}
+          vehicles={checklistVehicles as any}
           progress={checklistProgress}
           signedPhotoUrls={allSigned}
+          title={t("checklistTitle")}
         />
       )}
 
