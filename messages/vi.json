@@ -1006,7 +1006,8 @@
     "openJobChecklist": "Mở danh sách công việc",
     "backToNavigate": "Quay lại dẫn đường",
     "couldNotStartWork": "Không thể bắt đầu làm việc",
-    "retry": "Thử lại"
+    "retry": "Thử lại",
+    "checklistBaseGroup": "Base wash"
   },
   "appMe": {
     "hiName": "Chào {name}",
@@ -1485,7 +1486,8 @@
     "yourPro": "Chuyên viên của bạn",
     "yourProFallback": "Chuyên viên của bạn",
     "total": "Tổng cộng",
-    "addonsIncluded": "Dịch vụ detailing thêm"
+    "addonsIncluded": "Dịch vụ detailing thêm",
+    "receiptTitle": "Receipt"
   },
   "appMembership": {
     "eyebrow": "Gói thành viên",

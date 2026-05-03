@@ -776,7 +776,8 @@
     "openJobChecklist": "Abrir lista del trabajo",
     "backToNavigate": "Volver a navegar",
     "couldNotStartWork": "No se pudo iniciar el trabajo",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "checklistBaseGroup": "Base wash"
   },
   "appMe": {
     "hiName": "Hola, {name}",
@@ -1255,7 +1256,8 @@
     "yourPro": "Tu pro",
     "yourProFallback": "Tu pro",
     "total": "Total",
-    "addonsIncluded": "Extras de detallado"
+    "addonsIncluded": "Extras de detallado",
+    "receiptTitle": "Receipt"
   },
   "appMembership": {
     "eyebrow": "Membresía",

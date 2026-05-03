@@ -136,27 +136,67 @@ export async function POST(req: Request) {
       .maybeSingle();
     if (!svc) return NextResponse.json({ error: "Unknown service" }, { status: 400 });
 
-    const { data: addr } = await supabase
+    // Reuse an existing matching address row if the customer has booked
+    // this exact street before. Stops the addresses table from growing
+    // by one row per booking — which is what was making the saved-places
+    // picker pile up duplicates of the same house.
+    const composedStreet =
+      body.address.street + (body.address.unit ? ` ${body.address.unit}` : "");
+    const { data: existingAddr } = await supabase
       .from("addresses")
-      .insert({
-        user_id: user.id,
-        tag: "JOB",
-        street: body.address.street + (body.address.unit ? ` ${body.address.unit}` : ""),
-        city: body.address.city,
-        state: body.address.state,
-        zip: body.address.zip,
-        lat: body.address.lat ?? null,
-        lng: body.address.lng ?? null,
-        notes: body.address.notes ?? null,
-        has_water: body.address.has_water ?? null,
-        has_power: body.address.has_power ?? null,
-        water_notes: body.address.water_notes ?? null,
-        power_notes: body.address.power_notes ?? null,
-        gate_code: body.address.gate_code ?? null,
-        site_photo_paths: body.address.site_photo_paths ?? [],
-      })
       .select("id")
-      .single();
+      .eq("user_id", user.id)
+      .eq("street", composedStreet)
+      .eq("city", body.address.city)
+      .eq("state", body.address.state)
+      .eq("zip", body.address.zip)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let addr: { id: string } | null = existingAddr ?? null;
+    if (existingAddr) {
+      // Update site-access fields on the existing row so the latest
+      // gate code / site photos / water-power answers are what the
+      // washer sees on this specific booking.
+      await supabase
+        .from("addresses")
+        .update({
+          lat: body.address.lat ?? null,
+          lng: body.address.lng ?? null,
+          notes: body.address.notes ?? null,
+          has_water: body.address.has_water ?? null,
+          has_power: body.address.has_power ?? null,
+          water_notes: body.address.water_notes ?? null,
+          power_notes: body.address.power_notes ?? null,
+          gate_code: body.address.gate_code ?? null,
+          site_photo_paths: body.address.site_photo_paths ?? [],
+        })
+        .eq("id", existingAddr.id);
+    } else {
+      const { data: inserted } = await supabase
+        .from("addresses")
+        .insert({
+          user_id: user.id,
+          tag: "JOB",
+          street: composedStreet,
+          city: body.address.city,
+          state: body.address.state,
+          zip: body.address.zip,
+          lat: body.address.lat ?? null,
+          lng: body.address.lng ?? null,
+          notes: body.address.notes ?? null,
+          has_water: body.address.has_water ?? null,
+          has_power: body.address.has_power ?? null,
+          water_notes: body.address.water_notes ?? null,
+          power_notes: body.address.power_notes ?? null,
+          gate_code: body.address.gate_code ?? null,
+          site_photo_paths: body.address.site_photo_paths ?? [],
+        })
+        .select("id")
+        .single();
+      addr = inserted ?? null;
+    }
     if (!addr) return NextResponse.json({ error: "Could not save address" }, { status: 400 });
 
     // Server-side addon snapshot — never trust client price math.

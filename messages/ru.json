@@ -1006,7 +1006,8 @@
     "openJobChecklist": "Открыть чек-лист заказа",
     "backToNavigate": "Вернуться к навигации",
     "couldNotStartWork": "Не удалось начать работу",
-    "retry": "Повторить"
+    "retry": "Повторить",
+    "checklistBaseGroup": "Base wash"
   },
   "appMe": {
     "hiName": "Привет, {name}",
@@ -1485,7 +1486,8 @@
     "yourPro": "Ваш специалист",
     "yourProFallback": "Ваш специалист",
     "total": "Итого",
-    "addonsIncluded": "Допы детейлинга"
+    "addonsIncluded": "Допы детейлинга",
+    "receiptTitle": "Receipt"
   },
   "appMembership": {
     "eyebrow": "Подписка",

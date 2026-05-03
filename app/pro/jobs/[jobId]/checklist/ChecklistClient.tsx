@@ -10,6 +10,10 @@ type Item = {
   label: string;
   hint: string | null;
   requires_photo: boolean;
+  // null = part of the base service checklist
+  // non-null = belongs to an addon (string is the addon's display name,
+  // e.g. "Ceramic spray seal"). Drives the group headers in the list.
+  group?: string | null;
 };
 
 type ProgressEntry = { done_at?: string; photo_path?: string | null };
@@ -240,15 +244,29 @@ export function ChecklistClient({
 
       {/* Items */}
       <div className="space-y-2 mb-7">
-        {items.map((item) => {
+        {items.map((item, idx) => {
           const entry = progress[item.id];
           const isDone = !!entry?.done_at;
           const photoOk =
             !item.requires_photo || (isDone && !!entry?.photo_path);
           const fullyDone = isDone && photoOk;
+          // Render a group header whenever the group changes. Items with
+          // null group are the base service; items grouped by addon name
+          // get a sol-accent header so the pro sees what each block is for.
+          const prevGroup = idx === 0 ? "__none__" : items[idx - 1].group ?? null;
+          const showHeader = (item.group ?? null) !== prevGroup;
           return (
+            <div key={item.id}>
+            {showHeader && (
+              <div
+                className={`font-mono text-[10px] uppercase tracking-wider px-2 py-1 mt-${idx === 0 ? "0" : "3"} mb-1.5 ${
+                  item.group ? "bg-sol/15 text-sol" : "bg-white/5 text-bone/60"
+                }`}
+              >
+                {item.group ? `+ ${item.group}` : t("checklistBaseGroup")}
+              </div>
+            )}
             <div
-              key={item.id}
               className={`p-4 transition border-l-2 ${
                 fullyDone
                   ? "bg-good/10 border-good"
@@ -375,6 +393,7 @@ export function ChecklistClient({
                   )}
                 </div>
               </div>
+            </div>
             </div>
           );
         })}

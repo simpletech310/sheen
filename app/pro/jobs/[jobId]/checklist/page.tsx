@@ -22,7 +22,7 @@ export default async function JobChecklistPage({
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, service_id, checklist_progress, services(tier_name, category)"
+      "id, status, assigned_washer_id, service_id, checklist_progress, services(tier_name, category), booking_addons(addon_id, addon_name)"
     )
     .eq("id", params.jobId)
     .maybeSingle();
@@ -37,11 +37,63 @@ export default async function JobChecklistPage({
     );
   }
 
-  const { data: items } = await supabase
-    .from("service_checklist_items")
-    .select("id, label, hint, requires_photo, sort_order")
-    .eq("service_id", booking.service_id)
-    .order("sort_order");
+  const addonRows: Array<{ addon_id: string; addon_name: string }> =
+    (booking as any).booking_addons ?? [];
+  const addonIds = addonRows.map((a) => a.addon_id);
+  const addonNameById = new Map(addonRows.map((a) => [a.addon_id, a.addon_name]));
+
+  const [{ data: serviceItems }, { data: addonItems }] = await Promise.all([
+    supabase
+      .from("service_checklist_items")
+      .select("id, label, hint, requires_photo, sort_order")
+      .eq("service_id", booking.service_id)
+      .order("sort_order"),
+    addonIds.length > 0
+      ? supabase
+          .from("addon_checklist_items")
+          .select("id, label, hint, requires_photo, sort_order, addon_id")
+          .in("addon_id", addonIds)
+          .order("sort_order")
+      : Promise.resolve({ data: [] as any[] } as any),
+  ]);
+
+  // Flatten into one list with `group` set per addon. Base service
+  // items keep group=null so the ChecklistClient renders a "service"
+  // header for them; addon items get the addon name as the header,
+  // grouped together so the pro works through one add-on at a time.
+  type ChecklistItem = {
+    id: string;
+    label: string;
+    hint: string | null;
+    requires_photo: boolean;
+    sort_order: number;
+    group: string | null;
+  };
+  const baseList: ChecklistItem[] = (serviceItems ?? []).map((i: any) => ({
+    id: i.id,
+    label: i.label,
+    hint: i.hint,
+    requires_photo: i.requires_photo,
+    sort_order: i.sort_order,
+    group: null,
+  }));
+  const addonsByGroup = new Map<string, ChecklistItem[]>();
+  for (const i of (addonItems ?? []) as any[]) {
+    const name = addonNameById.get(i.addon_id) ?? "Add-on";
+    if (!addonsByGroup.has(name)) addonsByGroup.set(name, []);
+    addonsByGroup.get(name)!.push({
+      id: i.id,
+      label: i.label,
+      hint: i.hint,
+      requires_photo: i.requires_photo,
+      sort_order: i.sort_order,
+      group: name,
+    });
+  }
+  const items: ChecklistItem[] = [
+    ...baseList,
+    ...Array.from(addonsByGroup.values()).flat(),
+  ];
 
   const progress = (booking.checklist_progress as Record<
     string,
@@ -68,14 +120,13 @@ export default async function JobChecklistPage({
 
       <ChecklistClient
         jobId={params.jobId}
-        items={
-          (items ?? []).map((i: any) => ({
-            id: i.id,
-            label: i.label,
-            hint: i.hint,
-            requires_photo: i.requires_photo,
-          }))
-        }
+        items={items.map((i) => ({
+          id: i.id,
+          label: i.label,
+          hint: i.hint,
+          requires_photo: i.requires_photo,
+          group: i.group,
+        }))}
         initialProgress={progress}
       />
     </div>

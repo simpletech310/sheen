@@ -949,6 +949,7 @@
     "notAssigned": "This job isn't assigned to you.",
     "backToTimer": "Timer",
     "checklistEyebrow": "Job checklist",
+    "checklistBaseGroup": "Base wash",
     "jobFallback": "JOB",
     "checklistInstructions": "Check off each step as you finish. Items with the camera icon need a photo to count as done. Once everything's checked, you can mark the job complete and the customer gets the approval prompt.",
     "progress": "Progress",
@@ -1485,6 +1486,7 @@
     "yourPro": "Your pro",
     "yourProFallback": "Your pro",
     "addonsIncluded": "Detailing add-ons",
+    "receiptTitle": "Receipt",
     "total": "Total"
   },
   "appMembership": {

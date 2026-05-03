@@ -1006,7 +1006,8 @@
     "openJobChecklist": "打开工作清单",
     "backToNavigate": "返回导航",
     "couldNotStartWork": "无法开始工作",
-    "retry": "重试"
+    "retry": "重试",
+    "checklistBaseGroup": "Base wash"
   },
   "appMe": {
     "hiName": "嗨，{name}",
@@ -1485,7 +1486,8 @@
     "yourPro": "您的专员",
     "yourProFallback": "您的专员",
     "total": "总计",
-    "addonsIncluded": "Detailing add-ons"
+    "addonsIncluded": "Detailing add-ons",
+    "receiptTitle": "Receipt"
   },
   "appMembership": {
     "eyebrow": "会员",

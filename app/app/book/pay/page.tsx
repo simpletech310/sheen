@@ -102,7 +102,10 @@ function PayInner() {
           body: JSON.stringify({
             tier_name: tier,
             category,
-            service_cents: totalServiceCents,
+            // Send the BASE tier × vehicle_count only. The server snapshots
+            // add-ons from addon_codes + vehicle_size and sums them onto
+            // the total — sending a pre-summed value would double-count.
+            service_cents: baseTierTotal,
             vehicle_ids: usesVehicles ? draft?.vehicleIds : undefined,
             condition_photos: usesVehicles ? draft?.conditionPhotos : undefined,
             requested_wash_handle: requestedHandle || undefined,

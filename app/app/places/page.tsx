@@ -6,15 +6,40 @@ import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
+// Mirror of /api/places dedupe — keep this in sync. The composite
+// key drops dupes spawned by every booking inserting a fresh
+// address row, then we cap the auto-created "recent" rows to 2.
+function dedupKey(a: any): string {
+  return [a.street, a.unit ?? "", a.city, a.state, a.zip]
+    .map((s) => String(s ?? "").trim().toLowerCase())
+    .join("|");
+}
+
 export default async function PlacesPage() {
   const t = await getTranslations("appPlaces");
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: addresses } = await supabase
+  const { data: rawAddresses } = await supabase
     .from("addresses")
-    .select("id, tag, street, unit, city, state, zip, lat, lng, notes, is_default")
+    .select("id, tag, street, unit, city, state, zip, lat, lng, notes, is_default, created_at")
     .eq("user_id", user?.id ?? "")
     .order("created_at", { ascending: false });
+
+  const seen = new Set<string>();
+  const deduped: any[] = [];
+  for (const a of rawAddresses ?? []) {
+    const k = dedupKey(a);
+    if (k === "||||" || seen.has(k)) continue;
+    seen.add(k);
+    deduped.push(a);
+  }
+  const tagged = deduped.filter(
+    (a) => a.tag && String(a.tag).toUpperCase() !== "JOB"
+  );
+  const recent = deduped
+    .filter((a) => !a.tag || String(a.tag).toUpperCase() === "JOB")
+    .slice(0, 2);
+  const addresses = [...tagged, ...recent];
 
   return (
     <div className="px-5 pt-10 pb-8">

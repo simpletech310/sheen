@@ -21,7 +21,7 @@ export default async function TrackingPage({ params }: { params: { id: string } 
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, service_id, total_cents, customer_approved_at, funds_released_at, completed_at, work_photo_paths, checklist_progress, addresses(lat, lng), services(tier_name), booking_addons(addon_code, addon_name, price_cents)"
+      "id, status, assigned_washer_id, service_id, total_cents, customer_approved_at, funds_released_at, completed_at, work_photo_paths, checklist_progress, addresses(lat, lng), services(tier_name), booking_addons(addon_id, addon_code, addon_name, price_cents)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -44,12 +44,58 @@ export default async function TrackingPage({ params }: { params: { id: string } 
 
   const workPhotoPaths = (booking as any).work_photo_paths ?? [];
 
-  // Checklist + per-item proof photos so the customer can watch progress live.
-  const { data: checklistItems } = await supabase
-    .from("service_checklist_items")
-    .select("id, label, hint, requires_photo, sort_order")
-    .eq("service_id", (booking as any).service_id)
-    .order("sort_order");
+  // Checklist + per-item proof photos so the customer can watch progress
+  // live. Pulls BOTH the base service items AND every addon checklist
+  // for whatever extras they ticked at booking — flattened into one
+  // grouped list so the customer can verify each thing they paid for
+  // is actually getting done.
+  const trackedAddonRows: Array<{ addon_id: string; addon_name: string }> =
+    ((booking as any).booking_addons ?? []).map((a: any) => ({
+      addon_id: a.addon_id ?? a.id,
+      addon_name: a.addon_name,
+    }));
+  const trackedAddonIds = trackedAddonRows
+    .map((a) => a.addon_id)
+    .filter((id): id is string => !!id);
+  const trackedAddonNameById = new Map(
+    trackedAddonRows.map((a) => [a.addon_id, a.addon_name] as const)
+  );
+
+  const [{ data: serviceChecklistItems }, { data: addonChecklistItems }] =
+    await Promise.all([
+      supabase
+        .from("service_checklist_items")
+        .select("id, label, hint, requires_photo, sort_order")
+        .eq("service_id", (booking as any).service_id)
+        .order("sort_order"),
+      trackedAddonIds.length > 0
+        ? supabase
+            .from("addon_checklist_items")
+            .select("id, label, hint, requires_photo, sort_order, addon_id")
+            .in("addon_id", trackedAddonIds)
+            .order("sort_order")
+        : Promise.resolve({ data: [] as any[] } as any),
+    ]);
+
+  // Flatten with `group` per item — null = base wash, addon name otherwise.
+  const checklistItems = [
+    ...((serviceChecklistItems ?? []) as any[]).map((i) => ({
+      id: i.id,
+      label: i.label,
+      hint: i.hint,
+      requires_photo: i.requires_photo,
+      sort_order: i.sort_order,
+      group: null as string | null,
+    })),
+    ...((addonChecklistItems ?? []) as any[]).map((i) => ({
+      id: i.id,
+      label: i.label,
+      hint: i.hint,
+      requires_photo: i.requires_photo,
+      sort_order: i.sort_order,
+      group: trackedAddonNameById.get(i.addon_id) ?? "Add-on",
+    })),
+  ];
   const checklistProgress = ((booking as any).checklist_progress ?? {}) as Record<
     string,
     { done_at?: string; photo_path?: string | null }
@@ -159,21 +205,55 @@ export default async function TrackingPage({ params }: { params: { id: string } 
         />
       )}
 
-      <div className="mt-6 bg-mist/40 p-4 text-sm space-y-1.5">
+      {/* Receipt — proof of what was ordered. Shows the service tier,
+          every vehicle being washed, and every add-on the customer
+          ticked. Pro should see this same picture on their job card,
+          and the customer keeps it as their record. */}
+      <div className="mt-6 bg-mist/40 p-4 text-sm">
+        <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-3">
+          {t("receiptTitle")}
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex justify-between font-bold">
+            <span>{(booking as any).services?.tier_name ?? t("defaultServiceName")}</span>
+          </div>
+          {(bvRows ?? []).map((r: any) => {
+            const v = r.vehicles ?? {};
+            const label = [v.year, v.color, v.make, v.model]
+              .filter(Boolean)
+              .join(" ");
+            return (
+              <div
+                key={r.vehicle_id}
+                className="flex justify-between text-xs text-smoke pl-2"
+              >
+                <span>
+                  → {label || t("defaultServiceName")}
+                  {v.plate ? <span className="ml-1 font-mono text-[10px]">· {v.plate}</span> : null}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
         {((booking as any).booking_addons ?? []).length > 0 && (
           <>
-            <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mt-4 mb-2">
               {t("addonsIncluded")}
             </div>
-            {((booking as any).booking_addons ?? []).map((a: any) => (
-              <div key={a.addon_code} className="flex justify-between text-xs text-smoke">
-                <span>+ {a.addon_name}</span>
-                <span className="tabular">{fmtUSD(a.price_cents)}</span>
-              </div>
-            ))}
-            <div className="border-t border-bone/30 my-2" />
+            <div className="space-y-1.5">
+              {((booking as any).booking_addons ?? []).map((a: any) => (
+                <div key={a.addon_code} className="flex justify-between text-xs">
+                  <span>+ {a.addon_name}</span>
+                  <span className="tabular text-smoke">{fmtUSD(a.price_cents)}</span>
+                </div>
+              ))}
+            </div>
           </>
         )}
+
+        <div className="border-t border-bone/30 my-3" />
         <div className="flex justify-between">
           <span className="text-smoke">{t("total")}</span>
           <span className="display tabular text-xl">{fmtUSD(booking.total_cents)}</span>

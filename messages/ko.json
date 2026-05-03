@@ -1006,7 +1006,8 @@
     "openJobChecklist": "작업 체크리스트 열기",
     "backToNavigate": "길 찾기로 돌아가기",
     "couldNotStartWork": "작업을 시작할 수 없음",
-    "retry": "재시도"
+    "retry": "재시도",
+    "checklistBaseGroup": "Base wash"
   },
   "appMe": {
     "hiName": "안녕하세요, {name}님",
@@ -1485,7 +1486,8 @@
     "yourPro": "담당 프로",
     "yourProFallback": "담당 프로",
     "total": "합계",
-    "addonsIncluded": "디테일링 추가 옵션"
+    "addonsIncluded": "디테일링 추가 옵션",
+    "receiptTitle": "Receipt"
   },
   "appMembership": {
     "eyebrow": "멤버십",

@@ -5,6 +5,10 @@ export type ChecklistItem = {
   label: string;
   hint: string | null;
   requires_photo: boolean;
+  // null = base service item; non-null = belongs to an addon, value is
+  // the addon display name. Drives the group headers in the list so
+  // the customer sees what work belongs to which add-on they paid for.
+  group?: string | null;
 };
 
 export type ChecklistEntry = { done_at?: string; photo_path?: string | null };
@@ -40,16 +44,27 @@ export function CustomerChecklist({
       <div className="h-[2px] bg-mist mb-3 overflow-hidden">
         <div className="h-full bg-good transition-all" style={{ width: `${pct}%` }} />
       </div>
-      <ul className="space-y-2">
-        {items.map((it) => {
+      <div className="space-y-2">
+        {items.map((it, idx) => {
           const entry = progress[it.id];
           const isDone = !!entry?.done_at;
           const photoOk = !it.requires_photo || (isDone && !!entry?.photo_path);
           const fullyDone = isDone && photoOk;
           const photoUrl = entry?.photo_path ? signedPhotoUrls[entry.photo_path] : undefined;
+          const prevGroup = idx === 0 ? "__none__" : items[idx - 1].group ?? null;
+          const showHeader = (it.group ?? null) !== prevGroup;
           return (
-            <li
-              key={it.id}
+            <div key={it.id}>
+            {showHeader && (
+              <div
+                className={`font-mono text-[10px] uppercase tracking-wider px-2 py-1 mb-1.5 ${
+                  it.group ? "bg-royal/10 text-royal" : "bg-mist text-smoke"
+                } ${idx === 0 ? "" : "mt-3"}`}
+              >
+                {it.group ? `+ ${it.group}` : "Base wash"}
+              </div>
+            )}
+            <div
               className={`flex items-start gap-3 px-2.5 py-2 border-l-2 ${
                 fullyDone ? "border-good bg-good/5" : "border-mist bg-white/40"
               }`}
@@ -111,10 +126,11 @@ export function CustomerChecklist({
                   )}
                 </a>
               )}
-            </li>
+            </div>
+            </div>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }

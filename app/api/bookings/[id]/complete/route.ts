@@ -17,7 +17,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   const { data: booking } = await supabase
     .from("bookings")
-    .select("id, assigned_washer_id, assigned_partner_id, service_cents, stripe_payment_intent_id, status, customer_id, service_id, checklist_progress")
+    .select(
+      "id, assigned_washer_id, assigned_partner_id, service_cents, stripe_payment_intent_id, status, customer_id, service_id, checklist_progress, booking_addons(addon_id, addon_name)"
+    )
     .eq("id", params.id)
     .maybeSingle();
 
@@ -58,19 +60,39 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     );
   }
 
-  // Gate completion on the checklist. Every item must be marked done;
+  // Gate completion on EVERY checklist — base service + every add-on
+  // the customer ticked at booking. Each item must be marked done;
   // items that require a photo must have one recorded. This is the QA
   // step that proves the work was actually done before payment can
-  // release.
-  const { data: items } = await supabase
-    .from("service_checklist_items")
-    .select("id, label, requires_photo")
-    .eq("service_id", booking.service_id);
+  // release. Without the addon gate, a washer could mark complete
+  // without ever doing the ceramic seal the customer paid $129 for.
+  const addonRows: Array<{ addon_id: string; addon_name: string }> =
+    (booking as any).booking_addons ?? [];
+  const addonIds = addonRows.map((a) => a.addon_id);
+
+  const [{ data: serviceItems }, { data: addonItems }] = await Promise.all([
+    supabase
+      .from("service_checklist_items")
+      .select("id, label, requires_photo")
+      .eq("service_id", booking.service_id),
+    addonIds.length > 0
+      ? supabase
+          .from("addon_checklist_items")
+          .select("id, label, requires_photo, addon_id")
+          .in("addon_id", addonIds)
+      : Promise.resolve({ data: [] as any[] } as any),
+  ]);
 
   const progress: Record<string, { done_at?: string; photo_path?: string | null }> =
     (booking.checklist_progress as any) ?? {};
+
+  // Build addon_id → name map so missing-item errors say which add-on
+  // is incomplete (e.g. "Ceramic seal: Buffed to high gloss").
+  const addonNameById = new Map<string, string>();
+  for (const a of addonRows) addonNameById.set(a.addon_id, a.addon_name);
+
   const missing: string[] = [];
-  for (const it of items ?? []) {
+  for (const it of serviceItems ?? []) {
     const entry = progress[it.id];
     if (!entry?.done_at) {
       missing.push(it.label);
@@ -78,6 +100,17 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
     if (it.requires_photo && !entry.photo_path) {
       missing.push(`${it.label} (photo missing)`);
+    }
+  }
+  for (const it of (addonItems ?? []) as any[]) {
+    const entry = progress[it.id];
+    const addonName = addonNameById.get(it.addon_id) ?? "Add-on";
+    if (!entry?.done_at) {
+      missing.push(`${addonName}: ${it.label}`);
+      continue;
+    }
+    if (it.requires_photo && !entry.photo_path) {
+      missing.push(`${addonName}: ${it.label} (photo missing)`);
     }
   }
   if (missing.length > 0) {
