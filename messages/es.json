@@ -1085,7 +1085,9 @@
     "addonsVehicleN": "Vehicle {n} of {total}",
     "addonsThisVehicleSize": "This vehicle's size",
     "addonsGrandTotalLabel": "Booking total",
-    "payVehicleAddonsLabel": "Add-ons (#{id})"
+    "payVehicleAddonsLabel": "Add-ons (#{id})",
+    "payNoAddons": "Base wash only — no add-ons",
+    "paySubtotal": "Vehicle subtotal"
   },
   "appWashes": {
     "washSingular": "lavado",

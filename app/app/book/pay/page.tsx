@@ -26,15 +26,23 @@ function PayInner() {
   const baseTierTotal = category === "home" ? basePrice : basePrice * count;
   const usesVehicles = category === "auto" || category === "big_rig";
 
-  // Add-ons (auto + big-rig only) — keyed by vehicle so each car can
-  // get its own list. Carries from the addons step via sessionStorage.
+  // Vehicle ids for this booking (carried in sessionStorage). The
+  // pay-page receipt always renders one block per vehicle so the
+  // customer can verify which cars are getting washed AND which
+  // add-ons go on which one — even when no add-ons were picked.
   const draftForAddons = typeof window !== "undefined" ? readDraft() : null;
+  const draftVehicleIds = draftForAddons?.vehicleIds ?? [];
   const addonsByVehicle = draftForAddons?.addonsByVehicleId ?? {};
+
+  // One snapshot per vehicle in the booking (not just the ones with
+  // add-ons) — the receipt block needs the vehicle line whether the
+  // car has extras or just the base wash.
   const perVehicleSnapshots = useMemo(() => {
-    return Object.entries(addonsByVehicle).map(([vehicleId, pv]) => ({
-      vehicleId,
-      addons: snapshotAddons(pv.codes, pv.size),
-    }));
+    return draftVehicleIds.map((vehicleId) => {
+      const pv = addonsByVehicle[vehicleId];
+      const snaps = pv ? snapshotAddons(pv.codes, pv.size) : [];
+      return { vehicleId, addons: snaps };
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const addonsCents = perVehicleSnapshots.reduce(
@@ -212,9 +220,13 @@ function PayInner() {
           {unit ? ` ${unit}` : ""}, {city}, {state} {zip}
         </div>
         <div className="text-xs text-smoke mt-1">{win.replace(/_/g, " ")}</div>
-        {usesVehicles && (
-          <div className="text-xs text-smoke mt-1">
-            {count} {category === "big_rig" ? t(count === 1 ? "rigSingular" : "rigPlural") : t(count === 1 ? "vehicleSingular" : "vehiclePlural")}
+        {usesVehicles && draftVehicleIds.length > 0 && (
+          <div className="mt-2 space-y-0.5">
+            {draftVehicleIds.map((vid) => (
+              <div key={vid} className="text-xs text-ink/85">
+                → {vehicleLabels[vid] ?? t(category === "big_rig" ? "rigSingular" : "vehicleSingular")}
+              </div>
+            ))}
           </div>
         )}
         {requestedHandle && (
@@ -310,44 +322,67 @@ function PayInner() {
         </div>
       )}
 
-      <div className="space-y-2.5 text-sm mb-5">
-        <div className="flex justify-between">
-          <span className="text-smoke">
-            {tier} {count > 1 ? `× ${count}` : ""}
-          </span>
-          <span className="tabular">{fmtUSD(baseTierTotal)}</span>
-        </div>
-        {count > 1 && (
-          <div className="flex justify-between text-xs text-smoke pl-2">
-            <span>{t("perVehicle", { price: fmtUSD(basePrice) })}</span>
-            <span />
+      <div className="space-y-3 text-sm mb-5">
+        {/* Per-vehicle blocks — always render one per car, even when
+            no add-ons are ticked. Customer sees exactly which car is
+            getting which service so there's zero ambiguity at the
+            wash. Falls back to a flat "Tier × count" line for home
+            bookings + any flow that didn't carry vehicleIds. */}
+        {usesVehicles && perVehicleSnapshots.length > 0 ? (
+          perVehicleSnapshots.map(({ vehicleId, addons }) => {
+            const lineTotal =
+              basePrice + addons.reduce((a, x) => a + x.price_cents, 0);
+            return (
+              <div key={vehicleId} className="bg-mist/40 p-3">
+                <div className="flex justify-between items-baseline mb-1.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-mono text-[10px] uppercase tracking-wider text-royal">
+                      {vehicleLabels[vehicleId] ??
+                        t(category === "big_rig" ? "rigSingular" : "vehicleSingular")}
+                    </div>
+                    <div className="text-sm font-semibold mt-0.5">{tier}</div>
+                  </div>
+                  <span className="tabular text-sm">{fmtUSD(basePrice)}</span>
+                </div>
+                {addons.length === 0 ? (
+                  <div className="text-[11px] text-smoke italic pl-2">
+                    {t("payNoAddons")}
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {addons.map((sa) => {
+                      const a = getAddonByCode(sa.code);
+                      return (
+                        <div
+                          key={`${vehicleId}-${sa.code}`}
+                          className="flex justify-between text-xs text-smoke pl-2"
+                        >
+                          <span>+ {a?.name ?? sa.code}</span>
+                          <span className="tabular">{fmtUSD(sa.price_cents)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {addons.length > 0 && (
+                  <div className="flex justify-between text-xs pt-1.5 mt-1.5 border-t border-bone/40">
+                    <span className="text-smoke font-semibold">
+                      {t("paySubtotal")}
+                    </span>
+                    <span className="tabular font-semibold">{fmtUSD(lineTotal)}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="flex justify-between">
+            <span className="text-smoke">
+              {tier} {count > 1 ? `× ${count}` : ""}
+            </span>
+            <span className="tabular">{fmtUSD(baseTierTotal)}</span>
           </div>
         )}
-        {/* Per-vehicle add-on lines — grouped under the car they
-            belong to so the customer sees exactly what was ordered
-            for which vehicle. */}
-        {perVehicleSnapshots.map(({ vehicleId, addons }) => {
-          if (addons.length === 0) return null;
-          return (
-            <div key={vehicleId} className="pt-1.5">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-smoke pl-2">
-                {vehicleLabels[vehicleId] ?? t("payVehicleAddonsLabel", { id: vehicleId.slice(0, 6) })}
-              </div>
-              {addons.map((sa) => {
-                const a = getAddonByCode(sa.code);
-                return (
-                  <div
-                    key={`${vehicleId}-${sa.code}`}
-                    className="flex justify-between text-xs text-smoke pl-4"
-                  >
-                    <span>+ {a?.name ?? sa.code}</span>
-                    <span className="tabular">{fmtUSD(sa.price_cents)}</span>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
         <div className="flex justify-between">
           <span className="text-smoke">{t("trustFee")}</span>
           <span className="tabular">{fmtUSD(fees.trustFee)}</span>
