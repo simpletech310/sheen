@@ -1195,6 +1195,7 @@
     "paySubtotal": "Vehicle subtotal",
     "payAddonsSubtotal": "Detailing add-ons (all vehicles)",
     "addonsBaseOnly": "Base wash · tap to add extras",
+    "addonsLoading": "Loading your vehicles…",
     "addonsVehicleSize": "Your vehicle size",
     "addonsSize_sedan": "Sedan",
     "addonsSize_suv": "SUV / Crossover",

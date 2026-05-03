@@ -135,10 +135,17 @@ function AddressFormInner() {
       return;
     }
 
-    // Stash site access in the draft so the pay page can read it. Keeps the
-    // URL clean (photos especially would be huge).
+    // Stash site access in the draft so the pay page can read it.
+    //
+    // CRITICAL: spread the existing draft first. Previous code rebuilt
+    // the draft from scratch, which silently DROPPED addonsByVehicleId
+    // written by the addons step. Customer's per-vehicle add-on picks
+    // never made it to the pay page or the Stripe charge — the receipt
+    // would just say "Base wash only — no add-ons" for every vehicle
+    // even when extras had been ticked.
     const draft = readDraft();
     writeDraft({
+      ...(draft ?? { tier, price: Number(price), vehicleIds: [], conditionPhotos: {} }),
       tier: draft?.tier ?? tier,
       price: draft?.price ?? Number(price),
       vehicleIds: draft?.vehicleIds ?? [],

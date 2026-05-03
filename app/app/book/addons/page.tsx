@@ -171,7 +171,7 @@ function AddonsInner() {
 
       {!hydrated && (
         <div className="bg-mist/40 p-6 text-center text-sm text-smoke">
-          {t("loading") ?? "Loading…"}
+          {t("addonsLoading")}
         </div>
       )}
 
