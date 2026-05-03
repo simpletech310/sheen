@@ -52,6 +52,20 @@ const Body = z.object({
   // within 60 minutes. When set, the regular `window` field is
   // ignored (the booking gets a now/now+60 window).
   is_rush: z.boolean().default(false),
+  // Client-computed window timestamps (ISO 8601 with TZ offset).
+  // The legacy `window` field is parsed server-side using the SERVER'S
+  // timezone, which silently shifts "tomorrow 10am" by hours when the
+  // server is UTC and the customer is Pacific. New clients send these
+  // ISO strings derived from the customer's local clock — server stores
+  // verbatim, all downstream renders use toLocaleString in the viewer's
+  // own timezone, so customer + washer + server agree on wall-clock.
+  window_start_iso: z.string().datetime({ offset: true }).optional(),
+  window_end_iso: z.string().datetime({ offset: true }).optional(),
+  // IANA timezone of the customer at booking time. Stored on the
+  // booking row for the rare case where a viewer needs to render in
+  // the *customer's* clock (e.g. "your booked 10am Pacific window")
+  // even when the viewer is in a different zone.
+  customer_tz: z.string().optional(),
   // Detailing add-ons — keyed by vehicle id. Each car can have its
   // own list (Honda wax, Dodge no wax) and its own size multiplier.
   // Server re-snapshots prices itself (NEVER trusts client-supplied
@@ -248,7 +262,16 @@ export async function POST(req: Request) {
       const amts = computeRushAmounts(body.service_cents);
       rushSurchargeCents = amts.customerSurchargeCents;
       rushBonusCents = amts.washerBonusCents;
+    } else if (body.window_start_iso && body.window_end_iso) {
+      // Preferred path — client computed the window in the customer's
+      // local timezone. Server uses these absolute timestamps verbatim.
+      start = new Date(body.window_start_iso);
+      end = new Date(body.window_end_iso);
     } else {
+      // Legacy fallback — old clients send a "tomorrow_10_12" string.
+      // parseWindow runs in the SERVER timezone (likely UTC on Vercel),
+      // so this branch is wrong for any non-UTC customer. New clients
+      // skip this branch via the ISO fields above.
       const w = parseWindow(body.window!);
       start = w.start;
       end = w.end;
@@ -394,6 +417,7 @@ export async function POST(req: Request) {
         rush_deadline: rushDeadline,
         rush_surcharge_cents: rushSurchargeCents,
         rush_bonus_cents: rushBonusCents,
+        customer_tz: body.customer_tz ?? null,
       })
       .select("id, total_cents, service_cents")
       .single();

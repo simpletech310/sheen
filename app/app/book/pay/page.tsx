@@ -90,6 +90,27 @@ function PayInner() {
   const win = params.get("window") ?? "tomorrow_10_12";
   const isRush = params.get("rush") === "1";
   const requestedHandle = params.get("handle") ?? "";
+  // Parse the window CLIENT-SIDE in the customer's local TZ and send
+  // absolute ISO timestamps to checkout. Server used to do this in
+  // its own TZ (UTC on Vercel) which silently shifted "tomorrow 10am"
+  // by hours for any non-UTC customer.
+  function parseWindowLocal(w: string): { startIso: string; endIso: string } | null {
+    const parts = w.split("_");
+    if (parts.length < 3) return null;
+    const [day, sH, eH] = parts;
+    const base = new Date();
+    if (day === "tomorrow") base.setDate(base.getDate() + 1);
+    const start = new Date(base);
+    start.setHours(Number(sH), 0, 0, 0);
+    const end = new Date(base);
+    end.setHours(Number(eH), 0, 0, 0);
+    return { startIso: start.toISOString(), endIso: end.toISOString() };
+  }
+  const winLocal = !isRush ? parseWindowLocal(win) : null;
+  const customerTz =
+    typeof Intl !== "undefined"
+      ? Intl.DateTimeFormat().resolvedOptions().timeZone
+      : undefined;
   // Mirror the server-side calc — surfaces the surcharge inline on the
   // pay summary so the customer sees exactly what they're paying.
   const rushSurchargeCents = isRush ? Math.round(totalServiceCents * 0.15) : 0;
@@ -171,6 +192,9 @@ function PayInner() {
               site_photo_paths: draft?.sitePhotoPaths ?? [],
             },
             window: isRush ? undefined : win,
+            window_start_iso: winLocal?.startIso,
+            window_end_iso: winLocal?.endIso,
+            customer_tz: customerTz,
             is_rush: isRush,
           }),
         });
@@ -219,7 +243,22 @@ function PayInner() {
           {street}
           {unit ? ` ${unit}` : ""}, {city}, {state} {zip}
         </div>
-        <div className="text-xs text-smoke mt-1">{win.replace(/_/g, " ")}</div>
+        <div className="text-xs text-smoke mt-1">
+          {(() => {
+            if (isRush) return t("rushAsap");
+            if (!winLocal) return win.replace(/_/g, " ");
+            const s = new Date(winLocal.startIso);
+            const e = new Date(winLocal.endIso);
+            // Render in the customer's local clock — "Tomorrow, 10:00 AM
+            // – 12:00 PM PDT" — so they see exactly what the washer will
+            // also see (each in their own TZ but pointing at the same
+            // wall-clock window for the customer's address).
+            const dayLabel = s.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+            const tStart = s.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+            const tEnd = e.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+            return `${dayLabel} · ${tStart} – ${tEnd}`;
+          })()}
+        </div>
         {usesVehicles && draftVehicleIds.length > 0 && (
           <div className="mt-2 space-y-0.5">
             {draftVehicleIds.map((vid) => (
@@ -381,6 +420,19 @@ function PayInner() {
               {tier} {count > 1 ? `× ${count}` : ""}
             </span>
             <span className="tabular">{fmtUSD(baseTierTotal)}</span>
+          </div>
+        )}
+        {/* Explicit "Add-ons subtotal" so the customer can verify the
+            extras they ticked are actually in the charge. Sums all
+            add-ons across all vehicles. Hidden when none picked. */}
+        {addonsCents > 0 && (
+          <div className="flex justify-between text-xs">
+            <span className="text-smoke font-semibold">
+              {t("payAddonsSubtotal")}
+            </span>
+            <span className="tabular font-semibold text-royal">
+              +{fmtUSD(addonsCents)}
+            </span>
           </div>
         )}
         <div className="flex justify-between">

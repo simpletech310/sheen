@@ -1317,7 +1317,9 @@
     "addonsGrandTotalLabel": "Booking total",
     "payVehicleAddonsLabel": "Add-ons (#{id})",
     "payNoAddons": "Base wash only — no add-ons",
-    "paySubtotal": "Vehicle subtotal"
+    "paySubtotal": "Vehicle subtotal",
+    "payAddonsSubtotal": "Detailing add-ons (all vehicles)",
+    "addonsBaseOnly": "Base wash · tap to add extras"
   },
   "appWashes": {
     "washSingular": "lavagem",

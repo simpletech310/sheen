@@ -62,6 +62,10 @@ function AddonsInner() {
   const [vehicles, setVehicles] = useState<VehicleLite[]>([]);
   const [perVehicle, setPerVehicle] = useState<Record<string, PerVehicle>>({});
   const [hydrated, setHydrated] = useState(false);
+  // Collapsed cards by default — only one expanded at a time so the
+  // list stays scannable even with 5+ vehicles. Customer taps a car
+  // to expand, picks add-ons, taps again to collapse.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     const draft = readDraft();
@@ -171,23 +175,39 @@ function AddonsInner() {
         </div>
       )}
 
+      {/* Collapsible per-vehicle cards. Tap to expand and pick add-ons,
+          tap again to collapse. Keeps the page scannable on big bookings
+          (5 vehicles × 13 add-ons would otherwise be 65 stacked rows). */}
       {hydrated && perVehiclePriced.map(({ vehicle, addons, addonsTotal }, vIdx) => {
         const pv = perVehicle[vehicle.id] ?? { codes: new Set<string>(), size: "sedan" as VehicleSize };
+        const isOpen = expandedId === vehicle.id;
+        const pickedCount = addons.length;
         return (
-          <div key={vehicle.id} className="mb-6 bg-bone border border-mist">
-            {/* Vehicle header */}
-            <div className="px-4 py-3 bg-mist/60 border-b border-mist flex items-baseline justify-between gap-3">
+          <div key={vehicle.id} className="mb-3 bg-bone border border-mist">
+            {/* Header — always visible. Acts as the toggle. */}
+            <button
+              type="button"
+              onClick={() => setExpandedId(isOpen ? null : vehicle.id)}
+              aria-expanded={isOpen}
+              className="w-full text-left px-4 py-3.5 flex items-center gap-3 hover:bg-mist/40 transition"
+            >
               <div className="flex-1 min-w-0">
                 <div className="font-mono text-[10px] uppercase tracking-wider text-royal">
                   {t("addonsVehicleN", { n: vIdx + 1, total: vehicles.length })}
                 </div>
                 <div className="text-sm font-bold mt-0.5 truncate">
                   {vehicleLabel(vehicle)}
-                  {vehicle.plate ? <span className="ml-1 font-mono text-[10px] text-smoke">· {vehicle.plate}</span> : null}
+                  {vehicle.plate ? (
+                    <span className="ml-1 font-mono text-[10px] text-smoke">· {vehicle.plate}</span>
+                  ) : null}
+                </div>
+                <div className="text-[11px] text-smoke mt-1">
+                  {pickedCount === 0
+                    ? t("addonsBaseOnly")
+                    : t("addonsCount", { count: pickedCount })}
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <div className="font-mono text-[9px] uppercase tracking-wider text-smoke">{tier}</div>
                 <div
                   key={`${vehicle.id}-${addonsTotal}`}
                   className="display tabular text-lg text-ink"
@@ -195,85 +215,96 @@ function AddonsInner() {
                 >
                   {fmtUSD(basePrice + addonsTotal)}
                 </div>
-              </div>
-            </div>
-
-            {/* Size picker — auto only */}
-            {category === "auto" && (
-              <div className="px-4 py-3 border-b border-mist">
-                <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-2">
-                  {t("addonsThisVehicleSize")}
+                <div className="font-mono text-[9px] uppercase tracking-wider text-smoke">
+                  {tier}
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["sedan", "suv", "truck"] as VehicleSize[]).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setSize(vehicle.id, s)}
-                      className={`py-2 text-xs font-bold uppercase tracking-wide transition ${
-                        pv.size === s ? "bg-ink text-bone" : "bg-mist text-ink hover:bg-bone"
-                      }`}
-                    >
-                      {t(`addonsSize_${s}` as any)}
-                      <span className="block tabular text-[10px] mt-0.5 opacity-75">
-                        {SIZE_MULTIPLIER[s].toFixed(2)}×
-                      </span>
-                    </button>
-                  ))}
+              </div>
+              <span
+                className={`shrink-0 ml-2 text-smoke transition-transform ${isOpen ? "rotate-180" : ""}`}
+                aria-hidden
+              >
+                ⌄
+              </span>
+            </button>
+
+            {isOpen && (
+              <div className="border-t border-mist">
+                {category === "auto" && (
+                  <div className="px-4 py-3 border-b border-mist">
+                    <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-2">
+                      {t("addonsThisVehicleSize")}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["sedan", "suv", "truck"] as VehicleSize[]).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setSize(vehicle.id, s)}
+                          className={`py-2 text-xs font-bold uppercase tracking-wide transition ${
+                            pv.size === s ? "bg-ink text-bone" : "bg-mist text-ink hover:bg-bone"
+                          }`}
+                        >
+                          {t(`addonsSize_${s}` as any)}
+                          <span className="block tabular text-[10px] mt-0.5 opacity-75">
+                            {SIZE_MULTIPLIER[s].toFixed(2)}×
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="p-3 space-y-2">
+                  {compatible.length === 0 && (
+                    <div className="text-xs text-smoke text-center py-4">
+                      {t("addonsNoneAvailable")}
+                    </div>
+                  )}
+                  {compatible.map((a: Addon) => {
+                    const on = pv.codes.has(a.code);
+                    const mult = a.size_multiplier_applies && category === "auto" ? SIZE_MULTIPLIER[pv.size] : 1;
+                    const adjustedPrice = Math.round(a.base_price_cents * mult);
+                    return (
+                      <button
+                        key={a.code}
+                        onClick={() => toggleCode(vehicle.id, a.code)}
+                        className={`w-full text-left p-3 transition ${
+                          on ? "bg-ink text-bone" : "bg-mist/40 hover:bg-mist text-ink"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold">{a.name}</div>
+                            <div className={`text-[11px] mt-0.5 leading-snug ${on ? "text-bone/70" : "text-smoke"}`}>
+                              {a.short_desc}
+                            </div>
+                            <div
+                              className={`font-mono text-[10px] uppercase tracking-wider mt-1 ${
+                                on ? "text-sol/80" : "text-smoke"
+                              }`}
+                            >
+                              {Math.round(a.duration_minutes * mult)} min
+                              {a.size_multiplier_applies && mult !== 1 && (
+                                <> · {mult.toFixed(2)}× size</>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="display tabular text-base">+{fmtUSD(adjustedPrice)}</div>
+                            <div
+                              className={`font-mono text-[9px] uppercase tracking-wider mt-1 px-1.5 py-0.5 inline-block ${
+                                on ? "bg-sol text-ink" : "bg-bone text-smoke"
+                              }`}
+                            >
+                              {on ? t("addonsAdded") : t("addonsAdd")}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
-
-            {/* Add-on list */}
-            <div className="p-3 space-y-2">
-              {compatible.length === 0 && (
-                <div className="text-xs text-smoke text-center py-4">
-                  {t("addonsNoneAvailable")}
-                </div>
-              )}
-              {compatible.map((a: Addon) => {
-                const on = pv.codes.has(a.code);
-                const mult = a.size_multiplier_applies && category === "auto" ? SIZE_MULTIPLIER[pv.size] : 1;
-                const adjustedPrice = Math.round(a.base_price_cents * mult);
-                return (
-                  <button
-                    key={a.code}
-                    onClick={() => toggleCode(vehicle.id, a.code)}
-                    className={`w-full text-left p-3 transition ${
-                      on ? "bg-ink text-bone" : "bg-mist/40 hover:bg-mist text-ink"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold">{a.name}</div>
-                        <div className={`text-[11px] mt-0.5 leading-snug ${on ? "text-bone/70" : "text-smoke"}`}>
-                          {a.short_desc}
-                        </div>
-                        <div
-                          className={`font-mono text-[10px] uppercase tracking-wider mt-1 ${
-                            on ? "text-sol/80" : "text-smoke"
-                          }`}
-                        >
-                          {Math.round(a.duration_minutes * mult)} min
-                          {a.size_multiplier_applies && mult !== 1 && (
-                            <> · {mult.toFixed(2)}× size</>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="display tabular text-base">+{fmtUSD(adjustedPrice)}</div>
-                        <div
-                          className={`font-mono text-[9px] uppercase tracking-wider mt-1 px-1.5 py-0.5 inline-block ${
-                            on ? "bg-sol text-ink" : "bg-bone text-smoke"
-                          }`}
-                        >
-                          {on ? t("addonsAdded") : t("addonsAdd")}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
           </div>
         );
       })}
