@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getStripe } from "@/lib/stripe/server";
 import { sendPushToUser } from "@/lib/push";
 import { checkStripeReadiness, readinessMessage } from "@/lib/stripe/readiness";
 import { checkWasherEligibility } from "@/lib/job-matching";
+import { getBookingPaymentStatus } from "@/lib/payment-status";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,6 +58,23 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
         error: `You can't take this job — ${elig.reasons.join(" · ")}.`,
         code: "capability_mismatch",
         reasons: elig.reasons,
+      },
+      { status: 409 }
+    );
+  }
+
+  // Payment gate: a booking is created in 'pending' the instant the
+  // row is inserted, BEFORE the customer's Stripe PaymentIntent
+  // confirms. Without this check a washer could claim a job whose
+  // PI is still in requires_payment_method, drive out, do the work,
+  // then have /complete reject them at the finish line. Block here
+  // so they never start the trip.
+  const pay = await getBookingPaymentStatus(supabase, getStripe(), params.id);
+  if (!pay.ok) {
+    return NextResponse.json(
+      {
+        error: `This booking isn't paid yet — ${pay.reason}. It'll show in the queue once the customer's payment goes through.`,
+        code: "payment_not_settled",
       },
       { status: 409 }
     );

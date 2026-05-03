@@ -4,6 +4,7 @@ import { getStripe } from "@/lib/stripe/server";
 import { computeFees } from "@/lib/stripe/fees";
 import { awardPoints, pointsForService, checkAchievements } from "@/lib/loyalty";
 import { sendPushToUser } from "@/lib/push";
+import { getBookingPaymentStatus } from "@/lib/payment-status";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,6 +29,33 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
   if (booking.status === "completed") {
     return NextResponse.json({ ok: true, already_complete: true });
+  }
+
+  // Hard gate: never let a job flip to "completed" if the customer
+  // hasn't actually paid. Without this, a washer (or a stale UI, or
+  // a deep link, or a race with an abandoned PaymentIntent) could
+  // mark complete on a booking that never moved any money — which
+  // would then sit in escrow waiting for an "Approve" that releases
+  // a transfer the platform can't actually fund.
+  //
+  // Also blocks the rare case where the customer started a PI then
+  // cancelled their card / got declined — booking still in 'matched',
+  // washer doesn't know payment died, work gets done for free.
+  const pay = await getBookingPaymentStatus(supabase, stripe, booking.id);
+  if (!pay.ok) {
+    await supabase.from("booking_events").insert({
+      booking_id: booking.id,
+      type: "complete_blocked_unpaid",
+      actor_id: user.id,
+      payload: { reason: pay.reason },
+    });
+    return NextResponse.json(
+      {
+        error: `Can't complete this job — ${pay.reason}. Tell the customer to finish payment in their app, then try again.`,
+        code: "payment_not_settled",
+      },
+      { status: 402 }
+    );
   }
 
   // Gate completion on the checklist. Every item must be marked done;
