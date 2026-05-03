@@ -21,9 +21,10 @@ function TierPickerInner() {
   function next() {
     const tier = BIG_RIG_TIERS.find((t) => t.tier_name === selected);
     if (!tier) return;
-    // Route through the add-ons step so the driver can stack rig-specific
-    // extras (chrome polish, undercarriage, ceramic) before vehicles.
-    const url = new URL("/app/book/addons", window.location.origin);
+    // Vehicles first — add-ons run per-rig in the next step so a
+    // multi-rig booking can pick chrome polish on the cab and skip
+    // it on the trailer.
+    const url = new URL("/app/book/vehicles", window.location.origin);
     url.searchParams.set("tier", tier.tier_name);
     url.searchParams.set("price", String(tier.base_price_cents));
     url.searchParams.set("category", "big_rig");

@@ -71,13 +71,27 @@ export function VehiclesPicker({
 
   function next() {
     if (selected.length === 0) return;
+    // Carry forward an existing per-vehicle addon map (if user backed
+    // up from the addons step) but prune entries for vehicles they
+    // no longer have selected.
+    const existingDraft = readDraft();
+    const prevAddons = existingDraft?.addonsByVehicleId ?? {};
+    const carriedAddons: typeof prevAddons = {};
+    for (const id of selected) {
+      carriedAddons[id] = prevAddons[id] ?? { codes: [], size: "sedan" };
+    }
     writeDraft({
       tier,
       price,
       vehicleIds: selected,
       conditionPhotos: photos,
+      addonsByVehicleId: carriedAddons,
     });
-    const url = new URL("/app/book/address", window.location.origin);
+    // Auto + big-rig route through the add-ons step so each selected
+    // vehicle can get its own list. Home category never has add-ons,
+    // jumps straight to address (kept as future-proofing — no current
+    // home flow comes through this picker).
+    const url = new URL("/app/book/addons", window.location.origin);
     url.searchParams.set("tier", tier);
     url.searchParams.set("price", String(price));
     url.searchParams.set("count", String(selected.length));
@@ -86,6 +100,11 @@ export function VehiclesPicker({
     router.push(url.pathname + url.search);
   }
 
+  // Sticky-bar total. Computed every render — toggle() updates state
+  // synchronously so the number flips the same frame the user taps.
+  // Wrapping in a tabular display + key={selected.length} forces a
+  // brief reflow that makes the change visually obvious instead of
+  // silently swapping digits in place.
   const total = price * selected.length;
 
   if (vehicles.length === 0) {
@@ -206,7 +225,11 @@ export function VehiclesPicker({
                   })}
             </div>
           </div>
-          <div className="display tabular text-2xl">
+          <div
+            key={selected.length}
+            className="display tabular text-2xl text-ink"
+            style={{ animation: "fadeSlideIn 180ms ease-out" }}
+          >
             {fmtUSD(selected.length === 0 ? price : total)}
           </div>
         </div>

@@ -685,7 +685,8 @@
     "acceptError": "No se pudo aceptar",
     "requestDeclined": "Solicitud rechazada",
     "declineError": "No se pudo rechazar",
-    "addonsBreakdown": "Extras de detallado · {count}"
+    "addonsBreakdown": "Extras de detallado · {count}",
+    "addonsApplyToBooking": "Apply to booking"
   },
   "proJobs": {
     "service": "Servicio",
@@ -1079,7 +1080,12 @@
     "addonsRunningTotal": "Total del servicio",
     "addonsContinue": "Continuar con extras →",
     "addonsSkip": "Omitir extras →",
-    "addonsNoneAvailable": "No hay extras compatibles con este nivel — el lavado base ya los incluye."
+    "addonsNoneAvailable": "No hay extras compatibles con este nivel — el lavado base ya los incluye.",
+    "addonsSubheadPerVehicle": "Pick extras per vehicle. The Honda can get the ceramic seal while the Dodge stays bare — totally your call.",
+    "addonsVehicleN": "Vehicle {n} of {total}",
+    "addonsThisVehicleSize": "This vehicle's size",
+    "addonsGrandTotalLabel": "Booking total",
+    "payVehicleAddonsLabel": "Add-ons (#{id})"
   },
   "appWashes": {
     "washSingular": "lavado",

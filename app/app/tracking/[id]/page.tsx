@@ -21,7 +21,7 @@ export default async function TrackingPage({ params }: { params: { id: string } 
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, service_id, total_cents, customer_approved_at, funds_released_at, completed_at, work_photo_paths, checklist_progress, addresses(lat, lng), services(tier_name), booking_addons(addon_id, addon_code, addon_name, price_cents)"
+      "id, status, assigned_washer_id, service_id, total_cents, customer_approved_at, funds_released_at, completed_at, work_photo_paths, checklist_progress, addresses(lat, lng), services(tier_name), booking_addons(addon_id, addon_code, addon_name, price_cents, booking_vehicle_id)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -34,7 +34,7 @@ export default async function TrackingPage({ params }: { params: { id: string } 
   const { data: bvRows } = await supabase
     .from("booking_vehicles")
     .select(
-      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes, photo_paths)"
+      "id, vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes, photo_paths)"
     )
     .eq("booking_id", params.id);
   const photoPaths = (bvRows ?? []).flatMap((r: any) => [
@@ -205,60 +205,95 @@ export default async function TrackingPage({ params }: { params: { id: string } 
         />
       )}
 
-      {/* Receipt — proof of what was ordered. Shows the service tier,
-          every vehicle being washed, and every add-on the customer
-          ticked. Pro should see this same picture on their job card,
-          and the customer keeps it as their record. */}
-      <div className="mt-6 bg-mist/40 p-4 text-sm">
-        <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-3">
-          {t("receiptTitle")}
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="flex justify-between font-bold">
-            <span>{(booking as any).services?.tier_name ?? t("defaultServiceName")}</span>
-          </div>
-          {(bvRows ?? []).map((r: any) => {
-            const v = r.vehicles ?? {};
-            const label = [v.year, v.color, v.make, v.model]
-              .filter(Boolean)
-              .join(" ");
-            return (
-              <div
-                key={r.vehicle_id}
-                className="flex justify-between text-xs text-smoke pl-2"
-              >
-                <span>
-                  → {label || t("defaultServiceName")}
-                  {v.plate ? <span className="ml-1 font-mono text-[10px]">· {v.plate}</span> : null}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {((booking as any).booking_addons ?? []).length > 0 && (
-          <>
-            <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mt-4 mb-2">
-              {t("addonsIncluded")}
+      {/* Receipt — proof of what was ordered. Service tier on top,
+          then every vehicle as its own block with its own add-ons
+          underneath. Customer can see at a glance: Honda got wax +
+          headlight restore, Dodge just the base wash. */}
+      {(() => {
+        const allAddons: Array<{
+          addon_code: string;
+          addon_name: string;
+          price_cents: number;
+          booking_vehicle_id: string | null;
+        }> = (booking as any).booking_addons ?? [];
+        const addonsByBV = new Map<string, typeof allAddons>();
+        const orphanAddons: typeof allAddons = [];
+        for (const a of allAddons) {
+          if (a.booking_vehicle_id) {
+            const list = addonsByBV.get(a.booking_vehicle_id) ?? [];
+            list.push(a);
+            addonsByBV.set(a.booking_vehicle_id, list);
+          } else {
+            orphanAddons.push(a);
+          }
+        }
+        return (
+          <div className="mt-6 bg-mist/40 p-4 text-sm">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-3">
+              {t("receiptTitle")}
             </div>
-            <div className="space-y-1.5">
-              {((booking as any).booking_addons ?? []).map((a: any) => (
-                <div key={a.addon_code} className="flex justify-between text-xs">
-                  <span>+ {a.addon_name}</span>
-                  <span className="tabular text-smoke">{fmtUSD(a.price_cents)}</span>
+
+            <div className="font-bold mb-3">
+              {(booking as any).services?.tier_name ?? t("defaultServiceName")}
+            </div>
+
+            <div className="space-y-3">
+              {(bvRows ?? []).map((r: any) => {
+                const v = r.vehicles ?? {};
+                const label = [v.year, v.color, v.make, v.model]
+                  .filter(Boolean)
+                  .join(" ");
+                const vehicleAddons = addonsByBV.get(r.id) ?? [];
+                return (
+                  <div key={r.id} className="bg-bone/40 p-2.5">
+                    <div className="text-xs font-semibold text-ink">
+                      → {label || t("defaultServiceName")}
+                      {v.plate ? (
+                        <span className="ml-1 font-mono text-[10px] text-smoke">· {v.plate}</span>
+                      ) : null}
+                    </div>
+                    {vehicleAddons.length > 0 && (
+                      <div className="mt-1.5 space-y-1">
+                        {vehicleAddons.map((a) => (
+                          <div
+                            key={a.addon_code}
+                            className="flex justify-between text-xs pl-3"
+                          >
+                            <span className="text-ink/80">+ {a.addon_name}</span>
+                            <span className="tabular text-smoke">{fmtUSD(a.price_cents)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Orphan add-ons (legacy bookings pre-0036 — no vehicle FK).
+                Render in a single section so historical receipts stay readable. */}
+            {orphanAddons.length > 0 && (
+              <div className="mt-3 space-y-1">
+                <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
+                  {t("addonsIncluded")}
                 </div>
-              ))}
-            </div>
-          </>
-        )}
+                {orphanAddons.map((a) => (
+                  <div key={a.addon_code} className="flex justify-between text-xs">
+                    <span>+ {a.addon_name}</span>
+                    <span className="tabular text-smoke">{fmtUSD(a.price_cents)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
-        <div className="border-t border-bone/30 my-3" />
-        <div className="flex justify-between">
-          <span className="text-smoke">{t("total")}</span>
-          <span className="display tabular text-xl">{fmtUSD(booking.total_cents)}</span>
-        </div>
-      </div>
+            <div className="border-t border-bone/30 my-3" />
+            <div className="flex justify-between">
+              <span className="text-smoke">{t("total")}</span>
+              <span className="display tabular text-xl">{fmtUSD(booking.total_cents)}</span>
+            </div>
+          </div>
+        );
+      })()}
 
       {booking.status === "completed" && (
         <div className="mt-6">

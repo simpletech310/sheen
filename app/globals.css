@@ -104,3 +104,19 @@ html, body {
   }
 }
 
+
+/* ───────────────────────────────────────────────────────────────
+ * Quick fade-in nudge used in places where a number flips and we
+ * want the user to actually notice — vehicles picker total, queue
+ * new-job rows. Cheap (transform + opacity), GPU-friendly.
+ * ─────────────────────────────────────────────────────────────── */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

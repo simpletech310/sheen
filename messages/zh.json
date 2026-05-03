@@ -915,7 +915,8 @@
     "acceptError": "无法接受",
     "requestDeclined": "请求已拒绝",
     "declineError": "无法拒绝",
-    "addonsBreakdown": "Detailing add-ons · {count}"
+    "addonsBreakdown": "Detailing add-ons · {count}",
+    "addonsApplyToBooking": "Apply to booking"
   },
   "proJobs": {
     "service": "服务",
@@ -1309,7 +1310,12 @@
     "addonsRunningTotal": "Service total",
     "addonsContinue": "Continue with add-ons →",
     "addonsSkip": "Skip add-ons →",
-    "addonsNoneAvailable": "No add-ons compatible with this tier — base wash already includes them."
+    "addonsNoneAvailable": "No add-ons compatible with this tier — base wash already includes them.",
+    "addonsSubheadPerVehicle": "Pick extras per vehicle. The Honda can get the ceramic seal while the Dodge stays bare — totally your call.",
+    "addonsVehicleN": "Vehicle {n} of {total}",
+    "addonsThisVehicleSize": "This vehicle's size",
+    "addonsGrandTotalLabel": "Booking total",
+    "payVehicleAddonsLabel": "Add-ons (#{id})"
   },
   "appWashes": {
     "washSingular": "次洗车",

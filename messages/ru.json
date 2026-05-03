@@ -915,7 +915,8 @@
     "acceptError": "Не удалось принять",
     "requestDeclined": "Запрос отклонён",
     "declineError": "Не удалось отклонить",
-    "addonsBreakdown": "Допы детейлинга · {count}"
+    "addonsBreakdown": "Допы детейлинга · {count}",
+    "addonsApplyToBooking": "Apply to booking"
   },
   "proJobs": {
     "service": "Услуга",
@@ -1309,7 +1310,12 @@
     "addonsRunningTotal": "Итого услуг",
     "addonsContinue": "Продолжить с допами →",
     "addonsSkip": "Пропустить допы →",
-    "addonsNoneAvailable": "Нет совместимых допов для этого уровня — базовая мойка уже всё включает."
+    "addonsNoneAvailable": "Нет совместимых допов для этого уровня — базовая мойка уже всё включает.",
+    "addonsSubheadPerVehicle": "Pick extras per vehicle. The Honda can get the ceramic seal while the Dodge stays bare — totally your call.",
+    "addonsVehicleN": "Vehicle {n} of {total}",
+    "addonsThisVehicleSize": "This vehicle's size",
+    "addonsGrandTotalLabel": "Booking total",
+    "payVehicleAddonsLabel": "Add-ons (#{id})"
   },
   "appWashes": {
     "washSingular": "мойка",

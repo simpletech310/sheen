@@ -52,12 +52,21 @@ const Body = z.object({
   // within 60 minutes. When set, the regular `window` field is
   // ignored (the booking gets a now/now+60 window).
   is_rush: z.boolean().default(false),
-  // Detailing add-ons (auto + big_rig only) — codes from the catalog
-  // the customer ticked on the addons step. Server re-snapshots prices
-  // (NEVER trusts client-supplied price/payout) using vehicle_size for
-  // the multiplier on premium add-ons.
-  addon_codes: z.array(z.string()).max(20).optional(),
-  vehicle_size: z.enum(["sedan", "suv", "truck"]).optional(),
+  // Detailing add-ons — keyed by vehicle id. Each car can have its
+  // own list (Honda wax, Dodge no wax) and its own size multiplier.
+  // Server re-snapshots prices itself (NEVER trusts client-supplied
+  // price/payout). The booking_addons rows get linked back to their
+  // booking_vehicle_id so receipts + pro job cards can show what
+  // was ordered for which car.
+  addons_by_vehicle: z
+    .record(
+      z.string(),
+      z.object({
+        codes: z.array(z.string()).max(20),
+        size: z.enum(["sedan", "suv", "truck"]),
+      })
+    )
+    .optional(),
 });
 
 function parseWindow(w: string): { start: Date; end: Date } {
@@ -201,16 +210,23 @@ export async function POST(req: Request) {
 
     // Server-side addon snapshot — never trust client price math.
     // Codes are validated against the catalog; unknown codes are
-    // dropped silently (matches snapshotAddons behaviour).
-    const addonCodes =
-      (body.addon_codes ?? []).filter((c) => !!getAddonByCode(c));
-    // Big rig + auto only — home category never has add-ons.
+    // dropped silently (matches snapshotAddons behaviour). Snapshots
+    // are keyed by vehicle id so each gets its own size multiplier
+    // applied + the booking_addons row remembers which car it's for.
     const addonsAllowed = body.category === "auto" || body.category === "big_rig";
-    const vehicleSize = body.vehicle_size ?? "sedan";
-    const serverAddons = addonsAllowed
-      ? snapshotAddons(addonCodes, vehicleSize)
-      : [];
-    const addonTotal = sumAddonPrices(serverAddons);
+    type ServerAddon = ReturnType<typeof snapshotAddons>[number] & {
+      booking_vehicle_id?: string | null;
+    };
+    const serverAddonsByVehicle: Record<string, ServerAddon[]> = {};
+    if (addonsAllowed && body.addons_by_vehicle) {
+      for (const [vid, pv] of Object.entries(body.addons_by_vehicle)) {
+        const validCodes = pv.codes.filter((c) => !!getAddonByCode(c));
+        if (validCodes.length === 0) continue;
+        serverAddonsByVehicle[vid] = snapshotAddons(validCodes, pv.size);
+      }
+    }
+    const allServerAddons = Object.values(serverAddonsByVehicle).flat();
+    const addonTotal = sumAddonPrices(allServerAddons);
     // service_cents the client sent is the base tier × vehicle_count.
     // Add the snapshotted add-ons on top to get the real service total.
     const totalServiceCents = body.service_cents + addonTotal;
@@ -417,39 +433,10 @@ export async function POST(req: Request) {
       }).catch(() => {});
     }
 
-    // Persist add-on snapshots so receipts + queue cards + the payout
-    // breakdown can rebuild line items even if the catalog mutates
-    // later. The bookings.service_cents already includes the addon
-    // total above, so the existing payout pipeline stays unchanged —
-    // these rows are display-only.
-    if (serverAddons.length > 0) {
-      const { data: addonRows } = await supabase
-        .from("service_addons")
-        .select("id, code, name")
-        .in("code", serverAddons.map((a) => a.code));
-      const byCode: Record<string, { id: string; name: string }> = {};
-      for (const row of addonRows ?? []) {
-        byCode[row.code] = { id: row.id, name: row.name };
-      }
-      const insertRows = serverAddons
-        .filter((a) => byCode[a.code])
-        .map((a) => ({
-          booking_id: bookingId!,
-          addon_id: byCode[a.code].id,
-          addon_code: a.code,
-          addon_name: byCode[a.code].name,
-          price_cents: a.price_cents,
-          washer_payout_cents: a.washer_payout_cents,
-          duration_minutes: a.duration_minutes,
-          size_multiplier: a.size_multiplier,
-        }));
-      if (insertRows.length > 0) {
-        await supabase.from("booking_addons").insert(insertRows);
-      }
-    }
-
-    // Insert booking_vehicles join rows with per-vehicle pre-wash photos.
-    // Home services skip this — there's no vehicle to attach.
+    // Insert booking_vehicles FIRST so we have the booking_vehicle_id
+    // values to attach to add-on rows below. Home services skip this —
+    // there's no vehicle to attach.
+    let bookingVehicleIdByVehicleId: Record<string, string> = {};
     if (usesVehicles && vehicleIds.length > 0) {
       const photoMap = body.condition_photos ?? {};
       const bvRows = vehicleIds.map((vid) => ({
@@ -457,11 +444,55 @@ export async function POST(req: Request) {
         vehicle_id: vid,
         condition_photo_paths: photoMap[vid] ?? [],
       }));
-      const { error: bvErr } = await supabase.from("booking_vehicles").insert(bvRows);
+      const { data: insertedBV, error: bvErr } = await supabase
+        .from("booking_vehicles")
+        .insert(bvRows)
+        .select("id, vehicle_id");
       if (bvErr) {
         // Roll the booking back so the customer doesn't end up with a broken row.
         await supabase.from("bookings").delete().eq("id", bookingId!);
         return NextResponse.json({ error: `Could not save vehicles: ${bvErr.message}` }, { status: 400 });
+      }
+      bookingVehicleIdByVehicleId = Object.fromEntries(
+        (insertedBV ?? []).map((r: any) => [r.vehicle_id, r.id])
+      );
+    }
+
+    // Persist add-on snapshots, each linked back to its booking_vehicle_id
+    // so receipts + queue cards + the pro job card can group them per car
+    // (Honda: hand wax + headlight restore; Dodge: nothing). The bookings.
+    // service_cents already includes the addon total above, so the existing
+    // payout pipeline stays unchanged — these rows are display-only.
+    if (allServerAddons.length > 0) {
+      const allCodes = Array.from(new Set(allServerAddons.map((a) => a.code)));
+      const { data: addonRows } = await supabase
+        .from("service_addons")
+        .select("id, code, name")
+        .in("code", allCodes);
+      const byCode: Record<string, { id: string; name: string }> = {};
+      for (const row of addonRows ?? []) {
+        byCode[row.code] = { id: row.id, name: row.name };
+      }
+      const insertRows: any[] = [];
+      for (const [vehicleId, snaps] of Object.entries(serverAddonsByVehicle)) {
+        const bvId = bookingVehicleIdByVehicleId[vehicleId] ?? null;
+        for (const a of snaps) {
+          if (!byCode[a.code]) continue;
+          insertRows.push({
+            booking_id: bookingId!,
+            booking_vehicle_id: bvId,
+            addon_id: byCode[a.code].id,
+            addon_code: a.code,
+            addon_name: byCode[a.code].name,
+            price_cents: a.price_cents,
+            washer_payout_cents: a.washer_payout_cents,
+            duration_minutes: a.duration_minutes,
+            size_multiplier: a.size_multiplier,
+          });
+        }
+      }
+      if (insertRows.length > 0) {
+        await supabase.from("booking_addons").insert(insertRows);
       }
     }
 

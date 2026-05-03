@@ -32,7 +32,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
   const { data: job } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, customer_id, requested_washer_id, request_expires_at, request_declined_at, scheduled_window_start, scheduled_window_end, service_cents, customer_note, services(id, tier_name, duration_minutes, included, category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(street, city, state, zip, notes, has_water, has_power, water_notes, power_notes, gate_code, site_photo_paths), users:customer_id(full_name), booking_addons(addon_code, addon_name, price_cents, washer_payout_cents, duration_minutes, size_multiplier)"
+      "id, status, assigned_washer_id, customer_id, requested_washer_id, request_expires_at, request_declined_at, scheduled_window_start, scheduled_window_end, service_cents, customer_note, services(id, tier_name, duration_minutes, included, category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(street, city, state, zip, notes, has_water, has_power, water_notes, power_notes, gate_code, site_photo_paths), users:customer_id(full_name), booking_addons(addon_code, addon_name, price_cents, washer_payout_cents, duration_minutes, size_multiplier, booking_vehicle_id)"
     )
     .eq("id", params.jobId)
     .maybeSingle();
@@ -57,7 +57,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
   const { data: bvRows } = await supabase
     .from("booking_vehicles")
     .select(
-      "vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes, photo_paths)"
+      "id, vehicle_id, condition_photo_paths, vehicles(year, make, model, color, plate, notes, photo_paths)"
     )
     .eq("booking_id", params.jobId);
   const conditionPhotoPaths = (bvRows ?? []).flatMap(
@@ -109,6 +109,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
     washer_payout_cents: number;
     duration_minutes: number;
     size_multiplier: number;
+    booking_vehicle_id: string | null;
   }> = (job as any).booking_addons ?? [];
 
   const eligibility = checkWasherEligibility(
@@ -193,31 +194,85 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
         )}
       </div>
 
-      {addonRows.length > 0 && (
-        <div className="mt-5">
-          <Eyebrow className="!text-bone/60" prefix={null}>
-            {t("addonsBreakdown", { count: addonRows.length })}
-          </Eyebrow>
-          <div className="mt-2 bg-white/5 p-3 space-y-1.5">
-            {addonRows.map((a) => (
-              <div key={a.addon_code} className="flex justify-between items-baseline text-xs">
-                <div className="flex-1 min-w-0">
-                  <span className="text-bone/90">{a.addon_name}</span>
-                  <span className="ml-2 font-mono text-[10px] text-bone/50 uppercase tracking-wider">
-                    {a.duration_minutes}m
-                    {a.size_multiplier !== 1 && (
-                      <> · {a.size_multiplier.toFixed(2)}×</>
-                    )}
-                  </span>
+      {addonRows.length > 0 && (() => {
+        // Group add-ons by booking_vehicle_id so the pro sees exactly
+        // which add-ons go on which car. Honda gets ceramic + wax,
+        // Dodge gets nothing — no guesswork on the job site.
+        const addonsByBV = new Map<string, typeof addonRows>();
+        const orphans: typeof addonRows = [];
+        for (const a of addonRows) {
+          if (a.booking_vehicle_id) {
+            const list = addonsByBV.get(a.booking_vehicle_id) ?? [];
+            list.push(a);
+            addonsByBV.set(a.booking_vehicle_id, list);
+          } else {
+            orphans.push(a);
+          }
+        }
+        return (
+          <div className="mt-5">
+            <Eyebrow className="!text-bone/60" prefix={null}>
+              {t("addonsBreakdown", { count: addonRows.length })}
+            </Eyebrow>
+            <div className="mt-2 space-y-2">
+              {(bvRows ?? []).map((r: any) => {
+                const v = r.vehicles ?? {};
+                const label = [v.year, v.color, v.make, v.model].filter(Boolean).join(" ");
+                const list = addonsByBV.get(r.id) ?? [];
+                if (list.length === 0) return null;
+                return (
+                  <div key={r.id} className="bg-white/5 p-3">
+                    <div className="font-mono text-[10px] uppercase tracking-wider text-sol mb-2">
+                      → {label || "Vehicle"}
+                      {v.plate ? <span className="ml-1 opacity-60">· {v.plate}</span> : null}
+                    </div>
+                    <div className="space-y-1.5">
+                      {list.map((a) => (
+                        <div key={a.addon_code} className="flex justify-between items-baseline text-xs">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-bone/90">{a.addon_name}</span>
+                            <span className="ml-2 font-mono text-[10px] text-bone/50 uppercase tracking-wider">
+                              {a.duration_minutes}m
+                              {a.size_multiplier !== 1 && (
+                                <> · {a.size_multiplier.toFixed(2)}×</>
+                              )}
+                            </span>
+                          </div>
+                          <div className="text-sol font-mono text-[11px] tabular shrink-0">
+                            +{fmtUSD(a.washer_payout_cents)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {orphans.length > 0 && (
+                <div className="bg-white/5 p-3">
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-bone/60 mb-2">
+                    {t("addonsApplyToBooking")}
+                  </div>
+                  <div className="space-y-1.5">
+                    {orphans.map((a) => (
+                      <div key={a.addon_code} className="flex justify-between items-baseline text-xs">
+                        <div className="flex-1 min-w-0">
+                          <span className="text-bone/90">{a.addon_name}</span>
+                          <span className="ml-2 font-mono text-[10px] text-bone/50 uppercase tracking-wider">
+                            {a.duration_minutes}m
+                          </span>
+                        </div>
+                        <div className="text-sol font-mono text-[11px] tabular shrink-0">
+                          +{fmtUSD(a.washer_payout_cents)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="text-sol font-mono text-[11px] tabular shrink-0">
-                  +{fmtUSD(a.washer_payout_cents)}
-                </div>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {(job as any).customer_note && (
         <div className="mt-5">

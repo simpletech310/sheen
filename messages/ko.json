@@ -915,7 +915,8 @@
     "acceptError": "수락 실패",
     "requestDeclined": "요청 거절됨",
     "declineError": "거절 실패",
-    "addonsBreakdown": "디테일링 추가 옵션 · {count}개"
+    "addonsBreakdown": "디테일링 추가 옵션 · {count}개",
+    "addonsApplyToBooking": "Apply to booking"
   },
   "proJobs": {
     "service": "서비스",
@@ -1309,7 +1310,12 @@
     "addonsRunningTotal": "서비스 합계",
     "addonsContinue": "추가 옵션으로 계속 →",
     "addonsSkip": "추가 옵션 건너뛰기 →",
-    "addonsNoneAvailable": "이 등급에 호환되는 추가 옵션 없음 — 기본 세차에 이미 포함되어 있습니다."
+    "addonsNoneAvailable": "이 등급에 호환되는 추가 옵션 없음 — 기본 세차에 이미 포함되어 있습니다.",
+    "addonsSubheadPerVehicle": "Pick extras per vehicle. The Honda can get the ceramic seal while the Dodge stays bare — totally your call.",
+    "addonsVehicleN": "Vehicle {n} of {total}",
+    "addonsThisVehicleSize": "This vehicle's size",
+    "addonsGrandTotalLabel": "Booking total",
+    "payVehicleAddonsLabel": "Add-ons (#{id})"
   },
   "appWashes": {
     "washSingular": "세차",

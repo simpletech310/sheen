@@ -915,7 +915,8 @@
     "acceptError": "Không thể chấp nhận",
     "requestDeclined": "Đã từ chối yêu cầu",
     "declineError": "Không thể từ chối",
-    "addonsBreakdown": "Dịch vụ detailing thêm · {count}"
+    "addonsBreakdown": "Dịch vụ detailing thêm · {count}",
+    "addonsApplyToBooking": "Apply to booking"
   },
   "proJobs": {
     "service": "Dịch vụ",
@@ -1309,7 +1310,12 @@
     "addonsRunningTotal": "Tổng dịch vụ",
     "addonsContinue": "Tiếp tục với dịch vụ thêm →",
     "addonsSkip": "Bỏ qua dịch vụ thêm →",
-    "addonsNoneAvailable": "Không có dịch vụ thêm tương thích với gói này — gói rửa cơ bản đã bao gồm hết."
+    "addonsNoneAvailable": "Không có dịch vụ thêm tương thích với gói này — gói rửa cơ bản đã bao gồm hết.",
+    "addonsSubheadPerVehicle": "Pick extras per vehicle. The Honda can get the ceramic seal while the Dodge stays bare — totally your call.",
+    "addonsVehicleN": "Vehicle {n} of {total}",
+    "addonsThisVehicleSize": "This vehicle's size",
+    "addonsGrandTotalLabel": "Booking total",
+    "payVehicleAddonsLabel": "Add-ons (#{id})"
   },
   "appWashes": {
     "washSingular": "lần rửa",

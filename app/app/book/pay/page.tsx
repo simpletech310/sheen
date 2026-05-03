@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/Eyebrow";
@@ -26,17 +26,40 @@ function PayInner() {
   const baseTierTotal = category === "home" ? basePrice : basePrice * count;
   const usesVehicles = category === "auto" || category === "big_rig";
 
-  // Add-ons (auto + big-rig only) — pulled from the booking draft, not
-  // the URL, since the codes can be many and the size multiplier needs
-  // to be applied consistently between picker, pay, and checkout API.
+  // Add-ons (auto + big-rig only) — keyed by vehicle so each car can
+  // get its own list. Carries from the addons step via sessionStorage.
   const draftForAddons = typeof window !== "undefined" ? readDraft() : null;
-  const addonCodes = draftForAddons?.addonCodes ?? [];
-  const vehicleSize = draftForAddons?.vehicleSize ?? "sedan";
-  const selectedAddons = snapshotAddons(addonCodes, vehicleSize);
-  const addonsCents = sumAddonPrices(selectedAddons);
+  const addonsByVehicle = draftForAddons?.addonsByVehicleId ?? {};
+  const perVehicleSnapshots = useMemo(() => {
+    return Object.entries(addonsByVehicle).map(([vehicleId, pv]) => ({
+      vehicleId,
+      addons: snapshotAddons(pv.codes, pv.size),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const addonsCents = perVehicleSnapshots.reduce(
+    (a, p) => a + sumAddonPrices(p.addons),
+    0
+  );
 
   const totalServiceCents = baseTierTotal + addonsCents;
   const fees = computeFees({ serviceCents: totalServiceCents, routedTo: "solo_washer" });
+
+  // Vehicle metadata for the receipt — fetched once on mount.
+  const [vehicleLabels, setVehicleLabels] = useState<Record<string, string>>({});
+  useEffect(() => {
+    fetch("/api/vehicles")
+      .then((r) => r.json())
+      .then((d) => {
+        const map: Record<string, string> = {};
+        for (const v of d.vehicles ?? []) {
+          const parts = [v.year, v.color, v.make, v.model].filter(Boolean);
+          map[v.id] = parts.join(" ") || "Vehicle";
+        }
+        setVehicleLabels(map);
+      })
+      .catch(() => {});
+  }, []);
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -111,8 +134,18 @@ function PayInner() {
             requested_wash_handle: requestedHandle || undefined,
             redeem_points: redeemPoints || undefined,
             redeem_credit_id: useCredit && matchingCredit ? matchingCredit.id : undefined,
-            addon_codes: addonCodes.length > 0 ? addonCodes : undefined,
-            vehicle_size: addonCodes.length > 0 ? vehicleSize : undefined,
+            // Per-vehicle add-on map. Server snapshots prices itself
+            // (it's the only place we trust the math) using the size
+            // each vehicle was tagged with in the addons step.
+            addons_by_vehicle:
+              Object.keys(addonsByVehicle).length > 0
+                ? Object.fromEntries(
+                    Object.entries(addonsByVehicle).map(([vid, pv]) => [
+                      vid,
+                      { codes: pv.codes, size: pv.size },
+                    ])
+                  )
+                : undefined,
             address: {
               street,
               unit,
@@ -290,12 +323,28 @@ function PayInner() {
             <span />
           </div>
         )}
-        {selectedAddons.map((sa) => {
-          const a = getAddonByCode(sa.code);
+        {/* Per-vehicle add-on lines — grouped under the car they
+            belong to so the customer sees exactly what was ordered
+            for which vehicle. */}
+        {perVehicleSnapshots.map(({ vehicleId, addons }) => {
+          if (addons.length === 0) return null;
           return (
-            <div key={sa.code} className="flex justify-between text-xs text-smoke pl-2">
-              <span>+ {a?.name ?? sa.code}</span>
-              <span className="tabular">{fmtUSD(sa.price_cents)}</span>
+            <div key={vehicleId} className="pt-1.5">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-smoke pl-2">
+                {vehicleLabels[vehicleId] ?? t("payVehicleAddonsLabel", { id: vehicleId.slice(0, 6) })}
+              </div>
+              {addons.map((sa) => {
+                const a = getAddonByCode(sa.code);
+                return (
+                  <div
+                    key={`${vehicleId}-${sa.code}`}
+                    className="flex justify-between text-xs text-smoke pl-4"
+                  >
+                    <span>+ {a?.name ?? sa.code}</span>
+                    <span className="tabular">{fmtUSD(sa.price_cents)}</span>
+                  </div>
+                );
+              })}
             </div>
           );
         })}

@@ -19,12 +19,20 @@ export type BookingDraft = {
   powerNotes?: string;
   gateCode?: string;
   sitePhotoPaths?: string[];
-  // Add-ons (migration 0032+) — codes the customer ticked, plus the
-  // vehicle-size multiplier baseline picked in the same step. We carry
-  // them in the draft (not the URL) so the pay page can rebuild the
-  // checkout payload + the line-item total without 12 query params.
-  addonCodes?: string[];
-  vehicleSize?: "sedan" | "suv" | "truck";
+  // Add-ons (migration 0032+) — keyed by vehicleId so each car can
+  // get its own list (Honda wants wax, Dodge doesn't). Apply size
+  // multiplier per-vehicle too — a sedan and a truck on the same
+  // booking get different add-on prices for the same code.
+  //
+  // Example:
+  //   addonsByVehicleId: {
+  //     "<honda-id>": { codes: ["hand_wax", "headlight_restore"], size: "sedan" },
+  //     "<dodge-id>": { codes: [], size: "sedan" }
+  //   }
+  addonsByVehicleId?: Record<
+    string,
+    { codes: string[]; size: "sedan" | "suv" | "truck" }
+  >;
 };
 
 export function readDraft(): BookingDraft | null {
