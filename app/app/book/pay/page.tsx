@@ -85,7 +85,17 @@ function PayInner() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [pointsBalance, setPointsBalance] = useState(0);
+  // Points already redeemed in the rolling 24h window — the daily
+  // cap is $400/day = 40,000 pts. Counted server-side too; surfaced
+  // here so the slider max stays honest.
+  const [pointsUsedToday, setPointsUsedToday] = useState(0);
   const [redeemPoints, setRedeemPoints] = useState(Number(params.get("redeem") ?? "0"));
+  // Loyalty caps: customer always pays at least $5 (Stripe minimum +
+  // platform-floor for trust), and total redemption can't exceed
+  // $400/day. Server enforces; this matches client-side so the
+  // slider can't propose an amount the server will reject.
+  const MIN_CUSTOMER_CHARGE_CENTS = 500;
+  const DAILY_CAP_CENTS = 40000;
   // Achievement freebie matching this booking's category + tier, if any.
   const [matchingCredit, setMatchingCredit] = useState<{ id: string; source: string } | null>(null);
   const [useCredit, setUseCredit] = useState(params.get("credit") === "1");
@@ -139,10 +149,13 @@ function PayInner() {
       setLoading(false);
       return;
     }
-    // Best-effort load of loyalty balance for the redemption slider.
+    // Best-effort load of loyalty balance + 24h usage for the slider.
     fetch("/api/loyalty/balance")
       .then((r) => r.json())
-      .then((d) => setPointsBalance(d.points ?? 0))
+      .then((d) => {
+        setPointsBalance(d.points ?? 0);
+        setPointsUsedToday(d.used_today ?? 0);
+      })
       .catch(() => {});
 
     // Find an achievement freebie that fits this exact tier + category.
@@ -320,12 +333,13 @@ function PayInner() {
         </div>
       )}
 
-      {/* Loyalty redemption — visible on every booking. When the user
-          has zero points, renders as an informational card explaining
-          how to earn them so they know the perk exists. When they DO
-          have points, becomes an interactive slider that lets them
-          knock dollars off the wash (100 pts = $1). */}
-      {!clientSecret && !loading && (
+      {/* Loyalty redemption — visible on every booking, always. The
+          earlier !clientSecret gate hid the widget the instant Stripe
+          loaded (which is fast), so customers never saw it. Card now
+          stays put: zero balance → informational; has points → slider.
+          100 pts = $1. Server caps per booking at "drop charge to $5
+          minimum" and per day at $400 worth of points. */}
+      {!loading && (
         <div className={`p-4 mb-5 ${pointsBalance > 0 ? "bg-royal text-bone" : "bg-mist/60 text-ink border-l-2 border-royal"}`}>
           <div className="flex justify-between items-start gap-3">
             <div className="flex-1 min-w-0">
@@ -343,49 +357,95 @@ function PayInner() {
                   : t("loyaltyZeroBlurb")}
               </div>
             </div>
-            {pointsBalance > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  const max = Math.min(pointsBalance, fees.serviceCents);
-                  setRedeemPoints(redeemPoints > 0 ? 0 : Math.floor(max / 100) * 100);
-                }}
-                className="shrink-0 bg-sol text-ink px-3 py-2 text-xs font-bold uppercase tracking-wide hover:bg-bone"
-              >
-                {redeemPoints > 0 ? t("clearPoints") : t("applyMaxPoints")}
-              </button>
-            )}
+            {pointsBalance > 0 && (() => {
+              // Effective redeem ceiling: limited by balance, by the
+              // amount that would push customer charge below the $5
+              // floor, AND by the daily cap minus what was already used
+              // in the last 24h. Whichever is smallest wins. Floor to
+              // the nearest 100 since 100 pts = $1 and we don't deal
+              // in fractional dollars.
+              const wouldDropToFloor = Math.max(
+                0,
+                fees.customerCharge + rushSurchargeCents - MIN_CUSTOMER_CHARGE_CENTS
+              );
+              const dailyRoom = Math.max(0, DAILY_CAP_CENTS - pointsUsedToday);
+              const ceiling = Math.min(pointsBalance, wouldDropToFloor, dailyRoom);
+              const ceilingFloored = Math.floor(ceiling / 100) * 100;
+              return (
+                <button
+                  type="button"
+                  disabled={ceilingFloored <= 0}
+                  onClick={() => {
+                    setRedeemPoints(redeemPoints > 0 ? 0 : ceilingFloored);
+                  }}
+                  className="shrink-0 bg-sol text-ink px-3 py-2 text-xs font-bold uppercase tracking-wide hover:bg-bone disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {redeemPoints > 0 ? t("clearPoints") : t("applyMaxPoints")}
+                </button>
+              );
+            })()}
           </div>
-          {pointsBalance > 0 && redeemPoints > 0 && (
-            <>
-              <div className="mt-3">
-                <input
-                  type="range"
-                  min={0}
-                  max={Math.min(pointsBalance, fees.serviceCents)}
-                  step={100}
-                  value={redeemPoints}
-                  onChange={(e) => setRedeemPoints(Number(e.target.value))}
-                  className="w-full accent-sol"
-                />
-                <div className="flex justify-between text-xs mt-1 opacity-90 tabular">
-                  <span>{redeemPoints.toLocaleString()} pts</span>
-                  <span>− {fmtUSD(redeemPoints)}</span>
+          {pointsBalance > 0 && (() => {
+            const wouldDropToFloor = Math.max(
+              0,
+              fees.customerCharge + rushSurchargeCents - MIN_CUSTOMER_CHARGE_CENTS
+            );
+            const dailyRoom = Math.max(0, DAILY_CAP_CENTS - pointsUsedToday);
+            const ceiling = Math.min(pointsBalance, wouldDropToFloor, dailyRoom);
+            const ceilingFloored = Math.floor(ceiling / 100) * 100;
+            const cappedByDaily = dailyRoom < pointsBalance && dailyRoom < wouldDropToFloor;
+            const cappedByMin = wouldDropToFloor < pointsBalance && wouldDropToFloor < dailyRoom;
+            return (
+              <>
+                {/* Always-on hint about the constraints, even before
+                    the user opens the slider. Removes confusion about
+                    why the slider stops short of the balance. */}
+                <div className="text-[11px] mt-2 opacity-75 leading-snug">
+                  {cappedByMin
+                    ? t("loyaltyMinChargeNote", { min: (MIN_CUSTOMER_CHARGE_CENTS / 100).toFixed(0) })
+                    : cappedByDaily
+                    ? t("loyaltyDailyCapNote", {
+                        used: pointsUsedToday.toLocaleString(),
+                        cap: DAILY_CAP_CENTS.toLocaleString(),
+                      })
+                    : t("loyaltyHintNote", { max: (ceilingFloored / 100).toFixed(0) })}
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set("redeem", String(redeemPoints));
-                  window.location.href = url.pathname + url.search;
-                }}
-                className="mt-3 w-full bg-ink text-bone py-2.5 text-xs font-bold uppercase tracking-wide hover:bg-bone hover:text-ink"
-              >
-                {t("applyAndRefreshCheckout")}
-              </button>
-            </>
-          )}
+                {redeemPoints > 0 && (
+                  <>
+                    <div className="mt-3">
+                      <input
+                        type="range"
+                        min={0}
+                        max={ceilingFloored}
+                        step={100}
+                        value={Math.min(redeemPoints, ceilingFloored)}
+                        onChange={(e) => setRedeemPoints(Number(e.target.value))}
+                        className="w-full accent-sol"
+                      />
+                      <div className="flex justify-between text-xs mt-1 opacity-90 tabular">
+                        <span>{redeemPoints.toLocaleString()} pts</span>
+                        <span>− {fmtUSD(redeemPoints)}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set(
+                          "redeem",
+                          String(Math.min(redeemPoints, ceilingFloored))
+                        );
+                        window.location.href = url.pathname + url.search;
+                      }}
+                      className="mt-3 w-full bg-ink text-bone py-2.5 text-xs font-bold uppercase tracking-wide hover:bg-bone hover:text-ink"
+                    >
+                      {t("applyAndRefreshCheckout")}
+                    </button>
+                  </>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
 

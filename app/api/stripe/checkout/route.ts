@@ -313,21 +313,58 @@ export async function POST(req: Request) {
       requestExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     }
 
-    // Loyalty redemption: 100 points = $1. Bounded to wallet balance and
-    // the booking's pre-fee total so customers can't go negative or get
-    // a refund out of the trust fee.
+    // Loyalty redemption: 100 points = $1. Bounded by FOUR caps so a
+    // bad request can't break the platform's economics:
+    //   1. Wallet balance — can't redeem points you don't have.
+    //   2. Booking service amount — discount applies to wash, never
+    //      to the trust fee or the rush surcharge.
+    //   3. Min charge floor — customer always pays at least $5
+    //      (LOYALTY_MIN_CHARGE_CENTS) so even a fully-points-covered
+    //      wash leaves something for Stripe + audit trail.
+    //   4. Daily cap — total points redeemed in the rolling last 24h
+    //      can't exceed $400 (LOYALTY_DAILY_CAP_CENTS). Stops a single
+    //      account from draining a huge balance against Sheen's books
+    //      in one day.
+    const LOYALTY_MIN_CHARGE_CENTS = 500;
+    const LOYALTY_DAILY_CAP_CENTS = 40000;
     let discountCents = 0;
     let pointsRedeemed = 0;
     if (body.redeem_points && body.redeem_points > 0) {
-      const { data: ledger } = await supabase
-        .from("loyalty_ledger")
-        .select("points")
-        .eq("user_id", user.id);
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const [{ data: ledger }, { data: recent }] = await Promise.all([
+        supabase
+          .from("loyalty_ledger")
+          .select("points")
+          .eq("user_id", user.id),
+        supabase
+          .from("loyalty_ledger")
+          .select("points")
+          .eq("user_id", user.id)
+          .eq("reason", "redeem")
+          .gte("created_at", since),
+      ]);
       const balance = (ledger ?? []).reduce((acc, r: any) => acc + (r.points ?? 0), 0);
-      const requested = Math.min(body.redeem_points, balance);
+      const usedToday = (recent ?? []).reduce(
+        (acc, r: any) => acc + Math.max(0, -(r.points ?? 0)),
+        0
+      );
+      const dailyRoom = Math.max(0, LOYALTY_DAILY_CAP_CENTS - usedToday);
+
+      // Most we can discount this booking without dropping below the
+      // $5 floor. Trust fee + rush sit OUTSIDE the discount math
+      // (already excluded by maxDiscountCents below), so we only need
+      // the customerCharge gap here.
+      const minChargeRoom = Math.max(
+        0,
+        fees.customerCharge - LOYALTY_MIN_CHARGE_CENTS
+      );
+
+      const requested = Math.min(body.redeem_points, balance, dailyRoom);
       const requestedDollars = Math.floor(requested / 100);
-      // Max we can discount is the service amount (not the trust fee).
-      const maxDiscountCents = Math.floor(fees.serviceCents);
+      const maxDiscountCents = Math.min(
+        Math.floor(fees.serviceCents),
+        minChargeRoom
+      );
       discountCents = Math.min(requestedDollars * 100, maxDiscountCents);
       pointsRedeemed = discountCents; // 100 pts → $1, so cents == pts redeemed
     }

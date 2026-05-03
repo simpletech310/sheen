@@ -1323,7 +1323,10 @@
     "addonsLoading": "Loading your vehicles…",
     "loyaltyZeroHeadline": "Earn loyalty points on this wash",
     "loyaltyZeroBlurb": "1 point per $1 you spend on a wash. 100 pts = $1 off any future booking. Points kick in the moment your wash is funded.",
-    "loyaltyValueNote": "Worth ${dollars} off this wash"
+    "loyaltyValueNote": "Worth ${dollars} off this wash",
+    "loyaltyMinChargeNote": "Capped here so you still pay at least ${min} on the wash.",
+    "loyaltyDailyCapNote": "Daily cap: {used} of 40,000 pts redeemed in the last 24h.",
+    "loyaltyHintNote": "Up to ${max} off this wash. 100 pts = $1."
   },
   "appWashes": {
     "washSingular": "次洗车",
