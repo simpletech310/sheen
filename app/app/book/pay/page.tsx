@@ -320,29 +320,43 @@ function PayInner() {
         </div>
       )}
 
-      {pointsBalance > 0 && !clientSecret && !loading && (
-        <div className="bg-royal text-bone p-4 mb-5">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="font-mono text-[10px] uppercase tracking-wider opacity-80">
+      {/* Loyalty redemption — visible on every booking. When the user
+          has zero points, renders as an informational card explaining
+          how to earn them so they know the perk exists. When they DO
+          have points, becomes an interactive slider that lets them
+          knock dollars off the wash (100 pts = $1). */}
+      {!clientSecret && !loading && (
+        <div className={`p-4 mb-5 ${pointsBalance > 0 ? "bg-royal text-bone" : "bg-mist/60 text-ink border-l-2 border-royal"}`}>
+          <div className="flex justify-between items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div className={`font-mono text-[10px] uppercase tracking-wider ${pointsBalance > 0 ? "opacity-80" : "text-royal"}`}>
                 {t("redeemLoyalty")}
               </div>
-              <div className="text-sm mt-1">
-                {t("pointsAvailable", { count: pointsBalance.toLocaleString() })}
+              <div className="text-sm mt-1 font-bold">
+                {pointsBalance > 0
+                  ? t("pointsAvailable", { count: pointsBalance.toLocaleString() })
+                  : t("loyaltyZeroHeadline")}
+              </div>
+              <div className={`text-xs mt-1 leading-snug ${pointsBalance > 0 ? "opacity-80" : "text-smoke"}`}>
+                {pointsBalance > 0
+                  ? t("loyaltyValueNote", { dollars: (pointsBalance / 100).toFixed(2) })
+                  : t("loyaltyZeroBlurb")}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                const max = Math.min(pointsBalance, fees.serviceCents);
-                setRedeemPoints(redeemPoints > 0 ? 0 : Math.floor(max / 100) * 100);
-              }}
-              className="bg-sol text-ink px-3 py-2 text-xs font-bold uppercase tracking-wide hover:bg-bone"
-            >
-              {redeemPoints > 0 ? t("clearPoints") : t("applyMaxPoints")}
-            </button>
+            {pointsBalance > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const max = Math.min(pointsBalance, fees.serviceCents);
+                  setRedeemPoints(redeemPoints > 0 ? 0 : Math.floor(max / 100) * 100);
+                }}
+                className="shrink-0 bg-sol text-ink px-3 py-2 text-xs font-bold uppercase tracking-wide hover:bg-bone"
+              >
+                {redeemPoints > 0 ? t("clearPoints") : t("applyMaxPoints")}
+              </button>
+            )}
           </div>
-          {redeemPoints > 0 && (
+          {pointsBalance > 0 && redeemPoints > 0 && (
             <>
               <div className="mt-3">
                 <input

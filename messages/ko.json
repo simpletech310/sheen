@@ -1320,7 +1320,10 @@
     "paySubtotal": "Vehicle subtotal",
     "payAddonsSubtotal": "Detailing add-ons (all vehicles)",
     "addonsBaseOnly": "Base wash · tap to add extras",
-    "addonsLoading": "Loading your vehicles…"
+    "addonsLoading": "Loading your vehicles…",
+    "loyaltyZeroHeadline": "Earn loyalty points on this wash",
+    "loyaltyZeroBlurb": "1 point per $1 you spend on a wash. 100 pts = $1 off any future booking. Points kick in the moment your wash is funded.",
+    "loyaltyValueNote": "Worth ${dollars} off this wash"
   },
   "appWashes": {
     "washSingular": "세차",
