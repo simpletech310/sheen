@@ -180,7 +180,22 @@
     "faq6Q": "Bảo đảm thiệt hại hoạt động như thế nào?",
     "faq6A": "Mỗi lần rửa được bảo hiểm tới $2,500. Gửi từ ứng dụng trong vòng 24 giờ sau khi hoàn thành.",
     "faq7Q": "Tiền boa có đến thợ không?",
-    "faq7A": "100%, không cắt nền tảng. Mặc định 18 / 22 / 25%, cho phép số tiền tùy chỉnh."
+    "faq7A": "100%, không cắt nền tảng. Mặc định 18 / 22 / 25%, cho phép số tiền tùy chỉnh.",
+    "addonsEyebrow": "Menu detailing đầy đủ",
+    "addonsHeadlineA": "CHỌN GÓI RỬA.",
+    "addonsHeadlineB": "THÊM DỊCH VỤ EXTRA.",
+    "addonsBlurb": "Ngoài 4 gói cơ bản — giặt nội thất, phủ ceramic, đánh bóng sơn, phục hồi đèn pha, khử mùi ozone, vệ sinh khoang máy và nhiều hơn nữa. Chọn extras khi đặt, chuyên gia đã được xác minh sẽ mang tới tận nơi.",
+    "addonsCta": "Đặt lịch + thêm extras →",
+    "addonsFromLabel": "from",
+    "addonsFooter": "Tổng cộng 13 dịch vụ thêm. SUV và truck có hệ số nhân nhỏ theo diện tích cho dịch vụ cao cấp.",
+    "addon_interior_shampoo": "Giặt nội thất",
+    "addon_engine_bay": "Vệ sinh khoang máy",
+    "addon_headlight_restore": "Phục hồi đèn pha",
+    "addon_leather_treatment": "Dưỡng da",
+    "addon_clay_bar": "Tẩy bụi bám clay-bar",
+    "addon_ceramic_seal": "Phủ ceramic dạng xịt",
+    "addon_paint_correction": "Đánh bóng sơn",
+    "addon_ceramic_pro": "Ceramic Pro 2 năm"
   },
   "wash": {
     "eyebrow": "Dành cho thợ",
@@ -261,7 +276,9 @@
     "applyNow": "Ứng tuyển ngay →",
     "proSignIn": "Đăng nhập thợ",
     "promote5Title": "Gõ bằng ngôn ngữ của bạn",
-    "promote5Desc": "Tiếng Tây Ban Nha, Hàn Quốc, Việt Nam, gì cũng được miễn bạn viết thuận. Khách đọc bằng ngôn ngữ của họ và trả lời như vậy luôn. Đừng mất booking vì rào cản chat nữa."
+    "promote5Desc": "Tiếng Tây Ban Nha, Hàn Quốc, Việt Nam, gì cũng được miễn bạn viết thuận. Khách đọc bằng ngôn ngữ của họ và trả lời như vậy luôn. Đừng mất booking vì rào cản chat nữa.",
+    "ladderYouKeepFlat": "Bạn giữ · Hoa hồng 22%",
+    "ladderUnlocks": "Mở khóa"
   },
   "home": {
     "eyebrow": "Dịch vụ · Nhà ở",
@@ -403,7 +420,20 @@
     "closingSubhead": "Khung giờ trong ngày tại LA. Thợ có bảo hiểm. 100% tip cho tài xế của bạn.",
     "closingSeePlans": "Xem gói",
     "why5Title": "Nói bất kỳ ngôn ngữ nào",
-    "why5Desc": "Nói cho thợ biết xe cần gì — gõ tiếng Tây Ban Nha, Việt, Nga, gì tự nhiên cũng được. Họ đọc bằng ngôn ngữ của họ và trả lời như vậy."
+    "why5Desc": "Nói cho thợ biết xe cần gì — gõ tiếng Tây Ban Nha, Việt, Nga, gì tự nhiên cũng được. Họ đọc bằng ngôn ngữ của họ và trả lời như vậy.",
+    "addonsEyebrow": "Menu detailing đầy đủ cho xe đầu kéo",
+    "addonsHeadlineA": "BỐN GÓI CƠ BẢN.",
+    "addonsHeadlineB": "THÊM DỊCH VỤ EXTRA.",
+    "addonsBlurb": "Ngoài gói rửa cơ bản — tẩy dầu mỡ gầm xe, giặt cabin, vệ sinh sâu khoang ngủ, đánh bóng chrome, phủ ceramic, đánh bóng mâm nhôm. Chọn extras khi đặt; chuyên gia đã xác minh thiết bị sẽ mang gear tới.",
+    "addonsCta": "Đặt lịch + thêm extras →",
+    "addonsFromLabel": "from",
+    "addon_degrease_undercarriage": "Tẩy dầu mỡ gầm xe",
+    "addon_bug_tar_rig": "Tẩy vết côn trùng & nhựa đường",
+    "addon_cab_shampoo": "Giặt thảm cabin",
+    "addon_aluminum_wheel_polish": "Đánh bóng mâm nhôm",
+    "addon_sleeper_deep_clean": "Vệ sinh sâu khoang ngủ",
+    "addon_chrome_polish_premium": "Premium chrome polish",
+    "addon_ceramic_seal_rig": "Phủ ceramic (cabin + rơ moóc)"
   },
   "business": {
     "eyebrow": "Dịch vụ · Thương mại",
@@ -425,7 +455,7 @@
     "why1V": "Thời gian báo giá",
     "why2K": "15%",
     "why2V": "Giảm giá hợp đồng định kỳ",
-    "why3K": "Net-30",
+    "why3K": "Thanh toán sau 30 ngày",
     "why3V": "Thanh toán cho doanh nghiệp đã xác minh",
     "why4K": "$1M",
     "why4V": "GL · mỗi lần khảo sát",
@@ -611,7 +641,7 @@
     "statusActive": "Đang hoạt động",
     "statusPending": "Chờ xử lý",
     "statusVerified": "Đã xác minh",
-    "statusBigRig": "Big rig",
+    "statusBigRig": "Xe đầu kéo",
     "statJobs": "Đơn",
     "statLifetime": "tổng cộng",
     "statAvgScore": "điểm trung bình",
@@ -729,7 +759,27 @@
     "editSaved": "Đã lưu hồ sơ",
     "editSaveError": "Không thể lưu",
     "editSaving": "Đang lưu…",
-    "editSaveBtn": "Lưu hồ sơ"
+    "editSaveBtn": "Lưu hồ sơ",
+    "tierLabel": "Hạng của bạn",
+    "tierJobs": "jobs",
+    "tierMoreJobsTo": "việc nữa để",
+    "tierKeepRating": "giữ đánh giá ≥ {rating}★",
+    "tierKeepRatingTo": "Nâng đánh giá lên {rating}★ để đạt {next}",
+    "tierUnlocksAt": "Mở khóa tại {next}",
+    "tierEvaluating": "Đang đánh giá thăng hạng tiếp theo của bạn…",
+    "tierLegendBlurb": "Đỉnh cao nhất. Bạn được phép nhận mọi loại việc trên Sheen, bao gồm phủ ceramic 2 năm — công việc đơn lẻ trả cao nhất trên nền tảng.",
+    "capsLabel": "Dịch vụ detailing thêm",
+    "capsHeadline": "Dịch vụ bạn có thể thực hiện",
+    "capsDescPrefix": "Chọn những gì bạn được đào tạo. Hạng của bạn (",
+    "capsDescSuffix": ") quyết định giới hạn — leo hạng để mở khóa dịch vụ thêm trả cao hơn.",
+    "capsGroupAuto": "Dịch vụ thêm cho ô tô",
+    "capsGroupBigRig": "Dịch vụ thêm cho xe đầu kéo",
+    "capsBigRigGated": "Bật dịch vụ xe đầu kéo ở trên để quản lý dịch vụ thêm cho xe đầu kéo.",
+    "capsOn": "On",
+    "capsOff": "Off",
+    "capsLocked": "Đã khóa",
+    "capsLockedAt": "Mở khóa tại {tier}",
+    "capsErrorUpdate": "Không thể cập nhật khả năng"
   },
   "proSettings": {
     "backLink": "Hồ sơ",
@@ -864,7 +914,8 @@
     "requestAccepted": "Đã chấp nhận yêu cầu",
     "acceptError": "Không thể chấp nhận",
     "requestDeclined": "Đã từ chối yêu cầu",
-    "declineError": "Không thể từ chối"
+    "declineError": "Không thể từ chối",
+    "addonsBreakdown": "Dịch vụ detailing thêm · {count}"
   },
   "proJobs": {
     "service": "Dịch vụ",
@@ -990,7 +1041,7 @@
     "membershipPill": "SHEEN+ {plan} đang hoạt động",
     "sectionBookingTitle": "ĐẶT LỊCH",
     "sectionBookingEyebrow": "Chuẩn bị",
-    "tileGarage": "Garage",
+    "tileGarage": "Gara",
     "tileGarageSub": "Xe & xe tải lớn",
     "tilePlaces": "Địa điểm",
     "tilePlacesSub": "Địa chỉ đã lưu",
@@ -1242,7 +1293,22 @@
     "totalToday": "Tổng hôm nay",
     "rushRefundNote": "Nếu không có pro nào chấp nhận trong 15 phút, phụ phí Rush sẽ tự động hoàn lại và bạn vẫn giữ lịch đặt.",
     "settingUpPayment": "Đang thiết lập thanh toán bảo mật…",
-    "payFooter": "Thanh toán được xử lý bảo mật bởi Stripe. Tiền sẽ chuyển cho pro sau khi rửa xong."
+    "payFooter": "Thanh toán được xử lý bảo mật bởi Stripe. Tiền sẽ chuyển cho pro sau khi rửa xong.",
+    "addonsStep": "Bước 2 trên 4 · Thêm detailing",
+    "addonsHeadline": "Tùy chỉnh gói rửa",
+    "addonsSubhead": "Thêm dịch vụ detailing đầy đủ vào bất kỳ gói rửa cơ bản nào. Chọn những gì bạn muốn — chuyên gia sẽ chuẩn bị tại chỗ. Bỏ qua nếu chỉ muốn gói rửa cơ bản.",
+    "addonsVehicleSize": "Kích thước xe của bạn",
+    "addonsSize_sedan": "Sedan",
+    "addonsSize_suv": "SUV / Crossover",
+    "addonsSize_truck": "Truck / Van",
+    "addonsSizeNote": "Premium add-ons (ceramic, shampoo, paint correction) scale by surface area. Quick add-ons stay flat.",
+    "addonsAdd": "Add",
+    "addonsAdded": "Đã thêm ✓",
+    "addonsCount": "{count, plural, one {# add-on} other {# add-ons}}",
+    "addonsRunningTotal": "Tổng dịch vụ",
+    "addonsContinue": "Tiếp tục với dịch vụ thêm →",
+    "addonsSkip": "Bỏ qua dịch vụ thêm →",
+    "addonsNoneAvailable": "Không có dịch vụ thêm tương thích với gói này — gói rửa cơ bản đã bao gồm hết."
   },
   "appWashes": {
     "washSingular": "lần rửa",
@@ -1358,7 +1424,7 @@
     "noPoints": "Chưa có điểm — đặt lần rửa đầu tiên để bắt đầu tích điểm."
   },
   "appGarage": {
-    "eyebrow": "Garage",
+    "eyebrow": "Gara",
     "pageTitle": "Xe của bạn",
     "addVehicle": "Thêm xe",
     "emptyEyebrow": "Garage trống",
@@ -1418,7 +1484,8 @@
     "defaultServiceName": "Rửa xe",
     "yourPro": "Chuyên viên của bạn",
     "yourProFallback": "Chuyên viên của bạn",
-    "total": "Tổng cộng"
+    "total": "Tổng cộng",
+    "addonsIncluded": "Dịch vụ detailing thêm"
   },
   "appMembership": {
     "eyebrow": "Gói thành viên",

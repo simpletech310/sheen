@@ -166,6 +166,53 @@ export default async function AutoPage() {
         </div>
       </section>
 
+      {/* Add-ons pitch — full detailing menu without overloading the
+          tier picker. Customer ticks add-ons after their tier choice. */}
+      <section className="px-6 md:px-14 py-16 bg-bone">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end mb-8">
+          <div className="lg:col-span-2">
+            <Eyebrow>{t("addonsEyebrow")}</Eyebrow>
+            <h2 className="display text-[40px] md:text-[56px] leading-tight mt-4">
+              {t("addonsHeadlineA")}
+              <br />
+              <span className="text-royal">{t("addonsHeadlineB")}</span>
+            </h2>
+            <p className="text-sm md:text-base text-smoke mt-5 max-w-[560px] leading-relaxed">
+              {t("addonsBlurb")}
+            </p>
+          </div>
+          <Link
+            href="/app/book/auto"
+            className="bg-ink text-bone px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-royal transition text-center"
+          >
+            {t("addonsCta")}
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {[
+            { k: "interior_shampoo", price: "$79" },
+            { k: "engine_bay", price: "$59" },
+            { k: "headlight_restore", price: "$89" },
+            { k: "leather_treatment", price: "$49" },
+            { k: "clay_bar", price: "$69" },
+            { k: "ceramic_seal", price: "$129" },
+            { k: "paint_correction", price: "$249" },
+            { k: "ceramic_pro", price: "$399" },
+          ].map((a) => (
+            <div key={a.k} className="border-l-2 border-royal bg-mist/40 p-4">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-royal">
+                {t(`addon_${a.k}` as any)}
+              </div>
+              <div className="display tabular text-2xl mt-2 text-ink">{a.price}</div>
+              <div className="font-mono text-[9px] uppercase tracking-wider text-smoke mt-0.5">
+                {t("addonsFromLabel")}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-smoke mt-6 text-center">{t("addonsFooter")}</p>
+      </section>
+
       {/* Membership callout — Auto plans surface */}
       <section className="px-6 md:px-14 py-16 bg-royal text-bone relative">
         <div className="absolute top-0 left-0 right-0 h-1 bg-sol" />

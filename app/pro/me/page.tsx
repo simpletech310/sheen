@@ -6,7 +6,10 @@ import { LanguagePicker } from "@/components/i18n/LanguagePicker";
 import { fmtUSD } from "@/lib/pricing";
 import { WashHandleCard } from "./WashHandleCard";
 import { BigRigCapabilityCard } from "./BigRigCapabilityCard";
+import { ServicesCapabilityCard } from "./ServicesCapabilityCard";
+import { TierProgressCard } from "./TierProgressCard";
 import { getTranslations } from "next-intl/server";
+import type { Tier } from "@/lib/tier";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +25,7 @@ export default async function ProMePage() {
     supabase
       .from("washer_profiles")
       .select(
-        "status, stripe_account_id, jobs_completed, rating_avg, wash_handle, background_check_verified, can_wash_big_rig, bio, service_radius_miles, insurance_doc_url, background_check_status"
+        "status, stripe_account_id, jobs_completed, rating_avg, wash_handle, background_check_verified, can_wash_big_rig, bio, service_radius_miles, insurance_doc_url, background_check_status, tier, capabilities"
       )
       .eq("user_id", userId)
       .maybeSingle(),
@@ -155,6 +158,11 @@ export default async function ProMePage() {
               {t("statusBigRig")}
             </span>
           )}
+          {wp?.tier && wp.tier !== "rookie" && (
+            <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-1 bg-sol/20 text-sol">
+              {wp.tier}
+            </span>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -205,8 +213,22 @@ export default async function ProMePage() {
           <WashHandleCard handle={wp.wash_handle} />
         </div>
       )}
-      <div className="mb-7">
+      <div className="mb-3">
         <BigRigCapabilityCard initialCapable={!!wp?.can_wash_big_rig} />
+      </div>
+      <div className="mb-3">
+        <TierProgressCard
+          tier={(wp?.tier ?? "rookie") as Tier}
+          jobsCompleted={wp?.jobs_completed ?? 0}
+          ratingAvg={wp?.rating_avg ?? null}
+        />
+      </div>
+      <div className="mb-7">
+        <ServicesCapabilityCard
+          tier={(wp?.tier ?? "rookie") as Tier}
+          initialCapabilities={(wp?.capabilities as Record<string, boolean>) ?? {}}
+          canWashBigRig={!!wp?.can_wash_big_rig}
+        />
       </div>
 
       {/* Sectioned tile groups, mirroring /app/me. */}

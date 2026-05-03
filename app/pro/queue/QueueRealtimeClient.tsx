@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl";
 // Used both for the initial SSR query (queue/page.tsx) and for the
 // hydrating fetch we run when a realtime row arrives without joined data.
 const QUEUE_JOB_SELECT =
-  "id, status, assigned_washer_id, scheduled_window_start, service_cents, vehicle_count, requested_washer_id, request_expires_at, request_declined_at, is_rush, rush_deadline, rush_bonus_cents, services(tier_name, category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(street, city, state, zip, lat, lng, has_water, has_power)";
+  "id, status, assigned_washer_id, scheduled_window_start, service_cents, vehicle_count, requested_washer_id, request_expires_at, request_declined_at, is_rush, rush_deadline, rush_bonus_cents, services(tier_name, category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(street, city, state, zip, lat, lng, has_water, has_power), booking_addons(addon_code, addon_name, price_cents, washer_payout_cents)";
 
 type SortMode = "default" | "distance" | "pay" | "soonest";
 
@@ -72,6 +72,14 @@ export type QueueJob = {
     has_water?: boolean | null;
     has_power?: boolean | null;
   } | null;
+  booking_addons?:
+    | {
+        addon_code: string;
+        addon_name: string;
+        price_cents: number;
+        washer_payout_cents: number;
+      }[]
+    | null;
 };
 
 function distanceMilesSimple(
@@ -207,7 +215,8 @@ export function QueueRealtimeClient({
         return false;
       }
 
-      const elig = checkWasherEligibility(row.services, row.addresses, washerCaps);
+      const addonCodes = (row.booking_addons ?? []).map((a) => a.addon_code);
+      const elig = checkWasherEligibility(row.services, row.addresses, washerCaps, addonCodes);
       if (!elig.ok) return false;
 
       // Mirrors the SSR reach gate — radius OR city match (additive).
@@ -535,10 +544,27 @@ export function QueueRealtimeClient({
                   )}
                 </div>
                 <div className="flex justify-between items-start">
-                  <div>
+                  <div className="flex-1 min-w-0 pr-2">
                     <div className="text-sm font-bold uppercase">
                       {j.services?.tier_name ?? t("service")}
                     </div>
+                    {j.booking_addons && j.booking_addons.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {j.booking_addons.slice(0, 3).map((a) => (
+                          <span
+                            key={a.addon_code}
+                            className="font-mono text-[9px] uppercase tracking-wider bg-sol/20 text-sol px-1.5 py-0.5"
+                          >
+                            + {a.addon_name}
+                          </span>
+                        ))}
+                        {j.booking_addons.length > 3 && (
+                          <span className="font-mono text-[9px] uppercase tracking-wider bg-sol/20 text-sol px-1.5 py-0.5">
+                            +{j.booking_addons.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="text-xs text-bone/90 mt-1">
                       {j.addresses?.street}, {j.addresses?.city}{j.addresses?.state ? `, ${j.addresses.state}` : ""}
                       {dist ? ` · ${dist} mi` : ""}

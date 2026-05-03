@@ -19,6 +19,12 @@ export type BookingDraft = {
   powerNotes?: string;
   gateCode?: string;
   sitePhotoPaths?: string[];
+  // Add-ons (migration 0032+) — codes the customer ticked, plus the
+  // vehicle-size multiplier baseline picked in the same step. We carry
+  // them in the draft (not the URL) so the pay page can rebuild the
+  // checkout payload + the line-item total without 12 query params.
+  addonCodes?: string[];
+  vehicleSize?: "sedan" | "suv" | "truck";
 };
 
 export function readDraft(): BookingDraft | null {

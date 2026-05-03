@@ -198,6 +198,50 @@ export default async function BigRigPage() {
         </div>
       </section>
 
+      {/* Add-ons — full rig detailing menu, picked at booking */}
+      <section className="px-6 md:px-14 py-16 bg-bone">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end mb-8">
+          <div className="lg:col-span-2">
+            <Eyebrow>{t("addonsEyebrow")}</Eyebrow>
+            <h2 className="display text-[40px] md:text-[56px] leading-tight mt-4">
+              {t("addonsHeadlineA")}
+              <br />
+              <span className="text-royal">{t("addonsHeadlineB")}</span>
+            </h2>
+            <p className="text-sm md:text-base text-smoke mt-5 max-w-[560px] leading-relaxed">
+              {t("addonsBlurb")}
+            </p>
+          </div>
+          <Link
+            href="/app/book/big-rig"
+            className="bg-ink text-bone px-7 py-4 text-sm font-bold uppercase tracking-wide hover:bg-royal transition text-center"
+          >
+            {t("addonsCta")}
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {[
+            { k: "degrease_undercarriage", price: "$99" },
+            { k: "bug_tar_rig", price: "$79" },
+            { k: "cab_shampoo", price: "$129" },
+            { k: "aluminum_wheel_polish", price: "$149" },
+            { k: "sleeper_deep_clean", price: "$179" },
+            { k: "chrome_polish_premium", price: "$199" },
+            { k: "ceramic_seal_rig", price: "$299" },
+          ].map((a) => (
+            <div key={a.k} className="border-l-2 border-royal bg-mist/40 p-4">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-royal">
+                {t(`addon_${a.k}` as any)}
+              </div>
+              <div className="display tabular text-2xl mt-2 text-ink">{a.price}</div>
+              <div className="font-mono text-[9px] uppercase tracking-wider text-smoke mt-0.5">
+                {t("addonsFromLabel")}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Memberships — Rig Solo, Rig Pro, Combined */}
       <section className="px-6 md:px-14 py-20">
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-10">

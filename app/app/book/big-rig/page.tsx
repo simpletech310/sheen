@@ -21,7 +21,9 @@ function TierPickerInner() {
   function next() {
     const tier = BIG_RIG_TIERS.find((t) => t.tier_name === selected);
     if (!tier) return;
-    const url = new URL("/app/book/vehicles", window.location.origin);
+    // Route through the add-ons step so the driver can stack rig-specific
+    // extras (chrome polish, undercarriage, ceramic) before vehicles.
+    const url = new URL("/app/book/addons", window.location.origin);
     url.searchParams.set("tier", tier.tier_name);
     url.searchParams.set("price", String(tier.base_price_cents));
     url.searchParams.set("category", "big_rig");

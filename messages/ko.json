@@ -20,7 +20,7 @@
   "nav": {
     "auto": "자동차",
     "home": "주택",
-    "bigRig": "Big rig",
+    "bigRig": "대형 트럭",
     "business": "상업",
     "wash": "Sheen 세차 파트너",
     "safety": "신뢰 및 안전",
@@ -50,7 +50,7 @@
     "privacy": "개인정보 보호",
     "contact": "문의",
     "copyright": "© 2026 SHEEN INC. ALL RIGHTS RESERVED.",
-    "address": "sheen.co · Los Angeles · made for what shines"
+    "address": "sheen.co · Los Angeles · 빛나는 것을 위해"
   },
   "languagePicker": {
     "label": "언어",
@@ -180,7 +180,22 @@
     "faq6Q": "손상 보증은 어떻게 작동하나요?",
     "faq6A": "모든 세차는 최대 $2,500 보장. 완료 후 24시간 내 앱에서 신청.",
     "faq7Q": "팁이 전문가에게 가나요?",
-    "faq7A": "100%, 플랫폼 수수료 없음. 기본 제안 18 / 22 / 25%, 맞춤 금액 가능."
+    "faq7A": "100%, 플랫폼 수수료 없음. 기본 제안 18 / 22 / 25%, 맞춤 금액 가능.",
+    "addonsEyebrow": "전체 디테일링 메뉴",
+    "addonsHeadlineA": "세차 선택.",
+    "addonsHeadlineB": "추가 옵션 선택.",
+    "addonsBlurb": "4가지 기본 등급 외에도 — 실내 샴푸, 세라믹 실런트, 도장 보정, 헤드라이트 복원, 오존, 엔진룸 등. 예약 시 원하는 추가 옵션을 선택하면 검증된 전문가가 직접 방문합니다.",
+    "addonsCta": "예약 + 추가 옵션 선택 →",
+    "addonsFromLabel": "from",
+    "addonsFooter": "총 13가지 추가 옵션. SUV와 트럭은 프리미엄 서비스에 소량의 면적 할증이 적용됩니다.",
+    "addon_interior_shampoo": "실내 샴푸",
+    "addon_engine_bay": "엔진룸",
+    "addon_headlight_restore": "헤드라이트 복원",
+    "addon_leather_treatment": "가죽 트리트먼트",
+    "addon_clay_bar": "클레이바 디컨",
+    "addon_ceramic_seal": "세라믹 스프레이 실런트",
+    "addon_paint_correction": "도장 보정",
+    "addon_ceramic_pro": "Ceramic Pro 2년"
   },
   "wash": {
     "eyebrow": "세차 파트너용",
@@ -261,7 +276,9 @@
     "applyNow": "지금 지원 →",
     "proSignIn": "파트너 로그인",
     "promote5Title": "원하는 언어로 입력하세요",
-    "promote5Desc": "스페인어, 한국어, 베트남어, 뭐든 편한 언어로 쓰세요. 고객은 자기 언어로 읽고 답장하면 됩니다. 언어 장벽 때문에 예약을 놓치지 마세요."
+    "promote5Desc": "스페인어, 한국어, 베트남어, 뭐든 편한 언어로 쓰세요. 고객은 자기 언어로 읽고 답장하면 됩니다. 언어 장벽 때문에 예약을 놓치지 마세요.",
+    "ladderYouKeepFlat": "수령액 · 22% 수수료",
+    "ladderUnlocks": "해제 항목"
   },
   "home": {
     "eyebrow": "서비스 · 주택",
@@ -403,7 +420,20 @@
     "closingSubhead": "LA에서 당일 시간대. 보험 가입 전문가. 운전자에게 팁 100%.",
     "closingSeePlans": "플랜 보기",
     "why5Title": "모든 언어로 소통하세요",
-    "why5Desc": "차량에 필요한 사항을 정확히 전달하세요 — 스페인어, 베트남어, 러시아어, 편한 언어로 입력하세요. 상대방은 자기 언어로 읽고 답장합니다."
+    "why5Desc": "차량에 필요한 사항을 정확히 전달하세요 — 스페인어, 베트남어, 러시아어, 편한 언어로 입력하세요. 상대방은 자기 언어로 읽고 답장합니다.",
+    "addonsEyebrow": "전체 대형 트럭 디테일링 메뉴",
+    "addonsHeadlineA": "4가지 기본 등급.",
+    "addonsHeadlineB": "추가 옵션 선택.",
+    "addonsBlurb": "기본 세차 외에도 — 하부 탈지, 캡 샴푸, 슬리퍼 딥클린, 크롬 폴리싱, 세라믹 실런트, 알루미늄 휠 폴리싱. 예약 시 추가 옵션 선택하면 장비 검증된 전문가가 장비를 가지고 방문합니다.",
+    "addonsCta": "예약 + 추가 옵션 선택 →",
+    "addonsFromLabel": "from",
+    "addon_degrease_undercarriage": "하부 탈지",
+    "addon_bug_tar_rig": "벌레 & 타르 제거",
+    "addon_cab_shampoo": "캡 카펫 샴푸",
+    "addon_aluminum_wheel_polish": "알루미늄 휠 폴리싱",
+    "addon_sleeper_deep_clean": "슬리퍼 딥클린",
+    "addon_chrome_polish_premium": "Premium chrome polish",
+    "addon_ceramic_seal_rig": "세라믹 실런트 (캡 + 트레일러)"
   },
   "business": {
     "eyebrow": "서비스 · 상업",
@@ -611,7 +641,7 @@
     "statusActive": "활성",
     "statusPending": "대기 중",
     "statusVerified": "인증됨",
-    "statusBigRig": "Big rig",
+    "statusBigRig": "대형 트럭",
     "statJobs": "작업",
     "statLifetime": "누적",
     "statAvgScore": "평균 점수",
@@ -729,7 +759,27 @@
     "editSaved": "프로필 저장됨",
     "editSaveError": "저장할 수 없습니다",
     "editSaving": "저장 중…",
-    "editSaveBtn": "프로필 저장"
+    "editSaveBtn": "프로필 저장",
+    "tierLabel": "내 등급",
+    "tierJobs": "jobs",
+    "tierMoreJobsTo": "더 작업 필요",
+    "tierKeepRating": "평점 {rating}★ 이상 유지",
+    "tierKeepRatingTo": "{next} 도달하려면 평점 {rating}★로 상승 필요",
+    "tierUnlocksAt": "{next}에서 해제",
+    "tierEvaluating": "다음 승급 평가 중…",
+    "tierLegendBlurb": "최고 등급. Sheen의 모든 작업 유형을 수행할 수 있으며, 플랫폼에서 가장 높은 수익을 내는 2년 세라믹 코팅도 포함됩니다.",
+    "capsLabel": "디테일링 추가 옵션",
+    "capsHeadline": "수행 가능한 서비스",
+    "capsDescPrefix": "숙련된 항목을 선택하세요. 내 등급 (",
+    "capsDescSuffix": ")이 상한선입니다 — 등급을 올려 더 높은 수익의 추가 옵션을 해제하세요.",
+    "capsGroupAuto": "자동차 추가 옵션",
+    "capsGroupBigRig": "대형 트럭 추가 옵션",
+    "capsBigRigGated": "대형 트럭 추가 옵션 관리를 위해 위에서 대형 트럭 서비스를 활성화하세요.",
+    "capsOn": "On",
+    "capsOff": "Off",
+    "capsLocked": "잠김",
+    "capsLockedAt": "{tier}에서 해제",
+    "capsErrorUpdate": "역량 업데이트 실패"
   },
   "proSettings": {
     "backLink": "프로필",
@@ -864,7 +914,8 @@
     "requestAccepted": "요청 수락됨",
     "acceptError": "수락 실패",
     "requestDeclined": "요청 거절됨",
-    "declineError": "거절 실패"
+    "declineError": "거절 실패",
+    "addonsBreakdown": "디테일링 추가 옵션 · {count}개"
   },
   "proJobs": {
     "service": "서비스",
@@ -1242,7 +1293,22 @@
     "totalToday": "오늘 총액",
     "rushRefundNote": "15분 내에 전문가가 수락하지 않으면 급행 추가 요금이 자동으로 환불되며 예약은 유지됩니다.",
     "settingUpPayment": "보안 결제 준비 중…",
-    "payFooter": "결제는 Stripe를 통해 안전하게 처리됩니다. 세차 후 전문가에게 금액이 전달됩니다."
+    "payFooter": "결제는 Stripe를 통해 안전하게 처리됩니다. 세차 후 전문가에게 금액이 전달됩니다.",
+    "addonsStep": "4단계 중 2단계 · 디테일링 추가",
+    "addonsHeadline": "세차 구성하기",
+    "addonsSubhead": "모든 기본 세차에 풀 디테일 추가 옵션을 더할 수 있습니다. 원하는 항목을 선택하면 전문가가 현장에서 작업합니다. 기본 세차만 원하면 건너뛰세요.",
+    "addonsVehicleSize": "차량 크기",
+    "addonsSize_sedan": "Sedan",
+    "addonsSize_suv": "SUV / 크로스오버",
+    "addonsSize_truck": "트럭 / 밴",
+    "addonsSizeNote": "Premium add-ons (ceramic, shampoo, paint correction) scale by surface area. Quick add-ons stay flat.",
+    "addonsAdd": "Add",
+    "addonsAdded": "추가됨 ✓",
+    "addonsCount": "{count, plural, one {# add-on} other {# add-ons}}",
+    "addonsRunningTotal": "서비스 합계",
+    "addonsContinue": "추가 옵션으로 계속 →",
+    "addonsSkip": "추가 옵션 건너뛰기 →",
+    "addonsNoneAvailable": "이 등급에 호환되는 추가 옵션 없음 — 기본 세차에 이미 포함되어 있습니다."
   },
   "appWashes": {
     "washSingular": "세차",
@@ -1418,7 +1484,8 @@
     "defaultServiceName": "세차",
     "yourPro": "담당 프로",
     "yourProFallback": "담당 프로",
-    "total": "합계"
+    "total": "합계",
+    "addonsIncluded": "디테일링 추가 옵션"
   },
   "appMembership": {
     "eyebrow": "멤버십",

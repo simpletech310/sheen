@@ -1,6 +1,10 @@
 -- =============================================================
 -- ASAP / Rush bookings.
 --
+-- (Originally landed as a duplicate 0019 alongside
+-- 0019_fix_checklist_tier_names; renumbered to 0034 to keep migration
+-- versions unique. All statements are idempotent — safe to re-run.)
+--
 -- Customer hits "Rush" → pays a small surcharge on top of the regular
 -- price → we promise a pro within 60 minutes. The pro who claims it
 -- gets a small bonus IF they reach the address before the deadline.

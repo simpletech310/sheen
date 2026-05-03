@@ -180,7 +180,22 @@
     "faq6Q": "损坏保证如何运作?",
     "faq6A": "每次洗车最多覆盖 $2,500。完成后24小时内从应用提交。",
     "faq7Q": "小费给专业人员吗?",
-    "faq7A": "100%,平台不抽成。默认 18 / 22 / 25%,允许自定义金额。"
+    "faq7A": "100%,平台不抽成。默认 18 / 22 / 25%,允许自定义金额。",
+    "addonsEyebrow": "Full detailing menu",
+    "addonsHeadlineA": "PICK A WASH.",
+    "addonsHeadlineB": "STACK THE EXTRAS.",
+    "addonsBlurb": "Beyond the four base tiers — interior shampoo, ceramic seal, paint correction, headlight restore, ozone, engine bay, and more. Tick the extras you want at booking, your vetted pro brings them to your door.",
+    "addonsCta": "Book + add extras →",
+    "addonsFromLabel": "from",
+    "addonsFooter": "13 add-ons in total. SUVs and trucks add a small surface-area multiplier on premium services.",
+    "addon_interior_shampoo": "Interior shampoo",
+    "addon_engine_bay": "Engine bay",
+    "addon_headlight_restore": "Headlight restore",
+    "addon_leather_treatment": "Leather treatment",
+    "addon_clay_bar": "Clay-bar decon",
+    "addon_ceramic_seal": "Ceramic spray seal",
+    "addon_paint_correction": "Paint correction",
+    "addon_ceramic_pro": "Ceramic Pro 2-yr"
   },
   "wash": {
     "eyebrow": "针对洗车人员",
@@ -261,7 +276,9 @@
     "applyNow": "立即申请 →",
     "proSignIn": "专业人员登录",
     "promote5Title": "用你的语言输入",
-    "promote5Desc": "西班牙语、韩语、越南语，用你最习惯的语言。客户会看到他们的语言版本，回复也一样。别再因为语言障碍丢单了。"
+    "promote5Desc": "西班牙语、韩语、越南语，用你最习惯的语言。客户会看到他们的语言版本，回复也一样。别再因为语言障碍丢单了。",
+    "ladderYouKeepFlat": "You keep · 22% take",
+    "ladderUnlocks": "Unlocks"
   },
   "home": {
     "eyebrow": "服务 · 住宅",
@@ -403,7 +420,20 @@
     "closingSubhead": "洛杉矶当日预约窗口。保险齐全的专业人员。100%小费归司机。",
     "closingSeePlans": "查看方案",
     "why5Title": "说任何语言",
-    "why5Desc": "用你最自然的语言告诉服务人员车辆需求——西班牙语、越南语、俄语都行。他们会看到自己的语言版本，回复也一样。"
+    "why5Desc": "用你最自然的语言告诉服务人员车辆需求——西班牙语、越南语、俄语都行。他们会看到自己的语言版本，回复也一样。",
+    "addonsEyebrow": "Full rig detailing menu",
+    "addonsHeadlineA": "FOUR BASE TIERS.",
+    "addonsHeadlineB": "STACK THE EXTRAS.",
+    "addonsBlurb": "Beyond the base wash — undercarriage degrease, cab shampoo, sleeper deep-clean, chrome polish, ceramic seal, aluminum wheel polish. Tick the extras at booking; your equipment-verified pro brings the gear.",
+    "addonsCta": "Book + add extras →",
+    "addonsFromLabel": "from",
+    "addon_degrease_undercarriage": "Undercarriage degrease",
+    "addon_bug_tar_rig": "Bug & tar removal",
+    "addon_cab_shampoo": "Cab carpet shampoo",
+    "addon_aluminum_wheel_polish": "Aluminum wheel polish",
+    "addon_sleeper_deep_clean": "Sleeper deep-clean",
+    "addon_chrome_polish_premium": "Premium chrome polish",
+    "addon_ceramic_seal_rig": "Ceramic seal (cab + trailer)"
   },
   "business": {
     "eyebrow": "服务 · 商业",
@@ -729,7 +759,27 @@
     "editSaved": "资料已保存",
     "editSaveError": "无法保存",
     "editSaving": "保存中…",
-    "editSaveBtn": "保存资料"
+    "editSaveBtn": "保存资料",
+    "tierLabel": "Your tier",
+    "tierJobs": "jobs",
+    "tierMoreJobsTo": "more jobs to",
+    "tierKeepRating": "keep rating ≥ {rating}★",
+    "tierKeepRatingTo": "Lift rating to {rating}★ to reach {next}",
+    "tierUnlocksAt": "Unlocks at {next}",
+    "tierEvaluating": "Evaluating your next promotion…",
+    "tierLegendBlurb": "Top of the ladder. You're cleared for every job type on Sheen, including 2-year ceramic coatings — the highest-paying single jobs on the platform.",
+    "capsLabel": "Detailing add-ons",
+    "capsHeadline": "Services you can perform",
+    "capsDescPrefix": "Tick what you're trained for. Your tier (",
+    "capsDescSuffix": ") sets the ceiling — climb the ladder to unlock higher-paying add-ons.",
+    "capsGroupAuto": "Auto add-ons",
+    "capsGroupBigRig": "Big-rig add-ons",
+    "capsBigRigGated": "Turn on big-rig service above to manage rig add-ons.",
+    "capsOn": "On",
+    "capsOff": "Off",
+    "capsLocked": "Locked",
+    "capsLockedAt": "Unlocks at {tier}",
+    "capsErrorUpdate": "Could not update capability"
   },
   "proSettings": {
     "backLink": "个人资料",
@@ -864,7 +914,8 @@
     "requestAccepted": "请求已接受",
     "acceptError": "无法接受",
     "requestDeclined": "请求已拒绝",
-    "declineError": "无法拒绝"
+    "declineError": "无法拒绝",
+    "addonsBreakdown": "Detailing add-ons · {count}"
   },
   "proJobs": {
     "service": "服务",
@@ -1242,7 +1293,22 @@
     "totalToday": "今日总计",
     "rushRefundNote": "如果 15 分钟内无技师接单，急单加价会自动退还，你的预订仍然保留。",
     "settingUpPayment": "正在设置安全支付…",
-    "payFooter": "付款由 Stripe 安全处理。款项在清洁完成后转给技师。"
+    "payFooter": "付款由 Stripe 安全处理。款项在清洁完成后转给技师。",
+    "addonsStep": "Step 2 of 4 · Add detailing",
+    "addonsHeadline": "Stack your wash",
+    "addonsSubhead": "Add full-detail extras to any base wash. Tick what you want — your pro picks them up at the job. Skip if you just want the base wash.",
+    "addonsVehicleSize": "Your vehicle size",
+    "addonsSize_sedan": "Sedan",
+    "addonsSize_suv": "SUV / Crossover",
+    "addonsSize_truck": "Truck / Van",
+    "addonsSizeNote": "Premium add-ons (ceramic, shampoo, paint correction) scale by surface area. Quick add-ons stay flat.",
+    "addonsAdd": "Add",
+    "addonsAdded": "Added ✓",
+    "addonsCount": "{count, plural, one {# add-on} other {# add-ons}}",
+    "addonsRunningTotal": "Service total",
+    "addonsContinue": "Continue with add-ons →",
+    "addonsSkip": "Skip add-ons →",
+    "addonsNoneAvailable": "No add-ons compatible with this tier — base wash already includes them."
   },
   "appWashes": {
     "washSingular": "次洗车",
@@ -1418,7 +1484,8 @@
     "defaultServiceName": "洗车",
     "yourPro": "您的专员",
     "yourProFallback": "您的专员",
-    "total": "总计"
+    "total": "总计",
+    "addonsIncluded": "Detailing add-ons"
   },
   "appMembership": {
     "eyebrow": "会员",

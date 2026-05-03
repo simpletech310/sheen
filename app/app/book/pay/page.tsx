@@ -8,6 +8,7 @@ import { computeFees } from "@/lib/stripe/fees";
 import { fmtUSD } from "@/lib/pricing";
 import { StripePaymentElement } from "@/components/customer/StripePaymentElement";
 import { readDraft, clearDraft } from "@/lib/booking-draft";
+import { snapshotAddons, sumAddonPrices, getAddonByCode } from "@/lib/addons";
 import { useTranslations } from "next-intl";
 
 function PayInner() {
@@ -22,8 +23,19 @@ function PayInner() {
     rawCategory === "home" ? "home" : rawCategory === "big_rig" ? "big_rig" : "auto";
   // Auto + Big Rig multiply by vehicle count. Home has its multiplier baked
   // into `price` already (e.g. solar panels × N).
-  const totalServiceCents = category === "home" ? basePrice : basePrice * count;
+  const baseTierTotal = category === "home" ? basePrice : basePrice * count;
   const usesVehicles = category === "auto" || category === "big_rig";
+
+  // Add-ons (auto + big-rig only) — pulled from the booking draft, not
+  // the URL, since the codes can be many and the size multiplier needs
+  // to be applied consistently between picker, pay, and checkout API.
+  const draftForAddons = typeof window !== "undefined" ? readDraft() : null;
+  const addonCodes = draftForAddons?.addonCodes ?? [];
+  const vehicleSize = draftForAddons?.vehicleSize ?? "sedan";
+  const selectedAddons = snapshotAddons(addonCodes, vehicleSize);
+  const addonsCents = sumAddonPrices(selectedAddons);
+
+  const totalServiceCents = baseTierTotal + addonsCents;
   const fees = computeFees({ serviceCents: totalServiceCents, routedTo: "solo_washer" });
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -96,6 +108,8 @@ function PayInner() {
             requested_wash_handle: requestedHandle || undefined,
             redeem_points: redeemPoints || undefined,
             redeem_credit_id: useCredit && matchingCredit ? matchingCredit.id : undefined,
+            addon_codes: addonCodes.length > 0 ? addonCodes : undefined,
+            vehicle_size: addonCodes.length > 0 ? vehicleSize : undefined,
             address: {
               street,
               unit,
@@ -265,7 +279,7 @@ function PayInner() {
           <span className="text-smoke">
             {tier} {count > 1 ? `× ${count}` : ""}
           </span>
-          <span className="tabular">{fmtUSD(fees.serviceCents)}</span>
+          <span className="tabular">{fmtUSD(baseTierTotal)}</span>
         </div>
         {count > 1 && (
           <div className="flex justify-between text-xs text-smoke pl-2">
@@ -273,6 +287,15 @@ function PayInner() {
             <span />
           </div>
         )}
+        {selectedAddons.map((sa) => {
+          const a = getAddonByCode(sa.code);
+          return (
+            <div key={sa.code} className="flex justify-between text-xs text-smoke pl-2">
+              <span>+ {a?.name ?? sa.code}</span>
+              <span className="tabular">{fmtUSD(sa.price_cents)}</span>
+            </div>
+          );
+        })}
         <div className="flex justify-between">
           <span className="text-smoke">{t("trustFee")}</span>
           <span className="tabular">{fmtUSD(fees.trustFee)}</span>

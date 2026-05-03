@@ -4,6 +4,7 @@ import { ensurePublicUser } from "@/lib/auth";
 import { getStripe } from "@/lib/stripe/server";
 import { computeFees } from "@/lib/stripe/fees";
 import { getAllowance, consumeAllowance } from "@/lib/membership";
+import { snapshotAddons, sumAddonPrices, getAddonByCode } from "@/lib/addons";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -51,6 +52,12 @@ const Body = z.object({
   // within 60 minutes. When set, the regular `window` field is
   // ignored (the booking gets a now/now+60 window).
   is_rush: z.boolean().default(false),
+  // Detailing add-ons (auto + big_rig only) — codes from the catalog
+  // the customer ticked on the addons step. Server re-snapshots prices
+  // (NEVER trusts client-supplied price/payout) using vehicle_size for
+  // the multiplier on premium add-ons.
+  addon_codes: z.array(z.string()).max(20).optional(),
+  vehicle_size: z.enum(["sedan", "suv", "truck"]).optional(),
 });
 
 function parseWindow(w: string): { start: Date; end: Date } {
@@ -152,7 +159,23 @@ export async function POST(req: Request) {
       .single();
     if (!addr) return NextResponse.json({ error: "Could not save address" }, { status: 400 });
 
-    const fees = computeFees({ serviceCents: body.service_cents, routedTo: "solo_washer" });
+    // Server-side addon snapshot — never trust client price math.
+    // Codes are validated against the catalog; unknown codes are
+    // dropped silently (matches snapshotAddons behaviour).
+    const addonCodes =
+      (body.addon_codes ?? []).filter((c) => !!getAddonByCode(c));
+    // Big rig + auto only — home category never has add-ons.
+    const addonsAllowed = body.category === "auto" || body.category === "big_rig";
+    const vehicleSize = body.vehicle_size ?? "sedan";
+    const serverAddons = addonsAllowed
+      ? snapshotAddons(addonCodes, vehicleSize)
+      : [];
+    const addonTotal = sumAddonPrices(serverAddons);
+    // service_cents the client sent is the base tier × vehicle_count.
+    // Add the snapshotted add-ons on top to get the real service total.
+    const totalServiceCents = body.service_cents + addonTotal;
+
+    const fees = computeFees({ serviceCents: totalServiceCents, routedTo: "solo_washer" });
     // Rush: bypass the window picker and use now → +60min. Compute the
     // surcharge + bonus up front so the math is locked in even if the
     // RUSH_* constants change later.
@@ -352,6 +375,37 @@ export async function POST(req: Request) {
         url: `/pro/queue/${bookingId}`,
         tag: `request-${bookingId}`,
       }).catch(() => {});
+    }
+
+    // Persist add-on snapshots so receipts + queue cards + the payout
+    // breakdown can rebuild line items even if the catalog mutates
+    // later. The bookings.service_cents already includes the addon
+    // total above, so the existing payout pipeline stays unchanged —
+    // these rows are display-only.
+    if (serverAddons.length > 0) {
+      const { data: addonRows } = await supabase
+        .from("service_addons")
+        .select("id, code, name")
+        .in("code", serverAddons.map((a) => a.code));
+      const byCode: Record<string, { id: string; name: string }> = {};
+      for (const row of addonRows ?? []) {
+        byCode[row.code] = { id: row.id, name: row.name };
+      }
+      const insertRows = serverAddons
+        .filter((a) => byCode[a.code])
+        .map((a) => ({
+          booking_id: bookingId!,
+          addon_id: byCode[a.code].id,
+          addon_code: a.code,
+          addon_name: byCode[a.code].name,
+          price_cents: a.price_cents,
+          washer_payout_cents: a.washer_payout_cents,
+          duration_minutes: a.duration_minutes,
+          size_multiplier: a.size_multiplier,
+        }));
+      if (insertRows.length > 0) {
+        await supabase.from("booking_addons").insert(insertRows);
+      }
     }
 
     // Insert booking_vehicles join rows with per-vehicle pre-wash photos.

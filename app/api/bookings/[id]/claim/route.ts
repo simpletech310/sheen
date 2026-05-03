@@ -17,7 +17,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   const { data: profile } = await supabase
     .from("washer_profiles")
     .select(
-      "stripe_account_id, has_own_water, has_own_power, has_pressure_washer, can_detail_interior, can_do_paint_correction, can_wash_big_rig"
+      "stripe_account_id, has_own_water, has_own_power, has_pressure_washer, can_detail_interior, can_do_paint_correction, can_wash_big_rig, tier, capabilities"
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -38,14 +38,17 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   const { data: jobMeta } = await supabase
     .from("bookings")
     .select(
-      "requested_washer_id, request_expires_at, request_declined_at, services(category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(has_water, has_power)"
+      "requested_washer_id, request_expires_at, request_declined_at, services(category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(has_water, has_power), booking_addons(addon_code)"
     )
     .eq("id", params.id)
     .maybeSingle();
+  const addonCodes: string[] =
+    ((jobMeta as any)?.booking_addons ?? []).map((r: any) => r.addon_code as string);
   const elig = checkWasherEligibility(
     (jobMeta as any)?.services,
     (jobMeta as any)?.addresses,
-    profile as any
+    profile as any,
+    addonCodes
   );
   if (!elig.ok) {
     return NextResponse.json(

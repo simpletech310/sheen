@@ -32,7 +32,7 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
   const { data: job } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, customer_id, requested_washer_id, request_expires_at, request_declined_at, scheduled_window_start, scheduled_window_end, service_cents, customer_note, services(id, tier_name, duration_minutes, included, category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(street, city, state, zip, notes, has_water, has_power, water_notes, power_notes, gate_code, site_photo_paths), users:customer_id(full_name)"
+      "id, status, assigned_washer_id, customer_id, requested_washer_id, request_expires_at, request_declined_at, scheduled_window_start, scheduled_window_end, service_cents, customer_note, services(id, tier_name, duration_minutes, included, category, requires_water, requires_power, requires_pressure_washer, requires_paint_correction, requires_interior_detail), addresses(street, city, state, zip, notes, has_water, has_power, water_notes, power_notes, gate_code, site_photo_paths), users:customer_id(full_name), booking_addons(addon_code, addon_name, price_cents, washer_payout_cents, duration_minutes, size_multiplier)"
     )
     .eq("id", params.jobId)
     .maybeSingle();
@@ -95,17 +95,27 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
       ? supabase
           .from("washer_profiles")
           .select(
-            "has_own_water, has_own_power, has_pressure_washer, can_detail_interior, can_do_paint_correction, can_wash_big_rig"
+            "has_own_water, has_own_power, has_pressure_washer, can_detail_interior, can_do_paint_correction, can_wash_big_rig, tier, capabilities"
           )
           .eq("user_id", user.id)
           .maybeSingle()
       : Promise.resolve({ data: null } as any),
   ]);
 
+  const addonRows: Array<{
+    addon_code: string;
+    addon_name: string;
+    price_cents: number;
+    washer_payout_cents: number;
+    duration_minutes: number;
+    size_multiplier: number;
+  }> = (job as any).booking_addons ?? [];
+
   const eligibility = checkWasherEligibility(
     (job as any).services,
     (job as any).addresses,
-    washerProfile as any
+    washerProfile as any,
+    addonRows.map((a) => a.addon_code)
   );
 
   const addr = (job as any).addresses ?? {};
@@ -182,6 +192,32 @@ export default async function JobDetailPage({ params }: { params: { jobId: strin
           </>
         )}
       </div>
+
+      {addonRows.length > 0 && (
+        <div className="mt-5">
+          <Eyebrow className="!text-bone/60" prefix={null}>
+            {t("addonsBreakdown", { count: addonRows.length })}
+          </Eyebrow>
+          <div className="mt-2 bg-white/5 p-3 space-y-1.5">
+            {addonRows.map((a) => (
+              <div key={a.addon_code} className="flex justify-between items-baseline text-xs">
+                <div className="flex-1 min-w-0">
+                  <span className="text-bone/90">{a.addon_name}</span>
+                  <span className="ml-2 font-mono text-[10px] text-bone/50 uppercase tracking-wider">
+                    {a.duration_minutes}m
+                    {a.size_multiplier !== 1 && (
+                      <> · {a.size_multiplier.toFixed(2)}×</>
+                    )}
+                  </span>
+                </div>
+                <div className="text-sol font-mono text-[11px] tabular shrink-0">
+                  +{fmtUSD(a.washer_payout_cents)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {(job as any).customer_note && (
         <div className="mt-5">

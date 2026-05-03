@@ -180,7 +180,22 @@
     "faq6Q": "Como funciona a garantia contra danos?",
     "faq6A": "Toda lavagem é coberta até $2.500. Registre do app em até 24 horas da conclusão.",
     "faq7Q": "As gorjetas vão para o profissional?",
-    "faq7A": "100%, sem corte da plataforma. Sugestões padrão de 18 / 22 / 25%, valores personalizados permitidos."
+    "faq7A": "100%, sem corte da plataforma. Sugestões padrão de 18 / 22 / 25%, valores personalizados permitidos.",
+    "addonsEyebrow": "Menu completo de detalhamento",
+    "addonsHeadlineA": "ESCOLHA UMA LAVAGEM.",
+    "addonsHeadlineB": "ADICIONE OS EXTRAS.",
+    "addonsBlurb": "Além dos quatro níveis base — shampoo interno, selante cerâmico, correção de pintura, restauração de faróis, ozônio, motor, e mais. Marque os extras que quiser na reserva, seu profissional aprovado leva tudo até você.",
+    "addonsCta": "Reservar + adicionar extras →",
+    "addonsFromLabel": "from",
+    "addonsFooter": "13 adicionais no total. SUVs e picapes têm um pequeno multiplicador de área de superfície nos serviços premium.",
+    "addon_interior_shampoo": "Shampoo interno",
+    "addon_engine_bay": "Motor",
+    "addon_headlight_restore": "Restauração de faróis",
+    "addon_leather_treatment": "Tratamento de couro",
+    "addon_clay_bar": "Descontaminação clay-bar",
+    "addon_ceramic_seal": "Selante cerâmico spray",
+    "addon_paint_correction": "Correção de pintura",
+    "addon_ceramic_pro": "Ceramic Pro 2 anos"
   },
   "wash": {
     "eyebrow": "Para profissionais",
@@ -261,7 +276,9 @@
     "applyNow": "Candidatar-se agora →",
     "proSignIn": "Entrar como profissional",
     "promote5Title": "Digite no seu idioma",
-    "promote5Desc": "Espanhol, coreano, vietnamita, o que você escrever melhor. O cliente lê no idioma dele e responde do mesmo jeito. Pare de perder agendamentos por causa da barreira no chat."
+    "promote5Desc": "Espanhol, coreano, vietnamita, o que você escrever melhor. O cliente lê no idioma dele e responde do mesmo jeito. Pare de perder agendamentos por causa da barreira no chat.",
+    "ladderYouKeepFlat": "Você fica com · 22% de taxa",
+    "ladderUnlocks": "Desbloqueia"
   },
   "home": {
     "eyebrow": "Serviço · Casa",
@@ -403,7 +420,20 @@
     "closingSubhead": "Janelas no mesmo dia em LA. Profissionais segurados. 100% das gorjetas para seu motorista.",
     "closingSeePlans": "Ver planos",
     "why5Title": "Fale qualquer idioma",
-    "why5Desc": "Diga ao seu pro exatamente o que o caminhão precisa — digite em espanhol, vietnamita, russo, o que for natural. Eles leem no idioma deles e respondem do mesmo jeito."
+    "why5Desc": "Diga ao seu pro exatamente o que o caminhão precisa — digite em espanhol, vietnamita, russo, o que for natural. Eles leem no idioma deles e respondem do mesmo jeito.",
+    "addonsEyebrow": "Menu completo de detalhamento de caminhão",
+    "addonsHeadlineA": "QUATRO NÍVEIS BASE.",
+    "addonsHeadlineB": "ADICIONE OS EXTRAS.",
+    "addonsBlurb": "Além da lavagem base — desengraxe do chassi, shampoo da cabine, limpeza profunda do dormitório, polimento de cromados, selante cerâmico, polimento de rodas de alumínio. Marque os extras na reserva; seu profissional verificado traz o equipamento.",
+    "addonsCta": "Reservar + adicionar extras →",
+    "addonsFromLabel": "from",
+    "addon_degrease_undercarriage": "Desengraxe do chassi",
+    "addon_bug_tar_rig": "Remoção de insetos e piche",
+    "addon_cab_shampoo": "Shampoo do carpete da cabine",
+    "addon_aluminum_wheel_polish": "Polimento de rodas de alumínio",
+    "addon_sleeper_deep_clean": "Limpeza profunda do dormitório",
+    "addon_chrome_polish_premium": "Premium chrome polish",
+    "addon_ceramic_seal_rig": "Selante cerâmico (cabine + carreta)"
   },
   "business": {
     "eyebrow": "Serviço · Comercial",
@@ -729,7 +759,27 @@
     "editSaved": "Perfil salvo",
     "editSaveError": "Não foi possível salvar",
     "editSaving": "Salvando…",
-    "editSaveBtn": "Salvar perfil"
+    "editSaveBtn": "Salvar perfil",
+    "tierLabel": "Seu nível",
+    "tierJobs": "jobs",
+    "tierMoreJobsTo": "jobs a mais para",
+    "tierKeepRating": "manter avaliação ≥ {rating}★",
+    "tierKeepRatingTo": "Suba avaliação para {rating}★ para alcançar {next}",
+    "tierUnlocksAt": "Desbloqueia em {next}",
+    "tierEvaluating": "Avaliando sua próxima promoção…",
+    "tierLegendBlurb": "Topo da escala. Você está liberado para todos os tipos de job no Sheen, incluindo revestimentos cerâmicos de 2 anos — os jobs individuais mais bem pagos da plataforma.",
+    "capsLabel": "Adicionais de detalhamento",
+    "capsHeadline": "Serviços que você pode realizar",
+    "capsDescPrefix": "Marque o que você domina. Seu nível (",
+    "capsDescSuffix": ") define o limite — suba na escala para desbloquear adicionais com pagamento maior.",
+    "capsGroupAuto": "Adicionais auto",
+    "capsGroupBigRig": "Adicionais big-rig",
+    "capsBigRigGated": "Ative o serviço big-rig acima para gerenciar adicionais de caminhão.",
+    "capsOn": "On",
+    "capsOff": "Off",
+    "capsLocked": "Bloqueado",
+    "capsLockedAt": "Desbloqueia em {tier}",
+    "capsErrorUpdate": "Não foi possível atualizar capacidade"
   },
   "proSettings": {
     "backLink": "Perfil",
@@ -864,7 +914,8 @@
     "requestAccepted": "Solicitação aceita",
     "acceptError": "Não foi possível aceitar",
     "requestDeclined": "Solicitação recusada",
-    "declineError": "Não foi possível recusar"
+    "declineError": "Não foi possível recusar",
+    "addonsBreakdown": "Adicionais de detalhamento · {count}"
   },
   "proJobs": {
     "service": "Serviço",
@@ -985,7 +1036,7 @@
     "statPoints": "Pontos",
     "statWashesLabel": "Lavagens",
     "statWashesSub": "concluídas",
-    "statBadges": "Badges",
+    "statBadges": "Conquistas",
     "statBadgesSub": "desbloqueados",
     "membershipPill": "SHEEN+ {plan} ativo",
     "sectionBookingTitle": "AGENDAMENTO",
@@ -1242,7 +1293,22 @@
     "totalToday": "Total hoje",
     "rushRefundNote": "Se nenhum profissional aceitar em 15 minutos, a taxa Rush é reembolsada automaticamente e você mantém a reserva.",
     "settingUpPayment": "Configurando pagamento seguro…",
-    "payFooter": "Pagamentos são processados com segurança pela Stripe. O valor é liberado para o profissional após a lavagem."
+    "payFooter": "Pagamentos são processados com segurança pela Stripe. O valor é liberado para o profissional após a lavagem.",
+    "addonsStep": "Passo 2 de 4 · Adicionar detalhamento",
+    "addonsHeadline": "Monte sua lavagem",
+    "addonsSubhead": "Adicione extras de detalhamento completo a qualquer lavagem base. Marque o que quiser — seu profissional pega na hora do job. Pule se quiser só a lavagem base.",
+    "addonsVehicleSize": "Tamanho do seu veículo",
+    "addonsSize_sedan": "Sedan",
+    "addonsSize_suv": "SUV / Crossover",
+    "addonsSize_truck": "Picape / Van",
+    "addonsSizeNote": "Premium add-ons (ceramic, shampoo, paint correction) scale by surface area. Quick add-ons stay flat.",
+    "addonsAdd": "Add",
+    "addonsAdded": "Adicionado ✓",
+    "addonsCount": "{count, plural, one {# add-on} other {# add-ons}}",
+    "addonsRunningTotal": "Total do serviço",
+    "addonsContinue": "Continuar com adicionais →",
+    "addonsSkip": "Pular adicionais →",
+    "addonsNoneAvailable": "Nenhum adicional compatível com este nível — lavagem base já inclui tudo."
   },
   "appWashes": {
     "washSingular": "lavagem",
@@ -1418,7 +1484,8 @@
     "defaultServiceName": "Lavagem",
     "yourPro": "Seu pro",
     "yourProFallback": "Seu pro",
-    "total": "Total"
+    "total": "Total",
+    "addonsIncluded": "Adicionais de detalhamento"
   },
   "appMembership": {
     "eyebrow": "Assinatura",

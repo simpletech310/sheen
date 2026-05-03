@@ -21,7 +21,7 @@ export default async function TrackingPage({ params }: { params: { id: string } 
   const { data: booking } = await supabase
     .from("bookings")
     .select(
-      "id, status, assigned_washer_id, service_id, total_cents, customer_approved_at, funds_released_at, completed_at, work_photo_paths, checklist_progress, addresses(lat, lng), services(tier_name)"
+      "id, status, assigned_washer_id, service_id, total_cents, customer_approved_at, funds_released_at, completed_at, work_photo_paths, checklist_progress, addresses(lat, lng), services(tier_name), booking_addons(addon_code, addon_name, price_cents)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -159,7 +159,21 @@ export default async function TrackingPage({ params }: { params: { id: string } 
         />
       )}
 
-      <div className="mt-6 bg-mist/40 p-4 text-sm">
+      <div className="mt-6 bg-mist/40 p-4 text-sm space-y-1.5">
+        {((booking as any).booking_addons ?? []).length > 0 && (
+          <>
+            <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mb-1">
+              {t("addonsIncluded")}
+            </div>
+            {((booking as any).booking_addons ?? []).map((a: any) => (
+              <div key={a.addon_code} className="flex justify-between text-xs text-smoke">
+                <span>+ {a.addon_name}</span>
+                <span className="tabular">{fmtUSD(a.price_cents)}</span>
+              </div>
+            ))}
+            <div className="border-t border-bone/30 my-2" />
+          </>
+        )}
         <div className="flex justify-between">
           <span className="text-smoke">{t("total")}</span>
           <span className="display tabular text-xl">{fmtUSD(booking.total_cents)}</span>

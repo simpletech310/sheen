@@ -54,14 +54,34 @@ export default async function WashPage() {
     { n: "03", t: t("step3Title"), d: t("step3Desc") },
   ];
 
-  // The doc's full 5-tier ladder ships in a follow-up. Today we honour the
-  // current rates (22%/18%) and preview the climb so applicants see the runway.
+  // Real, code-backed tier ladder (lib/tier.ts + migration 0032).
+  // Promotion unlocks higher-paying add-ons — every tier already keeps
+  // 78% on day one, so the climb is about *job access*, not just %.
   const ladder = [
-    { name: "Rookie",   commission: "22%", keep: "78%", req: "Onboarded · COI on file" },
-    { name: "Verified", commission: "20%", keep: "80%", req: "25 jobs · 4.5★ · zero complaints" },
-    { name: "Pro",      commission: "18%", keep: "82%", req: "75 jobs · 4.7★ · <2% cancellations" },
-    { name: "Elite",    commission: "15%", keep: "85%", req: "200 jobs · 4.8★ · zero damage claims", soon: true },
-    { name: "Legend",   commission: "12%", keep: "88%", req: "500 jobs · 4.9★ · 1+ year tenure",     soon: true },
+    {
+      name: "Rookie",
+      keep: "78%",
+      req: "Onboarded · COI on file",
+      unlocks: "All base wash tiers · quick add-ons (tire shine, pet hair, hand wax)",
+    },
+    {
+      name: "Pro",
+      keep: "78%",
+      req: "10 jobs · 4.5★",
+      unlocks: "Interior shampoo, leather, engine bay, headlight restore, ozone — ~$40–$80 each",
+    },
+    {
+      name: "Elite",
+      keep: "78%",
+      req: "50 jobs · 4.7★",
+      unlocks: "Ceramic spray seal ($129+), paint correction ($249+), big-rig chrome polish",
+    },
+    {
+      name: "Legend",
+      keep: "78%",
+      req: "150 jobs · 4.8★",
+      unlocks: "2-year ceramic coating ($399+) — the highest-paying single jobs on the platform",
+    },
   ];
 
   const promote = [
@@ -168,23 +188,29 @@ export default async function WashPage() {
         <p className="text-sm text-smoke max-w-[640px] leading-relaxed mb-8">
           {t("ladderBody")}
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           {ladder.map((tier, i) => (
             <div
               key={tier.name}
-              className={`p-5 border-l-2 ${tier.soon ? "bg-mist/30 border-mist" : "bg-bone border-royal"}`}
+              className="p-5 border-l-2 bg-bone border-royal"
             >
               <div className="font-mono text-[10px] uppercase tracking-wider text-smoke">
-                {t("ladderTier")} {i + 1}{tier.soon ? ` · ${t("ladderSoon")}` : ""}
+                {t("ladderTier")} {i + 1}
               </div>
-              <div className={`display text-[22px] mt-1 ${tier.soon ? "text-smoke" : "text-ink"}`}>{tier.name}</div>
+              <div className="display text-[22px] mt-1 text-ink">{tier.name}</div>
               <div className="display tabular text-3xl mt-3">
-                <span className={tier.soon ? "text-smoke" : "text-royal"}>{tier.keep}</span>
+                <span className="text-royal">{tier.keep}</span>
               </div>
               <div className="font-mono text-[10px] uppercase tracking-wider text-smoke mt-1">
-                {t("ladderYouKeep", { commission: tier.commission })}
+                {t("ladderYouKeepFlat")}
               </div>
               <div className="text-xs text-smoke mt-3 leading-snug">{tier.req}</div>
+              <div className="mt-3 pt-3 border-t border-mist">
+                <div className="font-mono text-[9px] uppercase tracking-wider text-royal mb-1">
+                  {t("ladderUnlocks")}
+                </div>
+                <div className="text-[11px] text-ink/85 leading-snug">{tier.unlocks}</div>
+              </div>
             </div>
           ))}
         </div>

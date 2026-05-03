@@ -21,9 +21,12 @@ function TierPickerInner() {
   function next() {
     const tier = AUTO_TIERS.find((t) => t.tier_name === selected);
     if (!tier) return;
-    const url = new URL("/app/book/vehicles", window.location.origin);
+    // Route through the add-ons step so the customer can stack
+    // detailing extras on top before moving to vehicles.
+    const url = new URL("/app/book/addons", window.location.origin);
     url.searchParams.set("tier", tier.tier_name);
     url.searchParams.set("price", String(tier.base_price_cents));
+    url.searchParams.set("category", "auto");
     // Pass through @handle from /r/[handle] referral links so the customer
     // doesn't have to retype it at the address step.
     const handle = params.get("handle");

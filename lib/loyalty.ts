@@ -238,6 +238,10 @@ export async function checkAchievements(userId: string): Promise<string[]> {
     { id: "first_job",   condition: (wp?.jobs_completed ?? 0) >= 1 },
     { id: "hundred_club", condition: (wp?.jobs_completed ?? 0) >= 100 },
     { id: "top_rated",    condition: (wp?.jobs_completed ?? 0) >= 50 && (wp?.rating_avg ?? 0) >= 4.9 },
+    // Tier-ladder promotions (mirrors lib/tier.ts thresholds)
+    { id: "tier_pro",    condition: (wp?.jobs_completed ?? 0) >= 10  && (wp?.rating_avg ?? 0) >= 4.5 },
+    { id: "tier_elite",  condition: (wp?.jobs_completed ?? 0) >= 50  && (wp?.rating_avg ?? 0) >= 4.7 },
+    { id: "tier_legend", condition: (wp?.jobs_completed ?? 0) >= 150 && (wp?.rating_avg ?? 0) >= 4.8 },
   ];
 
   const newlyUnlocked: string[] = [];
