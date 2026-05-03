@@ -26,13 +26,25 @@ function PayInner() {
   const baseTierTotal = category === "home" ? basePrice : basePrice * count;
   const usesVehicles = category === "auto" || category === "big_rig";
 
-  // Vehicle ids for this booking (carried in sessionStorage). The
-  // pay-page receipt always renders one block per vehicle so the
-  // customer can verify which cars are getting washed AND which
-  // add-ons go on which one — even when no add-ons were picked.
-  const draftForAddons = typeof window !== "undefined" ? readDraft() : null;
-  const draftVehicleIds = draftForAddons?.vehicleIds ?? [];
-  const addonsByVehicle = draftForAddons?.addonsByVehicleId ?? {};
+  // Draft state — hydrated AFTER mount via useEffect, never inline.
+  // Inline reads of readDraft() at render time return null on SSR
+  // (typeof window check) AND a useMemo with [] deps then caches
+  // that empty value forever, so add-ons silently dropped from the
+  // checkout payload no matter what the customer picked.
+  const [draftVehicleIds, setDraftVehicleIds] = useState<string[]>([]);
+  const [addonsByVehicle, setAddonsByVehicle] = useState<
+    Record<string, { codes: string[]; size: "sedan" | "suv" | "truck" }>
+  >({});
+  const [draftLoaded, setDraftLoaded] = useState(false);
+
+  useEffect(() => {
+    const d = readDraft();
+    if (d) {
+      setDraftVehicleIds(d.vehicleIds ?? []);
+      setAddonsByVehicle(d.addonsByVehicleId ?? {});
+    }
+    setDraftLoaded(true);
+  }, []);
 
   // One snapshot per vehicle in the booking (not just the ones with
   // add-ons) — the receipt block needs the vehicle line whether the
@@ -43,8 +55,7 @@ function PayInner() {
       const snaps = pv ? snapshotAddons(pv.codes, pv.size) : [];
       return { vehicleId, addons: snaps };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [draftVehicleIds, addonsByVehicle]);
   const addonsCents = perVehicleSnapshots.reduce(
     (a, p) => a + sumAddonPrices(p.addons),
     0
@@ -163,18 +174,21 @@ function PayInner() {
             requested_wash_handle: requestedHandle || undefined,
             redeem_points: redeemPoints || undefined,
             redeem_credit_id: useCredit && matchingCredit ? matchingCredit.id : undefined,
-            // Per-vehicle add-on map. Server snapshots prices itself
-            // (it's the only place we trust the math) using the size
-            // each vehicle was tagged with in the addons step.
-            addons_by_vehicle:
-              Object.keys(addonsByVehicle).length > 0
-                ? Object.fromEntries(
-                    Object.entries(addonsByVehicle).map(([vid, pv]) => [
-                      vid,
-                      { codes: pv.codes, size: pv.size },
-                    ])
-                  )
-                : undefined,
+            // Per-vehicle add-on map — read FRESH from the draft, not
+            // the React state, because the state hydrates after this
+            // effect mounts and previously the checkout payload was
+            // built before hydration finished, dropping every add-on
+            // the customer ticked.
+            addons_by_vehicle: (() => {
+              const m = draft?.addonsByVehicleId ?? {};
+              if (Object.keys(m).length === 0) return undefined;
+              return Object.fromEntries(
+                Object.entries(m).map(([vid, pv]) => [
+                  vid,
+                  { codes: pv.codes, size: pv.size },
+                ])
+              );
+            })(),
             address: {
               street,
               unit,
